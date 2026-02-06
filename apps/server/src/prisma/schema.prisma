@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  password      String
+  displayName   String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  gameSessions  GameSession[]
+  @@index([email])
+}
+
+model GameSession {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter     Int       @default(1)
+  stage       Int       @default(1)
+  techDebt    Int       @default(0)
+  partyData   Json
+  inventory   Json
+  gold        Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  combatLogs  CombatLog[]
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model CombatLog {
+  id            String      @id @default(uuid())
+  sessionId     String
+  session       GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  turn          Int
+  actor         String
+  action        String
+  target        String
+  logData       Json
+  createdAt     DateTime    @default(now())
+  @@index([sessionId])
+  @@index([createdAt])
+}
