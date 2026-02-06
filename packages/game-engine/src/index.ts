@@ -15,6 +15,8 @@ export { EnemyAI } from './systems/EnemyAI';
 export type { EnemyAction } from './systems/EnemyAI';
 export { ItemSystem } from './systems/ItemSystem';
 export type { UseItemResult, DropResult } from './systems/ItemSystem';
+export { LevelUpSystem } from './systems/LevelUpSystem';
+export type { LevelUpResult, StatGrowth } from './systems/LevelUpSystem';
 
 /**
  * Create Phaser game configuration

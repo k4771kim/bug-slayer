@@ -4,6 +4,7 @@ import { createCharacter } from '../systems/CharacterFactory';
 import { dataLoader } from '../loaders/DataLoader';
 import { TechDebt } from '../systems/TechDebt';
 import { EnemyAI, type EnemyAction } from '../systems/EnemyAI';
+import { LevelUpSystem } from '../systems/LevelUpSystem';
 
 interface BattleSceneData {
   playerClass: string;
@@ -20,11 +21,13 @@ export class BattleScene extends Phaser.Scene {
   private monster: Monster | null = null;
   private techDebt: TechDebt | null = null;
   private enemyAI: EnemyAI | null = null;
+  private levelUpSystem: LevelUpSystem | null = null;
   private turnText: Phaser.GameObjects.Text | null = null;
   private playerHPText: Phaser.GameObjects.Text | null = null;
   private monsterHPText: Phaser.GameObjects.Text | null = null;
   private techDebtText: Phaser.GameObjects.Text | null = null;
   private techDebtBar: Phaser.GameObjects.Graphics | null = null;
+  private expText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -38,6 +41,12 @@ export class BattleScene extends Phaser.Scene {
 
     // Load actual character from JSON data
     this.player = createCharacter(data.playerClass.toLowerCase(), 'Hero', 1);
+
+    // Initialize Level-Up System
+    const classData = dataLoader.getClass(data.playerClass.toLowerCase());
+    if (classData && this.player) {
+      this.levelUpSystem = new LevelUpSystem(this.player, classData.statGrowth);
+    }
 
     // Load actual monster from JSON data
     const bugData = dataLoader.getBug('nullpointer');
@@ -209,8 +218,14 @@ export class BattleScene extends Phaser.Scene {
   private updateUI() {
     if (!this.player || !this.monster || !this.techDebt) return;
 
+    // Show level and EXP
+    const levelInfo = this.levelUpSystem?.getLevelInfo();
+    const expDisplay = levelInfo
+      ? `\nLv.${levelInfo.level} | EXP: ${levelInfo.exp}/${levelInfo.expForNextLevel}`
+      : '';
+
     this.playerHPText?.setText(
-      `${this.player.name}\nHP: ${this.player.currentHP}/${this.player.stats.HP}\nMP: ${this.player.currentMP}/${this.player.stats.MP}`
+      `${this.player.name}${expDisplay}\nHP: ${this.player.currentHP}/${this.player.stats.HP}\nMP: ${this.player.currentMP}/${this.player.stats.MP}`
     );
 
     // Monster HP with boss phase indicator
@@ -430,18 +445,50 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleVictory() {
-    if (!this.player) return;
+    if (!this.player || !this.monster || !this.levelUpSystem) return;
 
     // Restore MP to 100% on victory
     this.player.currentMP = this.player.stats.MP;
 
-    this.turnText?.setText('🎉 Victory! You defeated the bug! (MP fully restored)');
+    // Award EXP from monster drops
+    const expReward = this.monster.drops.exp;
+    const goldReward = this.monster.drops.gold;
+
+    this.turnText?.setText(`🎉 Victory! Defeated ${this.monster.name}!\n+${expReward} EXP, +${goldReward} Gold, MP restored`);
     this.updateUI();
 
-    // TODO: Show rewards screen
-    this.time.delayedCall(2000, () => {
-      console.log('Battle won! Returning to class selection...');
-      this.scene.start('ClassSelectScene');
+    // Check for level-up after a short delay
+    this.time.delayedCall(1500, () => {
+      if (!this.levelUpSystem) return;
+
+      const levelUpResult = this.levelUpSystem.addExp(expReward);
+
+      if (levelUpResult) {
+        // Level up occurred!
+        const statsText = Object.entries(levelUpResult.statsGained)
+          .filter(([_, value]) => value && value > 0)
+          .map(([stat, value]) => `${stat}+${value}`)
+          .join(', ');
+
+        this.turnText?.setText(
+          `🎊 LEVEL UP! ${levelUpResult.newLevel}\n` +
+          `Stats increased: ${statsText}\n` +
+          `HP and MP fully restored!`
+        );
+        this.updateUI();
+
+        // Wait longer before returning to show level-up message
+        this.time.delayedCall(3000, () => {
+          console.log('Battle won! Returning to class selection...');
+          this.scene.start('ClassSelectScene');
+        });
+      } else {
+        // No level-up, return to class selection
+        this.time.delayedCall(1500, () => {
+          console.log('Battle won! Returning to class selection...');
+          this.scene.start('ClassSelectScene');
+        });
+      }
     });
   }
 
