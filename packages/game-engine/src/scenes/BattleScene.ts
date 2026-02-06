@@ -83,6 +83,8 @@ export class BattleScene extends Phaser.Scene {
   private isPlayerTurn: boolean = true;
   private battleStartTime: number = 0;
   private stagesCompleted: number[] = [];
+  private skillCooldowns: Map<string, number> = new Map();
+  private attackCount: number = 0; // for Refactorer passive
 
   // UI elements
   private turnText: Phaser.GameObjects.Text | null = null;
@@ -245,45 +247,34 @@ export class BattleScene extends Phaser.Scene {
       wordWrap: { width: width - 40 },
     }).setOrigin(0.5);
 
-    // ---- Action Buttons: Attack, Skills, Focus, Flee ----
+    // ---- Action Buttons: Attack, Skills, Item, Focus, Flee ----
     const buttonY1 = height - 140;
     const buttonY2 = height - 90;
-    const buttonGap = 180;
-
-    const attackButton = this.add.text(width / 2 - buttonGap / 2, buttonY1, 'Attack', {
+    const btnStyle = (bg: string) => ({
       fontSize: '16px',
       color: '#ffffff',
-      backgroundColor: '#4a90e2',
-      padding: { x: 15, y: 8 },
-    }).setOrigin(0.5).setInteractive();
+      backgroundColor: bg,
+      padding: { x: 12, y: 8 },
+    });
 
-    const skillsButton = this.add.text(width / 2 + buttonGap / 2, buttonY1, 'Skills', {
-      fontSize: '16px',
-      color: '#ffffff',
-      backgroundColor: '#e5c07b',
-      padding: { x: 15, y: 8 },
-    }).setOrigin(0.5).setInteractive();
-
-    const focusButton = this.add.text(width / 2 - buttonGap / 2, buttonY2, 'Focus', {
-      fontSize: '16px',
-      color: '#ffffff',
-      backgroundColor: '#9333ea',
-      padding: { x: 15, y: 8 },
-    }).setOrigin(0.5).setInteractive();
-
-    const fleeButton = this.add.text(width / 2 + buttonGap / 2, buttonY2, 'Flee', {
-      fontSize: '16px',
-      color: '#ffffff',
-      backgroundColor: '#f59e0b',
-      padding: { x: 15, y: 8 },
-    }).setOrigin(0.5).setInteractive();
+    const attackButton = this.add.text(width / 2 - 120, buttonY1, 'Attack', btnStyle('#4a90e2'))
+      .setOrigin(0.5).setInteractive();
+    const skillsButton = this.add.text(width / 2, buttonY1, 'Skills', btnStyle('#e5c07b'))
+      .setOrigin(0.5).setInteractive();
+    const itemButton = this.add.text(width / 2 + 120, buttonY1, 'Item', btnStyle('#4ade80'))
+      .setOrigin(0.5).setInteractive();
+    const focusButton = this.add.text(width / 2 - 80, buttonY2, 'Focus', btnStyle('#9333ea'))
+      .setOrigin(0.5).setInteractive();
+    const fleeButton = this.add.text(width / 2 + 80, buttonY2, 'Flee', btnStyle('#f59e0b'))
+      .setOrigin(0.5).setInteractive();
 
     attackButton.on('pointerdown', () => this.handleAttack());
     skillsButton.on('pointerdown', () => this.toggleSkillPanel());
+    itemButton.on('pointerdown', () => this.handleItemUse());
     focusButton.on('pointerdown', () => this.handleFocus());
     fleeButton.on('pointerdown', () => this.handleFlee());
 
-    this.actionButtons = [attackButton, skillsButton, focusButton, fleeButton];
+    this.actionButtons = [attackButton, skillsButton, itemButton, focusButton, fleeButton];
 
     // ---- Skill Panel (hidden by default) ----
     this.createSkillPanel();
@@ -399,9 +390,13 @@ export class BattleScene extends Phaser.Scene {
     closeBtn.on('pointerdown', () => this.toggleSkillPanel());
     this.skillPanelContainer.add(closeBtn);
 
-    // Get skills for this class
+    // Get skills for this class, filtered by level unlock
+    // Skill unlock: indices 0-1 at Lv1, 2-3 at Lv5, 4-5 at Lv10, 6-7 at Lv15
     const classId = this.sceneData?.playerClass.toLowerCase() ?? '';
-    const skills = dataLoader.getSkillsForClass(classId);
+    const allSkills = dataLoader.getSkillsForClass(classId);
+    const playerLevel = this.player!.level;
+    const unlockLevels = [1, 1, 5, 5, 10, 10, 15, 15];
+    const skills = allSkills.filter((_, idx) => playerLevel >= (unlockLevels[idx] ?? 1));
 
     // Layout skills in a scrollable-ish list (max 8 visible)
     const startY = -100;
@@ -412,11 +407,15 @@ export class BattleScene extends Phaser.Scene {
       if (y > 140) return; // skip if overflow
 
       const hasMP = this.player!.currentMP >= skillData.mpCost;
-      const textColor = hasMP ? '#ffffff' : '#666666';
-      const bgColor = hasMP ? '#2a4a6a' : '#1a1a2a';
+      const cooldown = this.skillCooldowns.get(skillData.id) ?? 0;
+      const onCooldown = cooldown > 0;
+      const canUse = hasMP && !onCooldown;
+      const textColor = canUse ? '#ffffff' : '#666666';
+      const bgColor = canUse ? '#2a4a6a' : '#1a1a2a';
 
+      const cdText = onCooldown ? ` [CD: ${cooldown}t]` : '';
       const skillBtn = this.add.text(0, y,
-        `${skillData.name} (${skillData.mpCost} MP) - ${skillData.description}`, {
+        `${skillData.name} (${skillData.mpCost} MP)${cdText} - ${skillData.description}`, {
         fontSize: '13px',
         color: textColor,
         backgroundColor: bgColor,
@@ -424,7 +423,7 @@ export class BattleScene extends Phaser.Scene {
         wordWrap: { width: 460 },
       }).setOrigin(0.5);
 
-      if (hasMP) {
+      if (canUse) {
         skillBtn.setInteractive();
         skillBtn.on('pointerdown', () => {
           this.toggleSkillPanel();
@@ -436,6 +435,17 @@ export class BattleScene extends Phaser.Scene {
 
       this.skillPanelContainer!.add(skillBtn);
     });
+
+    // Show locked skills hint
+    const lockedCount = allSkills.length - skills.length;
+    if (lockedCount > 0) {
+      const lockText = this.add.text(0, startY + skills.length * rowHeight + 10,
+        `${lockedCount} skill(s) locked (higher level required)`, {
+        fontSize: '12px',
+        color: '#666666',
+      }).setOrigin(0.5);
+      this.skillPanelContainer!.add(lockText);
+    }
   }
 
   private toggleSkillPanel() {
@@ -526,6 +536,10 @@ export class BattleScene extends Phaser.Scene {
     const focusText = this.focusBuff === false && baseDamage !== this.player.stats.ATK
       ? ' +20% Focus Bonus!' : '';
 
+    // Apply class passive to outgoing damage
+    const passive = this.applyPassiveToOutgoingDamage(damage);
+    damage = passive.damage;
+
     // Apply damage
     this.monster.currentHP = Math.max(0, this.monster.currentHP - damage);
 
@@ -536,7 +550,7 @@ export class BattleScene extends Phaser.Scene {
     const mpRestored = this.autoRestoreMP();
 
     this.turnText?.setText(
-      `You dealt ${damage} damage!${critText}${focusText}\n(+${mpRestored} MP, +1 Tech Debt)`
+      `You dealt ${damage} damage!${critText}${focusText}${passive.text}\n(+${mpRestored} MP, +1 Tech Debt)`
     );
     this.updateUI();
 
@@ -559,11 +573,23 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    // Check cooldown
+    const currentCD = this.skillCooldowns.get(skillData.id) ?? 0;
+    if (currentCD > 0) {
+      this.turnText?.setText(`${skillData.name} is on cooldown! (${currentCD} turns)`);
+      return;
+    }
+
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
 
     // Deduct MP
     this.player.currentMP -= skillData.mpCost;
+
+    // Set cooldown (skills with mpCost >= 25 have 2-turn CD, others 0)
+    if (skillData.mpCost >= 25) {
+      this.skillCooldowns.set(skillData.id, 2);
+    }
 
     // Process skill effects
     let totalDamage = 0;
@@ -598,7 +624,7 @@ export class BattleScene extends Phaser.Scene {
 
           // Critical hit
           if (this.rollCritical(playerSPD, monsterSPD)) {
-            dmg = Math.floor(dmg * 1.5);
+            dmg = Math.floor(dmg * CRIT_MULTIPLIER);
             effectTexts.push('CRITICAL!');
           }
 
@@ -804,12 +830,17 @@ export class BattleScene extends Phaser.Scene {
         let damage = this.calculateDamage(monsterATK, playerDEF);
 
         // Monster critical hit
+        let critText = '';
         if (this.rollCritical(monsterSPD, playerSPD)) {
           damage = Math.floor(damage * CRIT_MULTIPLIER);
-          actionText = `${this.monster.name} scored a CRITICAL HIT! ${damage} damage`;
-        } else {
-          actionText = `${this.monster.name} attacked! ${damage} damage`;
+          critText = ' CRITICAL HIT!';
         }
+
+        // Apply Debugger passive (20% chance -50% incoming damage)
+        const passive = this.applyPassiveToIncomingDamage(damage);
+        damage = passive.damage;
+
+        actionText = `${this.monster.name} attacked!${critText} ${damage} damage${passive.text}`;
 
         const modifierText = techDebtModifier !== 1.0
           ? ` (${Math.round((techDebtModifier - 1) * 100)}% from Tech Debt)`
@@ -836,12 +867,17 @@ export class BattleScene extends Phaser.Scene {
         let damage = this.calculateDamage(modifiedAtk, playerDEF);
 
         // Monster critical hit
+        let skillCritText = '';
         if (this.rollCritical(monsterSPD, playerSPD)) {
           damage = Math.floor(damage * CRIT_MULTIPLIER);
-          actionText = `${this.monster.name} used ${action.skillId}! CRITICAL! ${damage} damage`;
-        } else {
-          actionText = `${this.monster.name} used ${action.skillId}! ${damage} damage`;
+          skillCritText = ' CRITICAL!';
         }
+
+        // Apply Debugger passive (20% chance -50% incoming damage)
+        const skillPassive = this.applyPassiveToIncomingDamage(damage);
+        damage = skillPassive.damage;
+
+        actionText = `${this.monster.name} used ${action.skillId}!${skillCritText} ${damage} damage${skillPassive.text}`;
 
         this.player.currentHP = Math.max(0, this.player.currentHP - damage);
         break;
@@ -883,6 +919,8 @@ export class BattleScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => {
       this.isPlayerTurn = true;
       this.setActionsEnabled(true);
+      // Tick cooldowns at start of player turn
+      this.tickCooldowns();
       this.turnText?.setText('Your turn! Choose an action.');
     });
   }
@@ -960,6 +998,113 @@ export class BattleScene extends Phaser.Scene {
       if (buff.stat === 'DOT' && buff.target === 'monster' && buff.turnsRemaining > 0) {
         this.monster.currentHP = Math.max(0, this.monster.currentHP - buff.value);
       }
+    }
+  }
+
+  // =========================================================================
+  // Cooldown System
+  // =========================================================================
+
+  /**
+   * Tick all skill cooldowns by 1 at start of player turn.
+   */
+  private tickCooldowns() {
+    for (const [skillId, cd] of this.skillCooldowns.entries()) {
+      if (cd > 0) {
+        this.skillCooldowns.set(skillId, cd - 1);
+      }
+      if (cd <= 1) {
+        this.skillCooldowns.delete(skillId);
+      }
+    }
+  }
+
+  // =========================================================================
+  // Passive Abilities
+  // =========================================================================
+
+  /**
+   * Apply class passive ability to damage.
+   * - Debugger: 20% chance to reduce incoming damage by 50%
+   * - Refactorer: Every 3rd attack deals 150% damage
+   * - FullStack: +20% damage when HP > 70%
+   * - DevOps: +5% crit rate (handled in rollCritical via higher SPD)
+   */
+  private applyPassiveToOutgoingDamage(damage: number): { damage: number; text: string } {
+    if (!this.player || !this.sceneData) return { damage, text: '' };
+
+    const classId = this.sceneData.playerClass.toLowerCase();
+    this.attackCount++;
+
+    switch (classId) {
+      case 'refactorer':
+        if (this.attackCount % 3 === 0) {
+          return { damage: Math.floor(damage * 1.5), text: ' [Code Optimization: 150%!]' };
+        }
+        break;
+      case 'fullstack':
+        if (this.player.currentHP > this.player.stats.HP * 0.7) {
+          return { damage: Math.floor(damage * 1.2), text: ' [Full Power: +20%!]' };
+        }
+        break;
+    }
+    return { damage, text: '' };
+  }
+
+  /**
+   * Apply class passive to incoming damage (Debugger).
+   */
+  private applyPassiveToIncomingDamage(damage: number): { damage: number; text: string } {
+    if (!this.sceneData) return { damage, text: '' };
+
+    const classId = this.sceneData.playerClass.toLowerCase();
+
+    if (classId === 'debugger' && Math.random() < 0.2) {
+      return { damage: Math.floor(damage * 0.5), text: ' [Exception Handler: -50%!]' };
+    }
+    return { damage, text: '' };
+  }
+
+  // =========================================================================
+  // In-Battle Item Use
+  // =========================================================================
+
+  private handleItemUse() {
+    if (!this.player || !this.techDebt || !this.isPlayerTurn || !this.itemSystem) return;
+
+    // Close skill panel if open
+    if (this.skillPanelVisible) this.toggleSkillPanel();
+
+    // Get consumable items from inventory
+    const consumables = this.itemSystem.getItemsByType('consumable');
+
+    if (consumables.length === 0) {
+      this.turnText?.setText('No items to use!');
+      return;
+    }
+
+    this.isPlayerTurn = false;
+    this.setActionsEnabled(false);
+
+    // Use first consumable (simple auto-selection for now)
+    const item = consumables[0]!;
+    const result = this.itemSystem.useItem(item);
+
+    if (result.success) {
+      let itemText = `Used ${item.name}!`;
+      if (result.hpRestored && result.hpRestored > 0) itemText += ` +${result.hpRestored} HP`;
+      if (result.mpRestored && result.mpRestored > 0) itemText += ` +${result.mpRestored} MP`;
+
+      // Item use doesn't increase tech debt but still counts as a turn
+      this.turnText?.setText(itemText);
+      this.updateUI();
+
+      // Monster turn after item use
+      this.time.delayedCall(1000, () => this.monsterTurn());
+    } else {
+      this.turnText?.setText(result.message);
+      this.isPlayerTurn = true;
+      this.setActionsEnabled(true);
     }
   }
 
