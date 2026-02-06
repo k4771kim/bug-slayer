@@ -165,16 +165,54 @@
       },
       "phase": 1,
       "behaviorTree": {
-        "conditions": [
-          { "type": "phase_change", "value": 2 },
-          { "type": "hp_below", "value": 75 },
-          { "type": "hp_below", "value": 50 },
-          { "type": "hp_below", "value": 25 }
-        ],
-        "actions": [
-          { "type": "attack", "weight": 50 },
-          { "type": "skill", "skillId": "index-corruption", "weight": 30 },
-          { "type": "skill", "skillId": "boundary-breach", "weight": 20 }
+        "phases": [
+          {
+            "hpThreshold": 100,
+            "conditions": [
+              { "type": "hp_check", "value": 100 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 60 },
+              { "type": "skill", "skillId": "index-corruption", "weight": 30 },
+              { "type": "buff", "weight": 10 }
+            ]
+          },
+          {
+            "hpThreshold": 75,
+            "conditions": [
+              { "type": "hp_check", "value": 75 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 45 },
+              { "type": "skill", "skillId": "index-corruption", "weight": 35 },
+              { "type": "skill", "skillId": "boundary-breach", "weight": 15 },
+              { "type": "buff", "weight": 5 }
+            ]
+          },
+          {
+            "hpThreshold": 50,
+            "conditions": [
+              { "type": "hp_check", "value": 50 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 30 },
+              { "type": "skill", "skillId": "index-corruption", "weight": 30 },
+              { "type": "skill", "skillId": "boundary-breach", "weight": 30 },
+              { "type": "buff", "weight": 10 }
+            ]
+          },
+          {
+            "hpThreshold": 25,
+            "conditions": [
+              { "type": "hp_check", "value": 25 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 20 },
+              { "type": "skill", "skillId": "index-corruption", "weight": 25 },
+              { "type": "skill", "skillId": "boundary-breach", "weight": 45 },
+              { "type": "buff", "weight": 10 }
+            ]
+          }
         ]
       },
       "drops": {
@@ -322,17 +360,54 @@
       },
       "phase": 1,
       "behaviorTree": {
-        "conditions": [
-          { "type": "phase_change", "value": 2 },
-          { "type": "hp_below", "value": 75 },
-          { "type": "hp_below", "value": 50 },
-          { "type": "hp_below", "value": 25 }
-        ],
-        "actions": [
-          { "type": "attack", "weight": 40 },
-          { "type": "skill", "skillId": "quantum-state", "weight": 30 },
-          { "type": "skill", "skillId": "observer-effect", "weight": 20 },
-          { "type": "skill", "skillId": "uncertainty", "weight": 10 }
+        "phases": [
+          {
+            "hpThreshold": 100,
+            "conditions": [
+              { "type": "hp_check", "value": 100 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 50 },
+              { "type": "skill", "skillId": "quantum-state", "weight": 35 },
+              { "type": "buff", "weight": 15 }
+            ]
+          },
+          {
+            "hpThreshold": 75,
+            "conditions": [
+              { "type": "hp_check", "value": 75 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 35 },
+              { "type": "skill", "skillId": "quantum-state", "weight": 30 },
+              { "type": "skill", "skillId": "observer-effect", "weight": 25 },
+              { "type": "buff", "weight": 10 }
+            ]
+          },
+          {
+            "hpThreshold": 50,
+            "conditions": [
+              { "type": "hp_check", "value": 50 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 25 },
+              { "type": "skill", "skillId": "quantum-state", "weight": 25 },
+              { "type": "skill", "skillId": "observer-effect", "weight": 30 },
+              { "type": "skill", "skillId": "uncertainty", "weight": 20 }
+            ]
+          },
+          {
+            "hpThreshold": 25,
+            "conditions": [
+              { "type": "hp_check", "value": 25 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 15 },
+              { "type": "skill", "skillId": "observer-effect", "weight": 25 },
+              { "type": "skill", "skillId": "uncertainty", "weight": 50 },
+              { "type": "buff", "weight": 10 }
+            ]
+          }
         ]
       },
       "drops": {

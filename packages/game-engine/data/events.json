@@ -5,6 +5,7 @@
       "name": "Marketing Promo Rush",
       "description": "The marketing team launched a surprise promotion! Server traffic surges.",
       "icon": "📢",
+      "chapter": 1,
       "probability": 10,
       "effects": [
         { "type": "buff", "stat": "ATK", "value": 20, "duration": 3, "target": "player" }
@@ -16,6 +17,7 @@
       "name": "Night Deploy",
       "description": "Someone deployed to production at 3 AM. Things are breaking.",
       "icon": "🌙",
+      "chapter": 2,
       "probability": 5,
       "effects": [
         { "type": "damage", "stat": "HP", "value": 10, "target": "player" }
@@ -27,6 +29,7 @@
       "name": "Code Review Request",
       "description": "A senior developer reviewed your code. Great feedback!",
       "icon": "📝",
+      "chapter": 1,
       "probability": 15,
       "effects": [
         { "type": "buff", "stat": "DEF", "value": 15, "duration": 3, "target": "player" }
@@ -38,6 +41,7 @@
       "name": "Legacy Code Discovery",
       "description": "You discovered ancient legacy code. It's full of secrets... and bugs.",
       "icon": "📜",
+      "chapter": 2,
       "probability": 10,
       "effects": [
         { "type": "techDebt", "value": 5 },
@@ -50,6 +54,7 @@
       "name": "Coffee Break",
       "description": "You took a quick coffee break. Feeling refreshed!",
       "icon": "☕",
+      "chapter": 1,
       "probability": 12,
       "effects": [
         { "type": "heal", "stat": "HP", "value": 15, "target": "player" }
@@ -61,6 +66,7 @@
       "name": "Stack Overflow Savior",
       "description": "Found the perfect answer on Stack Overflow!",
       "icon": "💡",
+      "chapter": 1,
       "probability": 8,
       "effects": [
         { "type": "buff", "stat": "SPD", "value": 25, "duration": 2, "target": "player" }
@@ -72,6 +78,7 @@
       "name": "Merge Conflict Hell",
       "description": "A massive merge conflict appeared. This will take time...",
       "icon": "⚠️",
+      "chapter": 2,
       "probability": 7,
       "effects": [
         { "type": "debuff", "stat": "SPD", "value": 20, "duration": 2, "target": "player" }
@@ -83,6 +90,7 @@
       "name": "Mentor's Wisdom",
       "description": "Your mentor shared valuable debugging techniques!",
       "icon": "🎓",
+      "chapter": 2,
       "probability": 6,
       "effects": [
         { "type": "buff", "stat": "ATK", "value": 15, "duration": 4, "target": "player" },
