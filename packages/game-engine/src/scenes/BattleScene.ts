@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Character, Monster } from '@bug-slayer/shared';
 import { createCharacter } from '../systems/CharacterFactory';
 import { dataLoader } from '../loaders/DataLoader';
+import { TechDebt } from '../systems/TechDebt';
 
 interface BattleSceneData {
   playerClass: string;
@@ -16,9 +17,12 @@ interface BattleSceneData {
 export class BattleScene extends Phaser.Scene {
   private player: Character | null = null;
   private monster: Monster | null = null;
+  private techDebt: TechDebt | null = null;
   private turnText: Phaser.GameObjects.Text | null = null;
   private playerHPText: Phaser.GameObjects.Text | null = null;
   private monsterHPText: Phaser.GameObjects.Text | null = null;
+  private techDebtText: Phaser.GameObjects.Text | null = null;
+  private techDebtBar: Phaser.GameObjects.Graphics | null = null;
 
   constructor() {
     super({ key: 'BattleScene' });
@@ -26,6 +30,9 @@ export class BattleScene extends Phaser.Scene {
 
   init(data: BattleSceneData) {
     console.log('BattleScene initialized with:', data);
+
+    // Initialize Tech Debt system
+    this.techDebt = new TechDebt(0);
 
     // Load actual character from JSON data
     this.player = createCharacter(data.playerClass.toLowerCase(), 'Hero', 1);
@@ -81,29 +88,73 @@ export class BattleScene extends Phaser.Scene {
     // Monster placeholder sprite (32x32 square)
     this.add.rectangle(width - 150, 300, 64, 64, 0xef4444);
 
+    // Tech Debt UI (center bottom area)
+    this.add.text(width / 2, height - 280, 'Tech Debt', {
+      fontSize: '16px',
+      color: '#858585',
+    }).setOrigin(0.5);
+
+    // Tech Debt bar background
+    const barWidth = 300;
+    const barHeight = 20;
+    const barX = width / 2 - barWidth / 2;
+    const barY = height - 250;
+
+    this.add.rectangle(barX + barWidth / 2, barY + barHeight / 2, barWidth, barHeight, 0x2a2a2a)
+      .setOrigin(0.5);
+
+    // Tech Debt bar (filled based on current debt)
+    this.techDebtBar = this.add.graphics();
+
+    // Tech Debt text (value and status)
+    this.techDebtText = this.add.text(width / 2, barY + barHeight + 15, '', {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5);
+
     // Turn indicator
     this.turnText = this.add.text(width / 2, height - 200, '', {
       fontSize: '20px',
       color: '#ffffff',
     }).setOrigin(0.5);
 
-    // Action buttons
-    const attackButton = this.add.text(width / 2 - 100, height - 100, '⚔️ Attack', {
-      fontSize: '18px',
+    // Action buttons (4 buttons in 2 rows)
+    const buttonY1 = height - 140;
+    const buttonY2 = height - 90;
+    const buttonGap = 180;
+
+    const attackButton = this.add.text(width / 2 - buttonGap / 2, buttonY1, '⚔️ Attack', {
+      fontSize: '16px',
       color: '#ffffff',
       backgroundColor: '#4a90e2',
-      padding: { x: 20, y: 10 },
+      padding: { x: 15, y: 8 },
     }).setInteractive();
 
-    const focusButton = this.add.text(width / 2 + 100, height - 100, '🎯 Focus', {
-      fontSize: '18px',
+    const focusButton = this.add.text(width / 2 + buttonGap / 2, buttonY1, '🎯 Focus', {
+      fontSize: '16px',
       color: '#ffffff',
       backgroundColor: '#9333ea',
-      padding: { x: 20, y: 10 },
+      padding: { x: 15, y: 8 },
+    }).setInteractive();
+
+    const fleeButton = this.add.text(width / 2 - buttonGap / 2, buttonY2, '💨 Flee', {
+      fontSize: '16px',
+      color: '#ffffff',
+      backgroundColor: '#f59e0b',
+      padding: { x: 15, y: 8 },
+    }).setInteractive();
+
+    const skipButton = this.add.text(width / 2 + buttonGap / 2, buttonY2, '⏭️ Skip', {
+      fontSize: '16px',
+      color: '#ffffff',
+      backgroundColor: '#6b7280',
+      padding: { x: 15, y: 8 },
     }).setInteractive();
 
     attackButton.on('pointerdown', () => this.handleAttack());
     focusButton.on('pointerdown', () => this.handleFocus());
+    fleeButton.on('pointerdown', () => this.handleFlee());
+    skipButton.on('pointerdown', () => this.handleSkip());
 
     // Update UI
     this.updateUI();
@@ -151,7 +202,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private updateUI() {
-    if (!this.player || !this.monster) return;
+    if (!this.player || !this.monster || !this.techDebt) return;
 
     this.playerHPText?.setText(
       `${this.player.name}\nHP: ${this.player.currentHP}/${this.player.stats.HP}\nMP: ${this.player.currentMP}/${this.player.stats.MP}`
@@ -161,11 +212,26 @@ export class BattleScene extends Phaser.Scene {
       `${this.monster.name}\nHP: ${this.monster.currentHP}/${this.monster.stats.HP}`
     );
 
+    // Update tech debt display
+    const status = this.techDebt.getStatus();
+    const barWidth = 300;
+    const barHeight = 20;
+    const barX = this.cameras.main.width / 2 - barWidth / 2;
+    const barY = this.cameras.main.height - 250;
+    const fillWidth = (status.current / 100) * barWidth;
+
+    this.techDebtBar?.clear();
+    this.techDebtBar?.fillStyle(parseInt(status.color.replace('#', '0x'), 16), 1);
+    this.techDebtBar?.fillRect(barX, barY, fillWidth, barHeight);
+
+    this.techDebtText?.setText(`${status.current}/100 - ${status.description}`);
+    this.techDebtText?.setColor(status.color);
+
     this.turnText?.setText('Your turn! Choose an action.');
   }
 
   private handleAttack() {
-    if (!this.player || !this.monster) return;
+    if (!this.player || !this.monster || !this.techDebt) return;
 
     // Calculate damage using game formula
     const baseDamage = this.player.stats.ATK;
@@ -176,7 +242,17 @@ export class BattleScene extends Phaser.Scene {
     // Apply damage
     this.monster.currentHP = Math.max(0, this.monster.currentHP - damage);
 
-    this.turnText?.setText(`You dealt ${damage} damage!`);
+    // Increase tech debt per turn
+    this.techDebt.turnPassed();
+
+    // Restore 5% MP per turn
+    const mpRestore = Math.floor(this.player.stats.MP * 0.05);
+    this.player.currentMP = Math.min(
+      this.player.stats.MP,
+      this.player.currentMP + mpRestore
+    );
+
+    this.turnText?.setText(`You dealt ${damage} damage! (+${mpRestore} MP, +1 Tech Debt)`);
     this.updateUI();
 
     // Check win condition
@@ -194,7 +270,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleFocus() {
-    if (!this.player || !this.monster) return;
+    if (!this.player || !this.monster || !this.techDebt) return;
 
     // Restore 15% MP
     const mpRestore = Math.floor(this.player.stats.MP * 0.15);
@@ -203,7 +279,10 @@ export class BattleScene extends Phaser.Scene {
       this.player.currentMP + mpRestore
     );
 
-    this.turnText?.setText(`You focused! Restored ${mpRestore} MP.`);
+    // Increase tech debt per turn
+    this.techDebt.turnPassed();
+
+    this.turnText?.setText(`You focused! Restored ${mpRestore} MP. (+1 Tech Debt)`);
     this.updateUI();
 
     // Monster turn
@@ -212,18 +291,56 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  private monsterTurn() {
-    if (!this.player || !this.monster) return;
+  private handleFlee() {
+    if (!this.player || !this.monster || !this.techDebt) return;
 
-    // Monster attacks
+    // Add tech debt for fleeing
+    const debtAdded = this.techDebt.flee();
+
+    this.turnText?.setText(`You fled from battle! (+${debtAdded} Tech Debt)`);
+    this.updateUI();
+
+    // Return to class selection after 2 seconds
+    this.time.delayedCall(2000, () => {
+      console.log('Fled from battle. Returning to class selection...');
+      this.scene.start('ClassSelectScene');
+    });
+  }
+
+  private handleSkip() {
+    if (!this.player || !this.monster || !this.techDebt) return;
+
+    // Add tech debt for skipping
+    const debtAdded = this.techDebt.skipBattle();
+
+    this.turnText?.setText(`You skipped the battle! (+${debtAdded} Tech Debt)`);
+    this.updateUI();
+
+    // Return to class selection after 2 seconds
+    this.time.delayedCall(2000, () => {
+      console.log('Skipped battle. Returning to class selection...');
+      this.scene.start('ClassSelectScene');
+    });
+  }
+
+  private monsterTurn() {
+    if (!this.player || !this.monster || !this.techDebt) return;
+
+    // Monster attacks with tech debt modifier
     const baseDamage = this.monster.stats.ATK;
+    const techDebtModifier = this.techDebt.enemyAtkModifier;
+    const modifiedAtk = Math.floor(baseDamage * techDebtModifier);
+
     const defense = this.player.stats.DEF;
     const damageReduction = 100 / (100 + defense * 0.7);
-    const damage = Math.max(1, Math.floor(baseDamage * damageReduction));
+    const damage = Math.max(1, Math.floor(modifiedAtk * damageReduction));
 
     this.player.currentHP = Math.max(0, this.player.currentHP - damage);
 
-    this.turnText?.setText(`${this.monster.name} dealt ${damage} damage!`);
+    const modifierText = techDebtModifier !== 1.0
+      ? ` (${Math.round((techDebtModifier - 1) * 100)}% from Tech Debt)`
+      : '';
+    this.turnText?.setText(`${this.monster.name} dealt ${damage} damage${modifierText}!`);
     this.updateUI();
 
     // Check lose condition
@@ -241,12 +358,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleVictory() {
-    this.turnText?.setText('🎉 Victory! You defeated the bug!');
+    if (!this.player) return;
+
+    // Restore MP to 100% on victory
+    this.player.currentMP = this.player.stats.MP;
+
+    this.turnText?.setText('🎉 Victory! You defeated the bug! (MP fully restored)');
+    this.updateUI();
 
     // TODO: Show rewards screen
     this.time.delayedCall(2000, () => {
-      console.log('Battle won! Returning to game page...');
-      // TODO: Navigate back to game page with rewards
+      console.log('Battle won! Returning to class selection...');
+      this.scene.start('ClassSelectScene');
     });
   }
 
@@ -254,8 +377,8 @@ export class BattleScene extends Phaser.Scene {
     this.turnText?.setText('💀 Defeat... The bug won.');
 
     this.time.delayedCall(2000, () => {
-      console.log('Battle lost! Returning to game page...');
-      // TODO: Navigate back to game page
+      console.log('Battle lost! Returning to class selection...');
+      this.scene.start('ClassSelectScene');
     });
   }
 }

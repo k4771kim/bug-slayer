@@ -9,6 +9,8 @@ import { ClassSelectScene } from './scenes/ClassSelectScene';
 import { BattleScene } from './scenes/BattleScene';
 
 export { BootScene, ClassSelectScene, BattleScene };
+export { TechDebt } from './systems/TechDebt';
+export type { TechDebtLevel, TechDebtStatus } from './systems/TechDebt';
 
 /**
  * Create Phaser game configuration
