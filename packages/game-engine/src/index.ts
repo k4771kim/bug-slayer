@@ -17,6 +17,8 @@ export { ItemSystem } from './systems/ItemSystem';
 export type { UseItemResult, DropResult } from './systems/ItemSystem';
 export { LevelUpSystem } from './systems/LevelUpSystem';
 export type { LevelUpResult, StatGrowth } from './systems/LevelUpSystem';
+export { ProgressionSystem } from './systems/ProgressionSystem';
+export type { GameProgress, ChapterProgress, StageProgress, SaveData } from './systems/ProgressionSystem';
 
 /**
  * Create Phaser game configuration
