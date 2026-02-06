@@ -1,0 +1,137 @@
+{
+  "$schema": "../schemas/classes.schema.json",
+  "classes": [
+    {
+      "id": "debugger",
+      "name": "Debugger",
+      "description": "High HP and defensive capabilities. Perfect for beginners who want a forgiving playstyle.",
+      "baseStats": {
+        "HP": 120,
+        "ATK": 12,
+        "DEF": 10,
+        "SPD": 8,
+        "MP": 40
+      },
+      "statGrowth": {
+        "HP": 8,
+        "ATK": 2,
+        "DEF": 2,
+        "SPD": 1,
+        "MP": 3
+      },
+      "skillIds": [
+        "debugger-basic-attack",
+        "debugger-breakpoint",
+        "debugger-stack-trace",
+        "debugger-watch-variable",
+        "debugger-defensive-stance",
+        "debugger-error-handler",
+        "debugger-step-through",
+        "debugger-assert"
+      ],
+      "passive": {
+        "name": "Exception Handler",
+        "description": "20% chance to reduce incoming damage by 50%"
+      }
+    },
+    {
+      "id": "refactorer",
+      "name": "Refactorer",
+      "description": "Balanced stats with versatile skills. Can adapt to any situation.",
+      "baseStats": {
+        "HP": 100,
+        "ATK": 14,
+        "DEF": 8,
+        "SPD": 10,
+        "MP": 50
+      },
+      "statGrowth": {
+        "HP": 6,
+        "ATK": 2,
+        "DEF": 1,
+        "SPD": 2,
+        "MP": 4
+      },
+      "skillIds": [
+        "refactorer-basic-attack",
+        "refactorer-clean-code",
+        "refactorer-extract-method",
+        "refactorer-optimize",
+        "refactorer-rename",
+        "refactorer-inline",
+        "refactorer-pattern-apply",
+        "refactorer-technical-debt"
+      ],
+      "passive": {
+        "name": "Code Optimization",
+        "description": "Every 3rd attack deals 150% damage"
+      }
+    },
+    {
+      "id": "fullstack",
+      "name": "FullStack",
+      "description": "High damage output with powerful offensive skills. Glass cannon playstyle.",
+      "baseStats": {
+        "HP": 90,
+        "ATK": 18,
+        "DEF": 6,
+        "SPD": 9,
+        "MP": 60
+      },
+      "statGrowth": {
+        "HP": 5,
+        "ATK": 3,
+        "DEF": 1,
+        "SPD": 1,
+        "MP": 5
+      },
+      "skillIds": [
+        "fullstack-basic-attack",
+        "fullstack-api-call",
+        "fullstack-database-query",
+        "fullstack-frontend-burst",
+        "fullstack-backend-strike",
+        "fullstack-deploy",
+        "fullstack-scale",
+        "fullstack-integration"
+      ],
+      "passive": {
+        "name": "Full Power",
+        "description": "Deal 20% more damage when HP > 70%"
+      }
+    },
+    {
+      "id": "devops",
+      "name": "DevOps",
+      "description": "Speed-focused with high critical hit rate and evasion. Hit-and-run tactics.",
+      "baseStats": {
+        "HP": 95,
+        "ATK": 15,
+        "DEF": 7,
+        "SPD": 14,
+        "MP": 45
+      },
+      "statGrowth": {
+        "HP": 5,
+        "ATK": 2,
+        "DEF": 1,
+        "SPD": 3,
+        "MP": 3
+      },
+      "skillIds": [
+        "devops-basic-attack",
+        "devops-ci-pipeline",
+        "devops-docker-strike",
+        "devops-kubernetes-swarm",
+        "devops-monitoring",
+        "devops-auto-scale",
+        "devops-rollback",
+        "devops-blue-green"
+      ],
+      "passive": {
+        "name": "Agility",
+        "description": "+2% evasion per SPD difference, +5% crit rate"
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "../schemas/palette.schema.json",
+  "name": "VS Code Dark+ Theme",
+  "description": "Official VS Code Dark+ color palette for accessibility",
+  "colors": {
+    "background": {
+      "primary": "#1e1e1e",
+      "secondary": "#252526",
+      "elevated": "#2d2d30"
+    },
+    "foreground": {
+      "primary": "#d4d4d4",
+      "secondary": "#cccccc",
+      "muted": "#858585"
+    },
+    "accent": {
+      "blue": "#569cd6",
+      "lightBlue": "#9cdcfe",
+      "green": "#4ec9b0",
+      "lightGreen": "#4fc1ff",
+      "yellow": "#dcdcaa",
+      "orange": "#ce9178",
+      "red": "#f48771",
+      "pink": "#c586c0",
+      "purple": "#c678dd"
+    },
+    "semantic": {
+      "error": "#f48771",
+      "warning": "#cca700",
+      "info": "#75beff",
+      "success": "#89d185"
+    },
+    "ui": {
+      "border": "#3e3e42",
+      "selection": "#264f78",
+      "hover": "#2a2d2e",
+      "focus": "#007acc"
+    }
+  },
+  "characterColors": {
+    "debugger": "#569cd6",
+    "refactorer": "#4ec9b0",
+    "fullstack": "#c586c0",
+    "devops": "#dcdcaa"
+  },
+  "bugColors": {
+    "nullpointer": "#f48771",
+    "stackoverflow": "#ce9178",
+    "racecondition": "#cca700",
+    "memoryleak": "#89d185",
+    "deadlock": "#858585",
+    "offbyone": "#d16969",
+    "sqlinjection": "#c586c0",
+    "xss": "#ce9178",
+    "bufferoverflow": "#f48771",
+    "infiniteloop": "#dcdcaa",
+    "heisenbug": "#c678dd"
+  },
+  "rarityColors": {
+    "common": "#d4d4d4",
+    "rare": "#569cd6",
+    "epic": "#c586c0"
+  },
+  "statusColors": {
+    "hp": "#4ec9b0",
+    "mp": "#569cd6",
+    "atk": "#f48771",
+    "def": "#dcdcaa",
+    "spd": "#9cdcfe",
+    "techDebt": "#ce9178"
+  }
+}

@@ -1,0 +1,349 @@
+{
+  "$schema": "../schemas/bugs.schema.json",
+  "bugs": [
+    {
+      "id": "nullpointer",
+      "name": "NullPointerException",
+      "description": "The classic null reference error",
+      "type": "bug",
+      "chapter": 1,
+      "stats": {
+        "HP": 80,
+        "ATK": 12,
+        "DEF": 5,
+        "SPD": 10
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 50 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 70 },
+          { "type": "skill", "skillId": "null-crash", "weight": 30 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "basic-potion", "dropRate": 50 }
+        ],
+        "exp": 50,
+        "gold": 20
+      },
+      "techDebtOnSkip": 10
+    },
+    {
+      "id": "stackoverflow",
+      "name": "StackOverflowError",
+      "description": "Infinite recursion nightmare",
+      "type": "bug",
+      "chapter": 1,
+      "stats": {
+        "HP": 100,
+        "ATK": 15,
+        "DEF": 6,
+        "SPD": 8
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 30 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 60 },
+          { "type": "skill", "skillId": "recursive-call", "weight": 40 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "basic-potion", "dropRate": 40 }
+        ],
+        "exp": 70,
+        "gold": 30
+      },
+      "techDebtOnSkip": 12
+    },
+    {
+      "id": "racecondition",
+      "name": "RaceCondition",
+      "description": "Unpredictable concurrent execution",
+      "type": "bug",
+      "chapter": 1,
+      "stats": {
+        "HP": 90,
+        "ATK": 18,
+        "DEF": 4,
+        "SPD": 16
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "turn_count", "value": 3 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 80 },
+          { "type": "skill", "skillId": "concurrent-strike", "weight": 20 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "speed-boost", "dropRate": 30 }
+        ],
+        "exp": 80,
+        "gold": 35
+      },
+      "techDebtOnSkip": 15
+    },
+    {
+      "id": "memoryleak",
+      "name": "MemoryLeak",
+      "description": "Slowly consumes all resources",
+      "type": "bug",
+      "chapter": 1,
+      "stats": {
+        "HP": 120,
+        "ATK": 10,
+        "DEF": 8,
+        "SPD": 6
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_above", "value": 70 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 50 },
+          { "type": "skill", "skillId": "memory-drain", "weight": 50 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "mp-potion", "dropRate": 60 }
+        ],
+        "exp": 90,
+        "gold": 40
+      },
+      "techDebtOnSkip": 18
+    },
+    {
+      "id": "deadlock",
+      "name": "Deadlock",
+      "description": "Two threads waiting for each other",
+      "type": "bug",
+      "chapter": 1,
+      "stats": {
+        "HP": 110,
+        "ATK": 14,
+        "DEF": 12,
+        "SPD": 5
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 60 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 40 },
+          { "type": "buff", "weight": 60 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "defense-charm", "dropRate": 40 }
+        ],
+        "exp": 85,
+        "gold": 38
+      },
+      "techDebtOnSkip": 20
+    },
+    {
+      "id": "offbyone",
+      "name": "OffByOneError",
+      "description": "Classic array indexing mistake",
+      "type": "boss",
+      "chapter": 1,
+      "stats": {
+        "HP": 300,
+        "ATK": 20,
+        "DEF": 15,
+        "SPD": 12
+      },
+      "phase": 1,
+      "behaviorTree": {
+        "conditions": [
+          { "type": "phase_change", "value": 2 },
+          { "type": "hp_below", "value": 75 },
+          { "type": "hp_below", "value": 50 },
+          { "type": "hp_below", "value": 25 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 50 },
+          { "type": "skill", "skillId": "index-corruption", "weight": 30 },
+          { "type": "skill", "skillId": "boundary-breach", "weight": 20 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "debugger-badge", "dropRate": 100 },
+          { "itemId": "rare-weapon", "dropRate": 30 }
+        ],
+        "exp": 200,
+        "gold": 100
+      },
+      "techDebtOnSkip": 50
+    },
+    {
+      "id": "sqlinjection",
+      "name": "SQLInjection",
+      "description": "Malicious database query",
+      "type": "bug",
+      "chapter": 2,
+      "stats": {
+        "HP": 130,
+        "ATK": 22,
+        "DEF": 8,
+        "SPD": 14
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 40 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 60 },
+          { "type": "skill", "skillId": "query-poison", "weight": 40 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "sanitize-token", "dropRate": 50 }
+        ],
+        "exp": 120,
+        "gold": 55
+      },
+      "techDebtOnSkip": 25
+    },
+    {
+      "id": "xss",
+      "name": "CrossSiteScripting",
+      "description": "Malicious script injection",
+      "type": "bug",
+      "chapter": 2,
+      "stats": {
+        "HP": 110,
+        "ATK": 25,
+        "DEF": 6,
+        "SPD": 16
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "turn_count", "value": 2 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 70 },
+          { "type": "skill", "skillId": "script-inject", "weight": 30 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "xss-shield", "dropRate": 45 }
+        ],
+        "exp": 130,
+        "gold": 60
+      },
+      "techDebtOnSkip": 28
+    },
+    {
+      "id": "bufferoverflow",
+      "name": "BufferOverflow",
+      "description": "Writing beyond allocated memory",
+      "type": "bug",
+      "chapter": 2,
+      "stats": {
+        "HP": 150,
+        "ATK": 28,
+        "DEF": 10,
+        "SPD": 11
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 50 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 50 },
+          { "type": "skill", "skillId": "overflow-burst", "weight": 50 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "buffer-guard", "dropRate": 40 }
+        ],
+        "exp": 140,
+        "gold": 65
+      },
+      "techDebtOnSkip": 30
+    },
+    {
+      "id": "infiniteloop",
+      "name": "InfiniteLoop",
+      "description": "Never-ending execution",
+      "type": "bug",
+      "chapter": 2,
+      "stats": {
+        "HP": 140,
+        "ATK": 18,
+        "DEF": 12,
+        "SPD": 8
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_above", "value": 60 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 40 },
+          { "type": "heal", "weight": 30 },
+          { "type": "buff", "weight": 30 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "break-token", "dropRate": 55 }
+        ],
+        "exp": 135,
+        "gold": 62
+      },
+      "techDebtOnSkip": 32
+    },
+    {
+      "id": "heisenbug",
+      "name": "Heisenbug",
+      "description": "Disappears when you try to debug it",
+      "type": "boss",
+      "chapter": 2,
+      "stats": {
+        "HP": 400,
+        "ATK": 30,
+        "DEF": 20,
+        "SPD": 18
+      },
+      "phase": 1,
+      "behaviorTree": {
+        "conditions": [
+          { "type": "phase_change", "value": 2 },
+          { "type": "hp_below", "value": 75 },
+          { "type": "hp_below", "value": 50 },
+          { "type": "hp_below", "value": 25 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 40 },
+          { "type": "skill", "skillId": "quantum-state", "weight": 30 },
+          { "type": "skill", "skillId": "observer-effect", "weight": 20 },
+          { "type": "skill", "skillId": "uncertainty", "weight": 10 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "heisen-crystal", "dropRate": 100 },
+          { "itemId": "epic-armor", "dropRate": 25 }
+        ],
+        "exp": 300,
+        "gold": 150
+      },
+      "techDebtOnSkip": 80
+    }
+  ]
+}

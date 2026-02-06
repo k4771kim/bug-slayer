@@ -1,0 +1,347 @@
+{
+  "$schema": "../schemas/skills.schema.json",
+  "skills": [
+    {
+      "id": "debugger-basic-attack",
+      "name": "Console.log",
+      "description": "Basic attack that prints the error",
+      "class": "debugger",
+      "mpCost": 0,
+      "baseDamage": 100,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 100 }]
+    },
+    {
+      "id": "debugger-breakpoint",
+      "name": "Breakpoint",
+      "description": "Set a breakpoint to stop the bug",
+      "class": "debugger",
+      "mpCost": 15,
+      "baseDamage": 150,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 150 },
+        { "type": "debuff", "stat": "SPD", "value": -20, "duration": 2 }
+      ]
+    },
+    {
+      "id": "debugger-stack-trace",
+      "name": "Stack Trace",
+      "description": "Trace back the error origin",
+      "class": "debugger",
+      "mpCost": 20,
+      "baseDamage": 180,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 180 }]
+    },
+    {
+      "id": "debugger-watch-variable",
+      "name": "Watch Variable",
+      "description": "Monitor the bug's state",
+      "class": "debugger",
+      "mpCost": 10,
+      "baseDamage": 0,
+      "targetType": "single",
+      "effects": [
+        { "type": "debuff", "stat": "DEF", "value": -30, "duration": 3 }
+      ]
+    },
+    {
+      "id": "debugger-defensive-stance",
+      "name": "Error Handling",
+      "description": "Prepare for incoming errors",
+      "class": "debugger",
+      "mpCost": 15,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "buff", "stat": "DEF", "value": 50, "duration": 3 }
+      ]
+    },
+    {
+      "id": "debugger-error-handler",
+      "name": "Try-Catch Block",
+      "description": "Wrap the bug in exception handling",
+      "class": "debugger",
+      "mpCost": 25,
+      "baseDamage": 200,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 200 },
+        { "type": "heal", "value": 30 }
+      ]
+    },
+    {
+      "id": "debugger-step-through",
+      "name": "Step Through",
+      "description": "Execute code line by line",
+      "class": "debugger",
+      "mpCost": 30,
+      "baseDamage": 120,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 120 }]
+    },
+    {
+      "id": "debugger-assert",
+      "name": "Assert",
+      "description": "Verify assumptions and break on failure",
+      "class": "debugger",
+      "mpCost": 35,
+      "baseDamage": 280,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 280 }]
+    },
+    {
+      "id": "refactorer-basic-attack",
+      "name": "Code Review",
+      "description": "Find and fix issues",
+      "class": "refactorer",
+      "mpCost": 0,
+      "baseDamage": 100,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 100 }]
+    },
+    {
+      "id": "refactorer-clean-code",
+      "name": "Clean Code",
+      "description": "Refactor messy code",
+      "class": "refactorer",
+      "mpCost": 15,
+      "baseDamage": 160,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 160 }]
+    },
+    {
+      "id": "refactorer-extract-method",
+      "name": "Extract Method",
+      "description": "Isolate and eliminate the bug",
+      "class": "refactorer",
+      "mpCost": 20,
+      "baseDamage": 170,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 170 },
+        { "type": "buff", "stat": "ATK", "value": 20, "duration": 2 }
+      ]
+    },
+    {
+      "id": "refactorer-optimize",
+      "name": "Optimize",
+      "description": "Improve performance",
+      "class": "refactorer",
+      "mpCost": 25,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "buff", "stat": "ATK", "value": 40, "duration": 3 },
+        { "type": "buff", "stat": "SPD", "value": 30, "duration": 3 }
+      ]
+    },
+    {
+      "id": "refactorer-rename",
+      "name": "Rename",
+      "description": "Clarify the bug's purpose",
+      "class": "refactorer",
+      "mpCost": 10,
+      "baseDamage": 130,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 130 }]
+    },
+    {
+      "id": "refactorer-inline",
+      "name": "Inline",
+      "description": "Simplify complexity",
+      "class": "refactorer",
+      "mpCost": 18,
+      "baseDamage": 150,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 150 }]
+    },
+    {
+      "id": "refactorer-pattern-apply",
+      "name": "Design Pattern",
+      "description": "Apply proven solution pattern",
+      "class": "refactorer",
+      "mpCost": 30,
+      "baseDamage": 220,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 220 }]
+    },
+    {
+      "id": "refactorer-technical-debt",
+      "name": "Pay Tech Debt",
+      "description": "Reduce technical debt",
+      "class": "refactorer",
+      "mpCost": 40,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "special", "value": -15, "description": "Reduce Tech Debt by 15" }
+      ]
+    },
+    {
+      "id": "fullstack-basic-attack",
+      "name": "HTTP Request",
+      "description": "Send a request to the bug",
+      "class": "fullstack",
+      "mpCost": 0,
+      "baseDamage": 100,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 100 }]
+    },
+    {
+      "id": "fullstack-api-call",
+      "name": "REST API",
+      "description": "Call API endpoint",
+      "class": "fullstack",
+      "mpCost": 20,
+      "baseDamage": 180,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 180 }]
+    },
+    {
+      "id": "fullstack-database-query",
+      "name": "SQL Query",
+      "description": "Execute database query",
+      "class": "fullstack",
+      "mpCost": 25,
+      "baseDamage": 200,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 200 }]
+    },
+    {
+      "id": "fullstack-frontend-burst",
+      "name": "React Render",
+      "description": "Rapid frontend updates",
+      "class": "fullstack",
+      "mpCost": 30,
+      "baseDamage": 140,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 140 }]
+    },
+    {
+      "id": "fullstack-backend-strike",
+      "name": "Server Logic",
+      "description": "Execute backend business logic",
+      "class": "fullstack",
+      "mpCost": 35,
+      "baseDamage": 260,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 260 }]
+    },
+    {
+      "id": "fullstack-deploy",
+      "name": "Deploy",
+      "description": "Push to production",
+      "class": "fullstack",
+      "mpCost": 40,
+      "baseDamage": 300,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 300 }]
+    },
+    {
+      "id": "fullstack-scale",
+      "name": "Horizontal Scale",
+      "description": "Scale out the attack",
+      "class": "fullstack",
+      "mpCost": 45,
+      "baseDamage": 180,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 180 }]
+    },
+    {
+      "id": "fullstack-integration",
+      "name": "System Integration",
+      "description": "Integrate all systems for massive damage",
+      "class": "fullstack",
+      "mpCost": 50,
+      "baseDamage": 400,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 400 }]
+    },
+    {
+      "id": "devops-basic-attack",
+      "name": "Shell Command",
+      "description": "Execute a command",
+      "class": "devops",
+      "mpCost": 0,
+      "baseDamage": 100,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 100 }]
+    },
+    {
+      "id": "devops-ci-pipeline",
+      "name": "CI Pipeline",
+      "description": "Automated testing and building",
+      "class": "devops",
+      "mpCost": 20,
+      "baseDamage": 170,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 170 }]
+    },
+    {
+      "id": "devops-docker-strike",
+      "name": "Container Attack",
+      "description": "Deploy containerized attack",
+      "class": "devops",
+      "mpCost": 25,
+      "baseDamage": 190,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 190 }]
+    },
+    {
+      "id": "devops-kubernetes-swarm",
+      "name": "K8s Orchestration",
+      "description": "Coordinate multiple attacks",
+      "class": "devops",
+      "mpCost": 35,
+      "baseDamage": 160,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 160 }]
+    },
+    {
+      "id": "devops-monitoring",
+      "name": "Monitoring",
+      "description": "Observe and alert",
+      "class": "devops",
+      "mpCost": 15,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "buff", "stat": "SPD", "value": 50, "duration": 3 }
+      ]
+    },
+    {
+      "id": "devops-auto-scale",
+      "name": "Auto-Scale",
+      "description": "Dynamically increase resources",
+      "class": "devops",
+      "mpCost": 30,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "buff", "stat": "ATK", "value": 60, "duration": 3 }
+      ]
+    },
+    {
+      "id": "devops-rollback",
+      "name": "Rollback",
+      "description": "Revert to previous state",
+      "class": "devops",
+      "mpCost": 20,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "heal", "value": 60 }]
+    },
+    {
+      "id": "devops-blue-green",
+      "name": "Blue-Green Deploy",
+      "description": "Zero-downtime massive strike",
+      "class": "devops",
+      "mpCost": 45,
+      "baseDamage": 350,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 350 }]
+    }
+  ]
+}
