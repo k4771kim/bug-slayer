@@ -7,8 +7,9 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { ClassSelectScene } from './scenes/ClassSelectScene';
 import { BattleScene } from './scenes/BattleScene';
+import { EndingScene } from './scenes/EndingScene';
 
-export { BootScene, ClassSelectScene, BattleScene };
+export { BootScene, ClassSelectScene, BattleScene, EndingScene };
 export { TechDebt } from './systems/TechDebt';
 export type { TechDebtLevel, TechDebtStatus } from './systems/TechDebt';
 export { EnemyAI } from './systems/EnemyAI';
@@ -19,6 +20,7 @@ export { LevelUpSystem } from './systems/LevelUpSystem';
 export type { LevelUpResult, StatGrowth } from './systems/LevelUpSystem';
 export { ProgressionSystem } from './systems/ProgressionSystem';
 export type { GameProgress, ChapterProgress, StageProgress, SaveData } from './systems/ProgressionSystem';
+export type { EndingType, EndingData } from './scenes/EndingScene';
 
 /**
  * Create Phaser game configuration
@@ -31,7 +33,7 @@ export function createGameConfig(parentElement: string): Phaser.Types.Core.GameC
     height: 600,
     parent: parentElement,
     backgroundColor: '#1e1e1e',
-    scene: [BootScene, ClassSelectScene, BattleScene],
+    scene: [BootScene, ClassSelectScene, BattleScene, EndingScene],
     physics: {
       default: 'arcade',
       arcade: {
