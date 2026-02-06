@@ -5,9 +5,10 @@
 
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { ClassSelectScene } from './scenes/ClassSelectScene';
 import { BattleScene } from './scenes/BattleScene';
 
-export { BootScene, BattleScene };
+export { BootScene, ClassSelectScene, BattleScene };
 
 /**
  * Create Phaser game configuration
@@ -20,7 +21,7 @@ export function createGameConfig(parentElement: string): Phaser.Types.Core.GameC
     height: 600,
     parent: parentElement,
     backgroundColor: '#1e1e1e',
-    scene: [BootScene, BattleScene],
+    scene: [BootScene, ClassSelectScene, BattleScene],
     physics: {
       default: 'arcade',
       arcade: {

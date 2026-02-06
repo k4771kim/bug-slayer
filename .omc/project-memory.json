@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1770358864356,
+  "projectRoot": "/home/claude/Claude/ai-gdd/bug-slayer",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=18.0.0",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "pnpm",
+    "runtime": "Node.js 18.0.0"
+  },
+  "build": {
+    "buildCommand": "pnpm build",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "dev": "turbo run dev",
+      "build": "turbo run build",
+      "test": "turbo run test",
+      "lint": "turbo run lint",
+      "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+      "type-check": "turbo run type-check",
+      "clean": "turbo run clean && rm -rf node_modules",
+      "prepare": "husky install"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [
+      "apps/*",
+      "packages/*"
+    ],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "apps": {
+      "path": "apps",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1770358864347,
+      "keyFiles": []
+    },
+    "data": {
+      "path": "data",
+      "purpose": "Data files",
+      "fileCount": 0,
+      "lastAccessed": 1770358864347,
+      "keyFiles": []
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1770358864347,
+      "keyFiles": [
+        "tsconfig.tsbuildinfo"
+      ]
+    },
+    "packages": {
+      "path": "packages",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1770358864353,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

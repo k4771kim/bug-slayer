@@ -44,13 +44,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    console.log('BootScene: Assets loaded, transitioning to BattleScene');
+    console.log('BootScene: Assets loaded, transitioning to ClassSelectScene');
 
-    // Transition to battle scene for MVP
-    this.scene.start('BattleScene', {
-      playerClass: 'Debugger',
-      chapter: 1,
-      stage: 1,
-    });
+    // Show class selection before battle
+    this.scene.start('ClassSelectScene');
   }
 }

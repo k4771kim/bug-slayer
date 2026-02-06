@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import type { Character, Monster } from '@bug-slayer/shared';
+import { createCharacter } from '../systems/CharacterFactory';
+import { dataLoader } from '../loaders/DataLoader';
 
 interface BattleSceneData {
   playerClass: string;
@@ -25,10 +27,17 @@ export class BattleScene extends Phaser.Scene {
   init(data: BattleSceneData) {
     console.log('BattleScene initialized with:', data);
 
-    // TODO: Load actual character/monster data from JSON
-    // For now, create mock data
-    this.player = this.createMockPlayer(data.playerClass);
-    this.monster = this.createMockMonster();
+    // Load actual character from JSON data
+    this.player = createCharacter(data.playerClass.toLowerCase(), 'Hero', 1);
+
+    // Load actual monster from JSON data
+    const bugData = dataLoader.getBug('nullpointer');
+    if (bugData) {
+      this.monster = this.createMonsterFromData(bugData);
+    } else {
+      console.error('Bug not found: nullpointer');
+      this.monster = this.createMockMonster();
+    }
   }
 
   create() {
@@ -100,25 +109,18 @@ export class BattleScene extends Phaser.Scene {
     this.updateUI();
   }
 
-  private createMockPlayer(className: string): Character {
+  private createMonsterFromData(bugData: any): Monster {
     return {
-      id: 'player-1',
-      name: 'CodeSlayer',
-      class: className as any,
-      level: 1,
-      exp: 0,
-      stats: {
-        HP: 100,
-        ATK: 15,
-        DEF: 8,
-        SPD: 12,
-        MP: 50,
-      },
-      currentHP: 100,
-      currentMP: 50,
-      skills: [],
-      equipment: {},
-      inventory: [],
+      id: bugData.id,
+      name: bugData.name,
+      type: bugData.type,
+      chapter: bugData.chapter,
+      stats: bugData.stats,
+      currentHP: bugData.stats.HP,
+      phase: bugData.phase,
+      behaviorTree: bugData.behaviorTree,
+      drops: bugData.drops,
+      techDebtOnSkip: bugData.techDebtOnSkip,
     };
   }
 
