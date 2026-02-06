@@ -99,6 +99,9 @@ export class BattleScene extends Phaser.Scene {
   private skillPanelContainer: Phaser.GameObjects.Container | null = null;
   private skillPanelVisible: boolean = false;
 
+  // Item panel
+  private itemPanelContainer: Phaser.GameObjects.Container | null = null;
+
   // Action buttons (stored so we can enable/disable them)
   private actionButtons: Phaser.GameObjects.Text[] = [];
 
@@ -586,9 +589,9 @@ export class BattleScene extends Phaser.Scene {
     // Deduct MP
     this.player.currentMP -= skillData.mpCost;
 
-    // Set cooldown (skills with mpCost >= 25 have 2-turn CD, others 0)
-    if (skillData.mpCost >= 25) {
-      this.skillCooldowns.set(skillData.id, 2);
+    // Set cooldown from skill data
+    if (skillData.cooldown > 0) {
+      this.skillCooldowns.set(skillData.id, skillData.cooldown);
     }
 
     // Process skill effects
@@ -1071,23 +1074,83 @@ export class BattleScene extends Phaser.Scene {
 
   private handleItemUse() {
     if (!this.player || !this.techDebt || !this.isPlayerTurn || !this.itemSystem) return;
-
-    // Close skill panel if open
     if (this.skillPanelVisible) this.toggleSkillPanel();
 
-    // Get consumable items from inventory
     const consumables = this.itemSystem.getItemsByType('consumable');
-
     if (consumables.length === 0) {
       this.turnText?.setText('No items to use!');
       return;
     }
 
+    // Create item selection popup
+    this.showItemPanel(consumables);
+  }
+
+  private showItemPanel(items: any[]) {
+    // Remove existing panel
+    if (this.itemPanelContainer) {
+      this.itemPanelContainer.removeAll(true);
+      this.itemPanelContainer.destroy();
+    }
+
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    this.itemPanelContainer = this.add.container(width / 2, height / 2);
+
+    // Background
+    const bg = this.add.rectangle(0, 0, 400, 250, 0x1a1a2e, 0.95);
+    bg.setStrokeStyle(2, 0x4ade80);
+    this.itemPanelContainer.add(bg);
+
+    // Title
+    const title = this.add.text(0, -100, 'Items', {
+      fontSize: '22px', color: '#4ade80', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.itemPanelContainer.add(title);
+
+    // Close button
+    const closeBtn = this.add.text(170, -100, 'X', {
+      fontSize: '18px', color: '#ef4444', backgroundColor: '#2a2a2a', padding: { x: 8, y: 4 },
+    }).setOrigin(0.5).setInteractive();
+    closeBtn.on('pointerdown', () => this.hideItemPanel());
+    this.itemPanelContainer.add(closeBtn);
+
+    // List items
+    items.forEach((item, index) => {
+      const y = -60 + index * 35;
+      if (y > 80) return;
+
+      const itemBtn = this.add.text(0, y, `${item.name} - ${item.description ?? 'Consumable'}`, {
+        fontSize: '14px', color: '#ffffff', backgroundColor: '#2a4a3a',
+        padding: { x: 10, y: 5 }, wordWrap: { width: 360 },
+      }).setOrigin(0.5).setInteractive();
+
+      itemBtn.on('pointerdown', () => {
+        this.hideItemPanel();
+        this.useSelectedItem(item);
+      });
+      itemBtn.on('pointerover', () => itemBtn.setBackgroundColor('#3a6a4a'));
+      itemBtn.on('pointerout', () => itemBtn.setBackgroundColor('#2a4a3a'));
+
+      this.itemPanelContainer!.add(itemBtn);
+    });
+  }
+
+  private hideItemPanel() {
+    if (this.itemPanelContainer) {
+      this.itemPanelContainer.removeAll(true);
+      this.itemPanelContainer.destroy();
+      this.itemPanelContainer = null;
+    }
+  }
+
+  private useSelectedItem(item: any) {
+    if (!this.player || !this.techDebt || !this.itemSystem) return;
+
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
 
-    // Use first consumable (simple auto-selection for now)
-    const item = consumables[0]!;
     const result = this.itemSystem.useItem(item);
 
     if (result.success) {
@@ -1095,11 +1158,8 @@ export class BattleScene extends Phaser.Scene {
       if (result.hpRestored && result.hpRestored > 0) itemText += ` +${result.hpRestored} HP`;
       if (result.mpRestored && result.mpRestored > 0) itemText += ` +${result.mpRestored} MP`;
 
-      // Item use doesn't increase tech debt but still counts as a turn
       this.turnText?.setText(itemText);
       this.updateUI();
-
-      // Monster turn after item use
       this.time.delayedCall(1000, () => this.monsterTurn());
     } else {
       this.turnText?.setText(result.message);
@@ -1140,9 +1200,10 @@ export class BattleScene extends Phaser.Scene {
     const stage = this.sceneData?.stage ?? 1;
     this.stagesCompleted.push(chapter * 100 + stage); // unique key
 
-    // Award EXP from monster drops
+    // Award EXP and gold from monster drops
     const expReward = this.monster.drops.exp;
     const goldReward = this.monster.drops.gold;
+    this.player.gold += goldReward;
 
     // Roll for item drops
     let dropText = '';
@@ -1328,6 +1389,7 @@ export class BattleScene extends Phaser.Scene {
       `${this.player.name}${expDisplay}` +
       `\nHP: ${this.player.currentHP}/${this.player.stats.HP}` +
       `\nMP: ${this.player.currentMP}/${this.player.stats.MP}` +
+      `\nGold: ${this.player.gold}` +
       focusIndicator
     );
 

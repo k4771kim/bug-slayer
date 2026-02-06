@@ -50,13 +50,15 @@ export class LevelUpSystem {
 
   /**
    * Calculate EXP required to reach a specific level
+   * GDD linear formula: Lv2=100, Lv3=120, Lv4=140... (+20 per level)
    */
   getExpForLevel(level: number): number {
     if (level <= 1) return 0;
     if (level > this.MAX_LEVEL) return Infinity;
 
-    // Formula: baseEXP * (level ^ 1.5)
-    return Math.floor(this.BASE_EXP * Math.pow(level, this.EXP_EXPONENT));
+    // Linear formula: 100 + (level - 2) * 20
+    // Lv2=100, Lv3=120, Lv4=140, Lv5=160, ...
+    return this.BASE_EXP + (level - 2) * 20;
   }
 
   /**

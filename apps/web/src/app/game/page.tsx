@@ -19,52 +19,44 @@ export default function GamePage() {
     }
   }, [user, isLoading, router]);
 
+  // Add game-active class to body for mobile overscroll prevention
+  useEffect(() => {
+    document.body.classList.add('game-active');
+    return () => document.body.classList.remove('game-active');
+  }, []);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-[#1e1e1e]">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <header className="bg-gray-800 border-b border-gray-700 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Bug Slayer</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-300">Welcome, {user.displayName}</span>
-            <button
-              onClick={() => {
-                useAuthStore.getState().logout();
-                router.push('/');
-              }}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="h-[100dvh] bg-[#1e1e1e] text-white flex flex-col overflow-hidden">
+      {/* Collapsible header - hidden on mobile landscape */}
+      <header className="hidden md:flex bg-[#252526] border-b border-[#3c3c3c] p-2 px-4 items-center justify-between shrink-0">
+        <h1 className="text-lg font-bold">Bug Slayer</h1>
+        <div className="flex items-center gap-3">
+          <span className="text-gray-400 text-sm">{user.displayName}</span>
+          <button
+            onClick={() => {
+              useAuthStore.getState().logout();
+              router.push('/');
+            }}
+            className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 rounded transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-8">
-        <div className="bg-gray-800 rounded-lg p-8">
-          <h2 className="text-3xl font-bold mb-6 text-center">Battle Arena</h2>
-
-          <div className="mb-6">
-            <PhaserGame />
-          </div>
-
-          <div className="bg-gray-700 p-4 rounded text-center">
-            <p className="text-gray-300 text-sm">
-              ⚡ Week 1-4 MVP: Basic turn-based combat with placeholder graphics
-            </p>
-          </div>
-        </div>
+      {/* Game container - fills remaining space */}
+      <main className="flex-1 flex items-center justify-center min-h-0">
+        <PhaserGame className="w-full h-full max-w-[800px] max-h-[600px] md:p-4" />
       </main>
     </div>
   );

@@ -49,6 +49,11 @@ export interface GameProgress {
 export interface SaveData {
   version: string;
   timestamp: string;
+  playerClass?: string;
+  player?: any; // Character data
+  techDebt?: number;
+  stagesCompleted?: number[];
+  playTime?: number;
   progress: {
     currentChapter: number;
     currentStage: number;
@@ -306,41 +311,60 @@ export class ProgressionSystem {
   }
 
   /**
-   * Load progress from localStorage
+   * Load progress from localStorage into this instance
    */
-  loadProgress(): boolean {
+  loadProgress(saveData?: SaveData): boolean {
     try {
-      const saved = localStorage.getItem(this.SAVE_KEY);
-      if (!saved) return false;
+      let data: SaveData;
 
-      const saveData: SaveData = JSON.parse(saved);
+      if (saveData) {
+        data = saveData;
+      } else {
+        const saved = localStorage.getItem(this.SAVE_KEY);
+        if (!saved) return false;
+        data = JSON.parse(saved);
+      }
 
       // Version check (future-proof)
-      if (saveData.version !== this.SAVE_VERSION) {
+      if (data.version !== this.SAVE_VERSION) {
         console.warn('Save version mismatch, skipping load');
         return false;
       }
 
       // Restore progress
-      this.progress.currentChapter = saveData.progress.currentChapter as Chapter;
-      this.progress.currentStage = saveData.progress.currentStage;
-      this.progress.totalDefeated = saveData.progress.totalDefeated;
-      this.progress.totalTechDebt = saveData.progress.totalTechDebt;
-      this.progress.playTime = saveData.progress.playTime;
-      this.progress.stages = saveData.progress.stages;
+      this.progress.currentChapter = data.progress.currentChapter as Chapter;
+      this.progress.currentStage = data.progress.currentStage;
+      this.progress.totalDefeated = data.progress.totalDefeated;
+      this.progress.totalTechDebt = data.progress.totalTechDebt;
+      this.progress.playTime = data.progress.playTime;
+      this.progress.stages = data.progress.stages;
 
       // Restore chapter data
       this.progress.chapters.clear();
-      saveData.progress.chapters.forEach(({ chapter, data }) => {
+      data.progress.chapters.forEach(({ chapter, data }) => {
         this.progress.chapters.set(chapter as Chapter, data);
       });
 
-      this.progress.lastPlayed = new Date(saveData.timestamp);
+      this.progress.lastPlayed = new Date(data.timestamp);
 
       return true;
     } catch (error) {
       console.error('Failed to load progress:', error);
       return false;
+    }
+  }
+
+  /**
+   * Static method to load save data from localStorage
+   */
+  static loadSave(): SaveData | null {
+    try {
+      const saved = localStorage.getItem('bug-slayer-progress');
+      if (!saved) return null;
+      return JSON.parse(saved) as SaveData;
+    } catch (error) {
+      console.error('Failed to load save:', error);
+      return null;
     }
   }
 

@@ -3,7 +3,7 @@
  * Handles authentication headers and error responses
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://100.91.39.21:3001';
 
 interface ApiError {
   code: string;

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -25,8 +25,8 @@ model GameSession {
   chapter     Int       @default(1)
   stage       Int       @default(1)
   techDebt    Int       @default(0)
-  partyData   Json
-  inventory   Json
+  partyData   String
+  inventory   String
   gold        Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -43,7 +43,7 @@ model CombatLog {
   actor         String
   action        String
   target        String
-  logData       Json
+  logData       String
   createdAt     DateTime    @default(now())
   @@index([sessionId])
   @@index([createdAt])

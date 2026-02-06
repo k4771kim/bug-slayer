@@ -42,6 +42,7 @@ export interface SkillData {
   class: string;
   mpCost: number;
   baseDamage: number;
+  cooldown: number;
   targetType: 'single' | 'all' | 'self';
   effects: SkillEffect[];
 }

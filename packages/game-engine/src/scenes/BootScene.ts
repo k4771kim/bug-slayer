@@ -44,9 +44,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    console.log('BootScene: Assets loaded, transitioning to ClassSelectScene');
+    console.log('BootScene: Assets loaded, transitioning to MainMenuScene');
 
-    // Show class selection before battle
-    this.scene.start('ClassSelectScene');
+    // Show main menu
+    this.scene.start('MainMenuScene');
   }
 }

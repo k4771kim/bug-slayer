@@ -25,6 +25,7 @@ export interface Character {
   class: CharacterClass;
   level: number;
   exp: number;
+  gold: number;
   stats: CharacterStats;
   currentHP: number;
   currentMP: number;

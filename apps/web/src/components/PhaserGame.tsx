@@ -38,8 +38,7 @@ export function PhaserGame({ className }: PhaserGameProps) {
       <div
         id="phaser-game"
         ref={containerRef}
-        className="mx-auto"
-        style={{ maxWidth: '800px' }}
+        className="w-full h-full flex items-center justify-center"
       />
     </div>
   );

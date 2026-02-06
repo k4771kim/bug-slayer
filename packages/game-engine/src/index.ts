@@ -5,11 +5,12 @@
 
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { MainMenuScene } from './scenes/MainMenuScene';
 import { ClassSelectScene } from './scenes/ClassSelectScene';
 import { BattleScene } from './scenes/BattleScene';
 import { EndingScene } from './scenes/EndingScene';
 
-export { BootScene, ClassSelectScene, BattleScene, EndingScene };
+export { BootScene, MainMenuScene, ClassSelectScene, BattleScene, EndingScene };
 export { TechDebt } from './systems/TechDebt';
 export type { TechDebtLevel, TechDebtStatus } from './systems/TechDebt';
 export { EnemyAI } from './systems/EnemyAI';
@@ -33,7 +34,7 @@ export function createGameConfig(parentElement: string): Phaser.Types.Core.GameC
     height: 600,
     parent: parentElement,
     backgroundColor: '#1e1e1e',
-    scene: [BootScene, ClassSelectScene, BattleScene, EndingScene],
+    scene: [BootScene, MainMenuScene, ClassSelectScene, BattleScene, EndingScene],
     physics: {
       default: 'arcade',
       arcade: {
@@ -44,6 +45,12 @@ export function createGameConfig(parentElement: string): Phaser.Types.Core.GameC
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    input: {
+      activePointers: 3, // Support multi-touch
+      touch: {
+        target: null as any, // Use canvas element
+      },
     },
   };
 }

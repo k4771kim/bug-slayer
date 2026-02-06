@@ -7,6 +7,7 @@
       "description": "Basic attack that prints the error",
       "class": "debugger",
       "mpCost": 0,
+      "cooldown": 0,
       "baseDamage": 100,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 100 }]
@@ -17,6 +18,7 @@
       "description": "Set a breakpoint to stop the bug",
       "class": "debugger",
       "mpCost": 15,
+      "cooldown": 0,
       "baseDamage": 150,
       "targetType": "single",
       "effects": [
@@ -30,6 +32,7 @@
       "description": "Trace back the error origin",
       "class": "debugger",
       "mpCost": 20,
+      "cooldown": 0,
       "baseDamage": 180,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 180 }]
@@ -40,6 +43,7 @@
       "description": "Monitor the bug's state",
       "class": "debugger",
       "mpCost": 10,
+      "cooldown": 0,
       "baseDamage": 0,
       "targetType": "single",
       "effects": [
@@ -52,6 +56,7 @@
       "description": "Prepare for incoming errors",
       "class": "debugger",
       "mpCost": 15,
+      "cooldown": 0,
       "baseDamage": 0,
       "targetType": "self",
       "effects": [
@@ -64,6 +69,7 @@
       "description": "Wrap the bug in exception handling",
       "class": "debugger",
       "mpCost": 25,
+      "cooldown": 2,
       "baseDamage": 200,
       "targetType": "single",
       "effects": [
@@ -77,6 +83,7 @@
       "description": "Execute code line by line",
       "class": "debugger",
       "mpCost": 30,
+      "cooldown": 2,
       "baseDamage": 120,
       "targetType": "all",
       "effects": [{ "type": "damage", "value": 120 }]
@@ -87,6 +94,7 @@
       "description": "Verify assumptions and break on failure",
       "class": "debugger",
       "mpCost": 35,
+      "cooldown": 3,
       "baseDamage": 280,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 280 }]
@@ -97,6 +105,7 @@
       "description": "Find and fix issues",
       "class": "refactorer",
       "mpCost": 0,
+      "cooldown": 0,
       "baseDamage": 100,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 100 }]
@@ -107,6 +116,7 @@
       "description": "Refactor messy code",
       "class": "refactorer",
       "mpCost": 15,
+      "cooldown": 0,
       "baseDamage": 160,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 160 }]
@@ -117,6 +127,7 @@
       "description": "Isolate and eliminate the bug",
       "class": "refactorer",
       "mpCost": 20,
+      "cooldown": 0,
       "baseDamage": 170,
       "targetType": "single",
       "effects": [
@@ -130,6 +141,7 @@
       "description": "Improve performance",
       "class": "refactorer",
       "mpCost": 25,
+      "cooldown": 2,
       "baseDamage": 0,
       "targetType": "self",
       "effects": [
@@ -143,6 +155,7 @@
       "description": "Clarify the bug's purpose",
       "class": "refactorer",
       "mpCost": 10,
+      "cooldown": 0,
       "baseDamage": 130,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 130 }]
@@ -153,6 +166,7 @@
       "description": "Simplify complexity",
       "class": "refactorer",
       "mpCost": 18,
+      "cooldown": 0,
       "baseDamage": 150,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 150 }]
@@ -163,6 +177,7 @@
       "description": "Apply proven solution pattern",
       "class": "refactorer",
       "mpCost": 30,
+      "cooldown": 2,
       "baseDamage": 220,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 220 }]
@@ -173,6 +188,7 @@
       "description": "Reduce technical debt",
       "class": "refactorer",
       "mpCost": 40,
+      "cooldown": 3,
       "baseDamage": 0,
       "targetType": "self",
       "effects": [
@@ -185,6 +201,7 @@
       "description": "Send a request to the bug",
       "class": "fullstack",
       "mpCost": 0,
+      "cooldown": 0,
       "baseDamage": 100,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 100 }]
@@ -195,6 +212,7 @@
       "description": "Call API endpoint",
       "class": "fullstack",
       "mpCost": 20,
+      "cooldown": 0,
       "baseDamage": 180,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 180 }]
@@ -205,6 +223,7 @@
       "description": "Execute database query",
       "class": "fullstack",
       "mpCost": 25,
+      "cooldown": 2,
       "baseDamage": 200,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 200 }]
@@ -215,6 +234,7 @@
       "description": "Rapid frontend updates",
       "class": "fullstack",
       "mpCost": 30,
+      "cooldown": 2,
       "baseDamage": 140,
       "targetType": "all",
       "effects": [{ "type": "damage", "value": 140 }]
@@ -225,6 +245,7 @@
       "description": "Execute backend business logic",
       "class": "fullstack",
       "mpCost": 35,
+      "cooldown": 3,
       "baseDamage": 260,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 260 }]
@@ -235,6 +256,7 @@
       "description": "Push to production",
       "class": "fullstack",
       "mpCost": 40,
+      "cooldown": 3,
       "baseDamage": 300,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 300 }]
@@ -245,6 +267,7 @@
       "description": "Scale out the attack",
       "class": "fullstack",
       "mpCost": 45,
+      "cooldown": 3,
       "baseDamage": 180,
       "targetType": "all",
       "effects": [{ "type": "damage", "value": 180 }]
@@ -255,6 +278,7 @@
       "description": "Integrate all systems for massive damage",
       "class": "fullstack",
       "mpCost": 50,
+      "cooldown": 3,
       "baseDamage": 400,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 400 }]
@@ -265,6 +289,7 @@
       "description": "Execute a command",
       "class": "devops",
       "mpCost": 0,
+      "cooldown": 0,
       "baseDamage": 100,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 100 }]
@@ -275,6 +300,7 @@
       "description": "Automated testing and building",
       "class": "devops",
       "mpCost": 20,
+      "cooldown": 0,
       "baseDamage": 170,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 170 }]
@@ -285,6 +311,7 @@
       "description": "Deploy containerized attack",
       "class": "devops",
       "mpCost": 25,
+      "cooldown": 2,
       "baseDamage": 190,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 190 }]
@@ -295,6 +322,7 @@
       "description": "Coordinate multiple attacks",
       "class": "devops",
       "mpCost": 35,
+      "cooldown": 3,
       "baseDamage": 160,
       "targetType": "all",
       "effects": [{ "type": "damage", "value": 160 }]
@@ -305,6 +333,7 @@
       "description": "Observe and alert",
       "class": "devops",
       "mpCost": 15,
+      "cooldown": 0,
       "baseDamage": 0,
       "targetType": "self",
       "effects": [
@@ -317,6 +346,7 @@
       "description": "Dynamically increase resources",
       "class": "devops",
       "mpCost": 30,
+      "cooldown": 2,
       "baseDamage": 0,
       "targetType": "self",
       "effects": [
@@ -329,6 +359,7 @@
       "description": "Revert to previous state",
       "class": "devops",
       "mpCost": 20,
+      "cooldown": 0,
       "baseDamage": 0,
       "targetType": "self",
       "effects": [{ "type": "heal", "value": 60 }]
@@ -339,6 +370,7 @@
       "description": "Zero-downtime massive strike",
       "class": "devops",
       "mpCost": 45,
+      "cooldown": 3,
       "baseDamage": 350,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 350 }]

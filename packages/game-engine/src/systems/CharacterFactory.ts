@@ -31,6 +31,7 @@ export function createCharacter(
     class: classId as any,
     level,
     exp: 0,
+    gold: 0,
     stats,
     currentHP: stats.HP,
     currentMP: stats.MP,
@@ -79,7 +80,7 @@ function convertSkillDataToSkill(skillData: SkillData): Skill {
     name: skillData.name,
     description: skillData.description,
     mpCost: skillData.mpCost,
-    cooldown: 0,
+    cooldown: skillData.cooldown ?? 0,
     currentCooldown: 0,
     effects: skillData.effects.map(effect => ({
       type: effect.type,

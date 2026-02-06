@@ -59,8 +59,8 @@ app.use(errorHandler);
 
 // Start server
 const PORT = parseInt(env.PORT);
-app.listen(PORT, () => {
-  console.log(`🚀 Bug Slayer Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Bug Slayer Server running on http://0.0.0.0:${PORT}`);
   console.log(`📊 Environment: ${env.NODE_ENV}`);
   console.log(`🔗 API Endpoints:`);
   console.log(`   - POST /api/auth/register`);
