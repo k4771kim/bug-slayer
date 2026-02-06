@@ -1,0 +1,196 @@
+{
+  "items": [
+    {
+      "id": "basic-potion",
+      "name": "Basic Potion",
+      "type": "consumable",
+      "rarity": "common",
+      "effects": [
+        {
+          "type": "heal",
+          "value": 30,
+          "duration": 0
+        }
+      ],
+      "price": 20
+    },
+    {
+      "id": "mana-potion",
+      "name": "Mana Potion",
+      "type": "consumable",
+      "rarity": "common",
+      "effects": [
+        {
+          "type": "heal",
+          "value": 20,
+          "duration": 0,
+          "stat": "MP"
+        }
+      ],
+      "price": 25
+    },
+    {
+      "id": "mega-potion",
+      "name": "Mega Potion",
+      "type": "consumable",
+      "rarity": "rare",
+      "effects": [
+        {
+          "type": "heal",
+          "value": 80,
+          "duration": 0
+        }
+      ],
+      "price": 60
+    },
+    {
+      "id": "full-restore",
+      "name": "Full Restore",
+      "type": "consumable",
+      "rarity": "epic",
+      "effects": [
+        {
+          "type": "heal",
+          "value": 999,
+          "duration": 0
+        },
+        {
+          "type": "heal",
+          "value": 999,
+          "duration": 0,
+          "stat": "MP"
+        }
+      ],
+      "price": 150
+    },
+    {
+      "id": "rusty-sword",
+      "name": "Rusty Sword",
+      "type": "weapon",
+      "rarity": "common",
+      "statBonus": {
+        "ATK": 3
+      },
+      "price": 50
+    },
+    {
+      "id": "iron-sword",
+      "name": "Iron Sword",
+      "type": "weapon",
+      "rarity": "common",
+      "statBonus": {
+        "ATK": 8
+      },
+      "price": 150
+    },
+    {
+      "id": "steel-blade",
+      "name": "Steel Blade",
+      "type": "weapon",
+      "rarity": "rare",
+      "statBonus": {
+        "ATK": 15
+      },
+      "price": 400
+    },
+    {
+      "id": "debugger-hammer",
+      "name": "Debugger's Hammer",
+      "type": "weapon",
+      "rarity": "epic",
+      "statBonus": {
+        "ATK": 25,
+        "DEF": 5
+      },
+      "price": 1000
+    },
+    {
+      "id": "cloth-armor",
+      "name": "Cloth Armor",
+      "type": "armor",
+      "rarity": "common",
+      "statBonus": {
+        "DEF": 3,
+        "HP": 10
+      },
+      "price": 40
+    },
+    {
+      "id": "leather-vest",
+      "name": "Leather Vest",
+      "type": "armor",
+      "rarity": "common",
+      "statBonus": {
+        "DEF": 7,
+        "HP": 20
+      },
+      "price": 120
+    },
+    {
+      "id": "chainmail",
+      "name": "Chainmail",
+      "type": "armor",
+      "rarity": "rare",
+      "statBonus": {
+        "DEF": 12,
+        "HP": 40
+      },
+      "price": 350
+    },
+    {
+      "id": "refactor-plate",
+      "name": "Refactorer's Plate",
+      "type": "armor",
+      "rarity": "epic",
+      "statBonus": {
+        "DEF": 20,
+        "HP": 80
+      },
+      "price": 900
+    },
+    {
+      "id": "speed-boots",
+      "name": "Speed Boots",
+      "type": "accessory",
+      "rarity": "common",
+      "statBonus": {
+        "SPD": 3
+      },
+      "price": 80
+    },
+    {
+      "id": "power-ring",
+      "name": "Power Ring",
+      "type": "accessory",
+      "rarity": "rare",
+      "statBonus": {
+        "ATK": 5,
+        "MP": 10
+      },
+      "price": 250
+    },
+    {
+      "id": "defense-pendant",
+      "name": "Defense Pendant",
+      "type": "accessory",
+      "rarity": "rare",
+      "statBonus": {
+        "DEF": 5,
+        "HP": 15
+      },
+      "price": 220
+    },
+    {
+      "id": "fullstack-amulet",
+      "name": "FullStack Amulet",
+      "type": "accessory",
+      "rarity": "epic",
+      "statBonus": {
+        "ATK": 8,
+        "DEF": 8,
+        "SPD": 8
+      },
+      "price": 800
+    }
+  ]
+}

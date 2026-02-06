@@ -13,6 +13,8 @@ export { TechDebt } from './systems/TechDebt';
 export type { TechDebtLevel, TechDebtStatus } from './systems/TechDebt';
 export { EnemyAI } from './systems/EnemyAI';
 export type { EnemyAction } from './systems/EnemyAI';
+export { ItemSystem } from './systems/ItemSystem';
+export type { UseItemResult, DropResult } from './systems/ItemSystem';
 
 /**
  * Create Phaser game configuration

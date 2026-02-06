@@ -7,6 +7,8 @@ import classesData from '../data/classes.json';
 import skillsData from '../data/skills.json';
 import bugsData from '../data/bugs.json';
 import paletteData from '../data/palette.json';
+import itemsData from '../data/items.json';
+import type { Item } from '@bug-slayer/shared';
 
 export interface ClassData {
   id: string;
@@ -96,6 +98,7 @@ export class DataLoader {
   private classes: Map<string, ClassData> = new Map();
   private skills: Map<string, SkillData> = new Map();
   private bugs: Map<string, BugData> = new Map();
+  private items: Map<string, Item> = new Map();
   private palette: PaletteData;
 
   private constructor() {
@@ -126,7 +129,12 @@ export class DataLoader {
       this.bugs.set(bug.id, bug);
     });
 
-    console.log(`DataLoader: Loaded ${this.classes.size} classes, ${this.skills.size} skills, ${this.bugs.size} bugs`);
+    // Load items
+    (itemsData as any).items.forEach((item: Item) => {
+      this.items.set(item.id, item);
+    });
+
+    console.log(`DataLoader: Loaded ${this.classes.size} classes, ${this.skills.size} skills, ${this.bugs.size} bugs, ${this.items.size} items`);
   }
 
   /**
@@ -212,6 +220,36 @@ export class DataLoader {
    */
   getStatusColor(status: string): string {
     return this.palette.statusColors[status] || '#ffffff';
+  }
+
+  /**
+   * Get item by ID
+   */
+  getItem(itemId: string): Item | undefined {
+    return this.items.get(itemId);
+  }
+
+  /**
+   * Get all items
+   */
+  getAllItems(): Item[] {
+    return Array.from(this.items.values());
+  }
+
+  /**
+   * Get items by type
+   */
+  getItemsByType(type: 'weapon' | 'armor' | 'accessory' | 'consumable'): Item[] {
+    return Array.from(this.items.values())
+      .filter(item => item.type === type);
+  }
+
+  /**
+   * Get items by rarity
+   */
+  getItemsByRarity(rarity: 'common' | 'rare' | 'epic'): Item[] {
+    return Array.from(this.items.values())
+      .filter(item => item.rarity === rarity);
   }
 }
 
