@@ -3,6 +3,7 @@ import type { Character, Monster } from '@bug-slayer/shared';
 import { createCharacter } from '../systems/CharacterFactory';
 import { dataLoader } from '../loaders/DataLoader';
 import { TechDebt } from '../systems/TechDebt';
+import { EnemyAI, type EnemyAction } from '../systems/EnemyAI';
 
 interface BattleSceneData {
   playerClass: string;
@@ -18,6 +19,7 @@ export class BattleScene extends Phaser.Scene {
   private player: Character | null = null;
   private monster: Monster | null = null;
   private techDebt: TechDebt | null = null;
+  private enemyAI: EnemyAI | null = null;
   private turnText: Phaser.GameObjects.Text | null = null;
   private playerHPText: Phaser.GameObjects.Text | null = null;
   private monsterHPText: Phaser.GameObjects.Text | null = null;
@@ -41,9 +43,12 @@ export class BattleScene extends Phaser.Scene {
     const bugData = dataLoader.getBug('nullpointer');
     if (bugData) {
       this.monster = this.createMonsterFromData(bugData);
+      // Initialize Enemy AI
+      this.enemyAI = new EnemyAI(this.monster);
     } else {
       console.error('Bug not found: nullpointer');
       this.monster = this.createMockMonster();
+      this.enemyAI = new EnemyAI(this.monster);
     }
   }
 
@@ -208,8 +213,14 @@ export class BattleScene extends Phaser.Scene {
       `${this.player.name}\nHP: ${this.player.currentHP}/${this.player.stats.HP}\nMP: ${this.player.currentMP}/${this.player.stats.MP}`
     );
 
+    // Monster HP with boss phase indicator
+    const isBoss = this.monster.type === 'boss';
+    const phaseText = isBoss && this.enemyAI
+      ? `\nPhase ${this.enemyAI.phase}/4`
+      : '';
+
     this.monsterHPText?.setText(
-      `${this.monster.name}\nHP: ${this.monster.currentHP}/${this.monster.stats.HP}`
+      `${this.monster.name}\nHP: ${this.monster.currentHP}/${this.monster.stats.HP}${phaseText}`
     );
 
     // Update tech debt display
@@ -324,23 +335,84 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private monsterTurn() {
+    if (!this.player || !this.monster || !this.techDebt || !this.enemyAI) return;
+
+    // Enemy AI decides action
+    const action = this.enemyAI.decideAction();
+
+    // Check for boss phase change
+    const isBoss = this.monster.type === 'boss';
+    const phaseDesc = isBoss ? this.enemyAI.getPhaseDescription() : '';
+    const phaseChanged = isBoss && this.enemyAI.phase > 1 && this.enemyAI.turns === 1;
+
+    if (phaseChanged) {
+      this.turnText?.setText(`⚠️ ${this.monster.name} enters ${phaseDesc}!`);
+      this.updateUI();
+      this.time.delayedCall(1500, () => {
+        this.executeEnemyAction(action);
+      });
+    } else {
+      this.executeEnemyAction(action);
+    }
+  }
+
+  private executeEnemyAction(action: EnemyAction) {
     if (!this.player || !this.monster || !this.techDebt) return;
 
-    // Monster attacks with tech debt modifier
-    const baseDamage = this.monster.stats.ATK;
     const techDebtModifier = this.techDebt.enemyAtkModifier;
-    const modifiedAtk = Math.floor(baseDamage * techDebtModifier);
+    let actionText = '';
 
-    const defense = this.player.stats.DEF;
-    const damageReduction = 100 / (100 + defense * 0.7);
-    const damage = Math.max(1, Math.floor(modifiedAtk * damageReduction));
+    switch (action.type) {
+      case 'attack': {
+        // Basic attack with tech debt modifier
+        const baseDamage = this.monster.stats.ATK;
+        const modifiedAtk = Math.floor(baseDamage * techDebtModifier);
+        const defense = this.player.stats.DEF;
+        const damageReduction = 100 / (100 + defense * 0.7);
+        const damage = Math.max(1, Math.floor(modifiedAtk * damageReduction));
 
-    this.player.currentHP = Math.max(0, this.player.currentHP - damage);
+        this.player.currentHP = Math.max(0, this.player.currentHP - damage);
 
-    const modifierText = techDebtModifier !== 1.0
-      ? ` (${Math.round((techDebtModifier - 1) * 100)}% from Tech Debt)`
-      : '';
-    this.turnText?.setText(`${this.monster.name} dealt ${damage} damage${modifierText}!`);
+        const modifierText = techDebtModifier !== 1.0
+          ? ` (${Math.round((techDebtModifier - 1) * 100)}% from Tech Debt)`
+          : '';
+        actionText = `${this.monster.name} attacked! ${damage} damage${modifierText}`;
+        break;
+      }
+
+      case 'skill': {
+        // Skill attack (TODO: implement actual skills)
+        const baseDamage = Math.floor(this.monster.stats.ATK * 1.5);
+        const modifiedAtk = Math.floor(baseDamage * techDebtModifier);
+        const defense = this.player.stats.DEF;
+        const damageReduction = 100 / (100 + defense * 0.7);
+        const damage = Math.max(1, Math.floor(modifiedAtk * damageReduction));
+
+        this.player.currentHP = Math.max(0, this.player.currentHP - damage);
+
+        actionText = `${this.monster.name} used ${action.skillId}! ${damage} damage`;
+        break;
+      }
+
+      case 'buff': {
+        // Self-buff (TODO: implement buff system)
+        actionText = `${this.monster.name} buffed ${action.targetStat || 'ATK'}!`;
+        break;
+      }
+
+      case 'heal': {
+        // Self-heal
+        const healAmount = action.amount || 20;
+        this.monster.currentHP = Math.min(
+          this.monster.stats.HP,
+          this.monster.currentHP + healAmount
+        );
+        actionText = `${this.monster.name} healed ${healAmount} HP!`;
+        break;
+      }
+    }
+
+    this.turnText?.setText(actionText);
     this.updateUI();
 
     // Check lose condition
@@ -352,7 +424,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Back to player turn
-    this.time.delayedCall(1000, () => {
+    this.time.delayedCall(1500, () => {
       this.turnText?.setText('Your turn! Choose an action.');
     });
   }

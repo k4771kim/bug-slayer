@@ -11,6 +11,8 @@ import { BattleScene } from './scenes/BattleScene';
 export { BootScene, ClassSelectScene, BattleScene };
 export { TechDebt } from './systems/TechDebt';
 export type { TechDebtLevel, TechDebtStatus } from './systems/TechDebt';
+export { EnemyAI } from './systems/EnemyAI';
+export type { EnemyAction } from './systems/EnemyAI';
 
 /**
  * Create Phaser game configuration
