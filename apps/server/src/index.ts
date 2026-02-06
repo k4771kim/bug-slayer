@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
+import gameRoutes from './routes/game';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/game', gameRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -66,6 +68,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   - POST /api/auth/register`);
   console.log(`   - POST /api/auth/login`);
   console.log(`   - GET  /api/auth/me`);
+  console.log(`   - POST /api/game/save`);
+  console.log(`   - GET  /api/game/load`);
+  console.log(`   - DELETE /api/game/save`);
   console.log(`   - GET  /health`);
 });
 

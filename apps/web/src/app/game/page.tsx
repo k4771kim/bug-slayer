@@ -2,8 +2,17 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { PhaserGame } from '@/components/PhaserGame';
+
+const PhaserGame = dynamic(() => import('@/components/PhaserGame').then(m => ({ default: m.PhaserGame })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="text-gray-400">Loading game engine...</div>
+    </div>
+  ),
+});
 
 export default function GamePage() {
   const router = useRouter();
