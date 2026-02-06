@@ -1,5 +1,14 @@
 import Phaser from 'phaser';
 import type { Character, Monster, Skill, SkillEffect } from '@bug-slayer/shared';
+import {
+  calculateDamage as sharedCalculateDamage,
+  calculateCritChance,
+  calculateEvasionChance,
+  CRIT_MULTIPLIER,
+  FOCUS_DAMAGE_BONUS_PERCENT,
+  MP_AUTO_RECOVERY_PERCENT,
+  MP_FOCUS_RECOVERY_PERCENT,
+} from '@bug-slayer/shared';
 import { createCharacter } from '../systems/CharacterFactory';
 import { dataLoader } from '../loaders/DataLoader';
 import type { SkillData, BugData } from '../loaders/DataLoader';
@@ -485,7 +494,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Apply focus buff (+20%)
     if (this.focusBuff) {
-      baseDamage = Math.floor(baseDamage * 1.2);
+      baseDamage = Math.floor(baseDamage * (1 + FOCUS_DAMAGE_BONUS_PERCENT / 100));
       this.focusBuff = false;
     }
 
@@ -509,7 +518,7 @@ export class BattleScene extends Phaser.Scene {
     const critResult = this.rollCritical(playerSPD, monsterSPD);
     let critText = '';
     if (critResult) {
-      damage = Math.floor(damage * 1.5);
+      damage = Math.floor(damage * CRIT_MULTIPLIER);
       critText = ' CRITICAL HIT!';
     }
 
@@ -564,11 +573,13 @@ export class BattleScene extends Phaser.Scene {
     for (const effect of skillData.effects) {
       switch (effect.type) {
         case 'damage': {
-          let baseDmg = effect.value;
+          // Scale skill damage off player ATK: baseDmg = ATK * (skillValue / 100)
+          const playerATK = this.getEffectiveStat(this.player.stats.ATK, 'ATK', 'player');
+          let baseDmg = Math.floor(playerATK * (effect.value / 100));
 
           // Apply focus buff
           if (this.focusBuff) {
-            baseDmg = Math.floor(baseDmg * 1.2);
+            baseDmg = Math.floor(baseDmg * (1 + FOCUS_DAMAGE_BONUS_PERCENT / 100));
             effectTexts.push('+20% Focus Bonus!');
             this.focusBuff = false;
           }
@@ -691,8 +702,8 @@ export class BattleScene extends Phaser.Scene {
     // Close skill panel if open
     if (this.skillPanelVisible) this.toggleSkillPanel();
 
-    // Restore 15% MP
-    const mpRestore = Math.floor(this.player.stats.MP * 0.15);
+    // Restore Focus MP
+    const mpRestore = Math.floor(this.player.stats.MP * (MP_FOCUS_RECOVERY_PERCENT / 100));
     this.player.currentMP = Math.min(
       this.player.stats.MP,
       this.player.currentMP + mpRestore
@@ -794,7 +805,7 @@ export class BattleScene extends Phaser.Scene {
 
         // Monster critical hit
         if (this.rollCritical(monsterSPD, playerSPD)) {
-          damage = Math.floor(damage * 1.5);
+          damage = Math.floor(damage * CRIT_MULTIPLIER);
           actionText = `${this.monster.name} scored a CRITICAL HIT! ${damage} damage`;
         } else {
           actionText = `${this.monster.name} attacked! ${damage} damage`;
@@ -826,7 +837,7 @@ export class BattleScene extends Phaser.Scene {
 
         // Monster critical hit
         if (this.rollCritical(monsterSPD, playerSPD)) {
-          damage = Math.floor(damage * 1.5);
+          damage = Math.floor(damage * CRIT_MULTIPLIER);
           actionText = `${this.monster.name} used ${action.skillId}! CRITICAL! ${damage} damage`;
         } else {
           actionText = `${this.monster.name} used ${action.skillId}! ${damage} damage`;
@@ -881,23 +892,20 @@ export class BattleScene extends Phaser.Scene {
   // =========================================================================
 
   /**
-   * Critical hit: critChance = min(30%, 5% + SPD_diff * 1%)
-   * Returns true if critical hit.
+   * Critical hit: critChance = min(30%, 10 + SPD * 0.5)
+   * Uses shared constants from GDD spec.
    */
-  private rollCritical(attackerSPD: number, defenderSPD: number): boolean {
-    const spdDiff = Math.max(0, attackerSPD - defenderSPD);
-    const critChance = Math.min(30, 5 + spdDiff * 1);
+  private rollCritical(attackerSPD: number, _defenderSPD: number): boolean {
+    const critChance = calculateCritChance(attackerSPD);
     return Math.random() * 100 < critChance;
   }
 
   /**
-   * Evasion: evasionChance = max(0, 2% * (defender_SPD - attacker_SPD))
-   * Returns true if attack is evaded.
+   * Evasion: evasionChance = max(0, (targetSPD - attackerSPD) * 2)
+   * Uses shared constants from GDD spec. Capped at 50%.
    */
   private rollEvasion(defenderSPD: number, attackerSPD: number): boolean {
-    const spdDiff = defenderSPD - attackerSPD;
-    if (spdDiff <= 0) return false;
-    const evasionChance = Math.min(50, 2 * spdDiff); // cap at 50% for sanity
+    const evasionChance = Math.min(50, calculateEvasionChance(defenderSPD, attackerSPD));
     return Math.random() * 100 < evasionChance;
   }
 
@@ -907,10 +915,10 @@ export class BattleScene extends Phaser.Scene {
 
   /**
    * finalDmg = baseDmg * (100 / (100 + DEF * 0.7))
+   * Uses shared formula from @bug-slayer/shared constants.
    */
   private calculateDamage(baseDmg: number, defense: number): number {
-    const damageReduction = 100 / (100 + defense * 0.7);
-    return Math.max(1, Math.floor(baseDmg * damageReduction));
+    return sharedCalculateDamage(baseDmg, defense);
   }
 
   // =========================================================================
@@ -964,7 +972,7 @@ export class BattleScene extends Phaser.Scene {
    */
   private autoRestoreMP(): number {
     if (!this.player) return 0;
-    const mpRestore = Math.floor(this.player.stats.MP * 0.05);
+    const mpRestore = Math.floor(this.player.stats.MP * (MP_AUTO_RECOVERY_PERCENT / 100));
     this.player.currentMP = Math.min(
       this.player.stats.MP,
       this.player.currentMP + mpRestore

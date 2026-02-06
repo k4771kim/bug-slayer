@@ -41,7 +41,7 @@ export class LevelUpSystem {
   // EXP curve constants
   private readonly BASE_EXP = 100;
   private readonly EXP_EXPONENT = 1.5;
-  private readonly MAX_LEVEL = 50;
+  private readonly MAX_LEVEL = 20;
 
   constructor(character: Character, statGrowth: StatGrowth) {
     this.character = character;

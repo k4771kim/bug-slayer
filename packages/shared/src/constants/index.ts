@@ -10,10 +10,10 @@
 
 export const MAX_TECH_DEBT = 100;
 export const TECH_DEBT_THRESHOLDS = {
-  LOW: 25,
-  MEDIUM: 60,
-  HIGH: 90,
-  CRITICAL: 91,
+  LOW: 20,
+  MEDIUM: 50,
+  HIGH: 80,
+  CRITICAL: 81,
 } as const;
 
 export const CRIT_CAP = 30;
