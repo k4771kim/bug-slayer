@@ -44,7 +44,7 @@ export async function register(
     env.JWT_SECRET,
     {
       expiresIn: env.JWT_EXPIRES_IN,
-    }
+    } as jwt.SignOptions
   );
 
   // Return user (without password) and token
@@ -92,7 +92,7 @@ export async function login(
     env.JWT_SECRET,
     {
       expiresIn: env.JWT_EXPIRES_IN,
-    }
+    } as jwt.SignOptions
   );
 
   // Return user (without password) and token

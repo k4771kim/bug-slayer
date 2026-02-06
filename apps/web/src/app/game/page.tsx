@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { PhaserGame } from '@/components/PhaserGame';
 
 export default function GamePage() {
   const router = useRouter();
@@ -51,22 +52,17 @@ export default function GamePage() {
       </header>
 
       <main className="max-w-7xl mx-auto p-8">
-        <div className="bg-gray-800 rounded-lg p-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Game Coming Soon</h2>
-          <p className="text-gray-400 mb-8">
-            Phaser.js integration will be added in Week 1-4
-          </p>
-          <div className="space-y-4">
-            <div className="bg-gray-700 p-4 rounded">
-              <h3 className="font-bold mb-2">Next Steps:</h3>
-              <ul className="text-left text-gray-300 space-y-2">
-                <li>✓ Week 1-1: Monorepo Setup</li>
-                <li>✓ Week 1-2: Backend Authentication</li>
-                <li>✓ Week 1-3: Frontend Foundation</li>
-                <li>□ Week 1-4: Phaser.js Integration</li>
-                <li>□ Week 1-5: Game Data Preparation</li>
-              </ul>
-            </div>
+        <div className="bg-gray-800 rounded-lg p-8">
+          <h2 className="text-3xl font-bold mb-6 text-center">Battle Arena</h2>
+
+          <div className="mb-6">
+            <PhaserGame />
+          </div>
+
+          <div className="bg-gray-700 p-4 rounded text-center">
+            <p className="text-gray-300 text-sm">
+              ⚡ Week 1-4 MVP: Basic turn-based combat with placeholder graphics
+            </p>
           </div>
         </div>
       </main>
