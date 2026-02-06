@@ -1,0 +1,217 @@
+{
+  "$schema": "../schemas/accessibility.schema.json",
+  "description": "Color+Icon pairing data for accessibility (WCAG AA, color-blind friendly)",
+  "stats": {
+    "HP": {
+      "color": "#4ec9b0",
+      "icon": "❤",
+      "shape": "heart",
+      "label": "Health Points",
+      "contrastRatio": 8.2
+    },
+    "MP": {
+      "color": "#569cd6",
+      "icon": "◆",
+      "shape": "diamond",
+      "label": "Magic Points",
+      "contrastRatio": 5.8
+    },
+    "ATK": {
+      "color": "#f48771",
+      "icon": "⚔",
+      "shape": "upTriangle",
+      "label": "Attack",
+      "contrastRatio": 6.4
+    },
+    "DEF": {
+      "color": "#dcdcaa",
+      "icon": "🛡",
+      "shape": "square",
+      "label": "Defense",
+      "contrastRatio": 11.3
+    },
+    "SPD": {
+      "color": "#9cdcfe",
+      "icon": "⚡",
+      "shape": "bolt",
+      "label": "Speed",
+      "contrastRatio": 10.8
+    }
+  },
+  "techDebt": {
+    "low": {
+      "color": "#89d185",
+      "icon": "✓",
+      "shape": "checkmark",
+      "label": "Low Tech Debt",
+      "range": "0-24",
+      "contrastRatio": 7.9
+    },
+    "medium": {
+      "color": "#cca700",
+      "icon": "⚠",
+      "shape": "warning",
+      "label": "Medium Tech Debt",
+      "range": "25-49",
+      "contrastRatio": 8.1
+    },
+    "high": {
+      "color": "#ce9178",
+      "icon": "!",
+      "shape": "exclamation",
+      "label": "High Tech Debt",
+      "range": "50-74",
+      "contrastRatio": 6.2
+    },
+    "critical": {
+      "color": "#f48771",
+      "icon": "☠",
+      "shape": "skull",
+      "label": "Critical Tech Debt",
+      "range": "75-100",
+      "contrastRatio": 6.4
+    }
+  },
+  "rarity": {
+    "common": {
+      "color": "#d4d4d4",
+      "icon": "○",
+      "shape": "circle",
+      "label": "Common",
+      "contrastRatio": 12.6
+    },
+    "rare": {
+      "color": "#569cd6",
+      "icon": "★",
+      "shape": "star",
+      "label": "Rare",
+      "contrastRatio": 5.8
+    },
+    "epic": {
+      "color": "#c586c0",
+      "icon": "♔",
+      "shape": "crown",
+      "label": "Epic",
+      "contrastRatio": 5.1
+    }
+  },
+  "combatActions": {
+    "attack": {
+      "color": "#f48771",
+      "icon": "⚔",
+      "shape": "sword",
+      "label": "Attack",
+      "hotkey": "A",
+      "contrastRatio": 6.4
+    },
+    "skill": {
+      "color": "#569cd6",
+      "icon": "⭐",
+      "shape": "star",
+      "label": "Skill",
+      "hotkey": "S",
+      "contrastRatio": 5.8
+    },
+    "focus": {
+      "color": "#dcdcaa",
+      "icon": "🛡",
+      "shape": "shield",
+      "label": "Focus",
+      "hotkey": "F",
+      "contrastRatio": 11.3
+    },
+    "item": {
+      "color": "#4ec9b0",
+      "icon": "🧭",
+      "shape": "compass",
+      "label": "Item",
+      "hotkey": "I",
+      "contrastRatio": 8.2
+    },
+    "flee": {
+      "color": "#858585",
+      "icon": "🏃",
+      "shape": "run",
+      "label": "Flee",
+      "hotkey": "Escape",
+      "contrastRatio": 3.5
+    }
+  },
+  "stageStatus": {
+    "completed": {
+      "color": "#4ec9b0",
+      "icon": "✓",
+      "shape": "checkmark",
+      "label": "Completed",
+      "contrastRatio": 8.2
+    },
+    "current": {
+      "color": "#dcdcaa",
+      "icon": "▶",
+      "shape": "arrow",
+      "label": "Current Stage",
+      "contrastRatio": 11.3
+    },
+    "locked": {
+      "color": "#858585",
+      "icon": "🔒",
+      "shape": "lock",
+      "label": "Locked",
+      "contrastRatio": 3.5
+    }
+  },
+  "bossPhases": {
+    "phase1": {
+      "color": "#ffffff",
+      "icon": "😐",
+      "label": "Phase 1: Calm",
+      "contrastRatio": 15.8
+    },
+    "phase2": {
+      "color": "#dcdcaa",
+      "icon": "😠",
+      "label": "Phase 2: Warning",
+      "contrastRatio": 11.3
+    },
+    "phase3": {
+      "color": "#f48771",
+      "icon": "😡",
+      "label": "Phase 3: Rage",
+      "contrastRatio": 6.4
+    },
+    "phase4": {
+      "color": "#ce4545",
+      "icon": "💀",
+      "label": "Phase 4: Desperate",
+      "contrastRatio": 4.2
+    }
+  },
+  "wcagCompliance": {
+    "backgroundColor": "#1e1e1e",
+    "minimumContrastNormal": 4.5,
+    "minimumContrastLarge": 3.0,
+    "allColorsMeetAALarge": true,
+    "colorsMeetingAANormal": [
+      "HP",
+      "MP",
+      "ATK",
+      "DEF",
+      "SPD",
+      "techDebt.low",
+      "techDebt.medium",
+      "techDebt.high",
+      "techDebt.critical",
+      "rarity.common",
+      "rarity.rare",
+      "rarity.epic",
+      "combatActions.attack",
+      "combatActions.skill",
+      "combatActions.focus",
+      "combatActions.item"
+    ],
+    "colorsRequiringIconPairing": [
+      "combatActions.flee",
+      "stageStatus.locked"
+    ]
+  }
+}

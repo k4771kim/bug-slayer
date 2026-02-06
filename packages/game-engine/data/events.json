@@ -1,0 +1,94 @@
+{
+  "events": [
+    {
+      "id": "marketing-promo",
+      "name": "Marketing Promo Rush",
+      "description": "The marketing team launched a surprise promotion! Server traffic surges.",
+      "icon": "📢",
+      "probability": 10,
+      "effects": [
+        { "type": "buff", "stat": "ATK", "value": 20, "duration": 3, "target": "player" }
+      ],
+      "resultText": "Adrenaline rush! ATK +20% for 3 turns"
+    },
+    {
+      "id": "night-deploy",
+      "name": "Night Deploy",
+      "description": "Someone deployed to production at 3 AM. Things are breaking.",
+      "icon": "🌙",
+      "probability": 5,
+      "effects": [
+        { "type": "damage", "stat": "HP", "value": 10, "target": "player" }
+      ],
+      "resultText": "Lost 10% HP from the stress!"
+    },
+    {
+      "id": "code-review",
+      "name": "Code Review Request",
+      "description": "A senior developer reviewed your code. Great feedback!",
+      "icon": "📝",
+      "probability": 15,
+      "effects": [
+        { "type": "buff", "stat": "DEF", "value": 15, "duration": 3, "target": "player" }
+      ],
+      "resultText": "Improved defense! DEF +15% for 3 turns"
+    },
+    {
+      "id": "legacy-code",
+      "name": "Legacy Code Discovery",
+      "description": "You discovered ancient legacy code. It's full of secrets... and bugs.",
+      "icon": "📜",
+      "probability": 10,
+      "effects": [
+        { "type": "techDebt", "value": 5 },
+        { "type": "gold", "value": 2, "multiplier": true }
+      ],
+      "resultText": "Tech Debt +5, but next battle gold x2!"
+    },
+    {
+      "id": "coffee-break",
+      "name": "Coffee Break",
+      "description": "You took a quick coffee break. Feeling refreshed!",
+      "icon": "☕",
+      "probability": 12,
+      "effects": [
+        { "type": "heal", "stat": "HP", "value": 15, "target": "player" }
+      ],
+      "resultText": "Recovered 15% HP!"
+    },
+    {
+      "id": "stack-overflow",
+      "name": "Stack Overflow Savior",
+      "description": "Found the perfect answer on Stack Overflow!",
+      "icon": "💡",
+      "probability": 8,
+      "effects": [
+        { "type": "buff", "stat": "SPD", "value": 25, "duration": 2, "target": "player" }
+      ],
+      "resultText": "Coding speed increased! SPD +25% for 2 turns"
+    },
+    {
+      "id": "merge-conflict",
+      "name": "Merge Conflict Hell",
+      "description": "A massive merge conflict appeared. This will take time...",
+      "icon": "⚠️",
+      "probability": 7,
+      "effects": [
+        { "type": "debuff", "stat": "SPD", "value": 20, "duration": 2, "target": "player" }
+      ],
+      "resultText": "Slowed down by conflicts. SPD -20% for 2 turns"
+    },
+    {
+      "id": "mentor-help",
+      "name": "Mentor's Wisdom",
+      "description": "Your mentor shared valuable debugging techniques!",
+      "icon": "🎓",
+      "probability": 6,
+      "effects": [
+        { "type": "buff", "stat": "ATK", "value": 15, "duration": 4, "target": "player" },
+        { "type": "buff", "stat": "DEF", "value": 10, "duration": 4, "target": "player" }
+      ],
+      "resultText": "Learned new skills! ATK +15%, DEF +10% for 4 turns"
+    }
+  ]
+}

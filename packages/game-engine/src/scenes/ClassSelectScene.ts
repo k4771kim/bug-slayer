@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
-import { getAllClassesInfo } from '../systems/CharacterFactory';
+import { getAllClassesInfo, createCharacter } from '../systems/CharacterFactory';
 
 /**
  * ClassSelectScene - Choose your character class
  */
 export class ClassSelectScene extends Phaser.Scene {
+  private isFirstGame = true; // TODO: Check save data to determine if tutorial needed
+
   constructor() {
     super({ key: 'ClassSelectScene' });
   }
@@ -80,11 +82,20 @@ export class ClassSelectScene extends Phaser.Scene {
       // Click to select
       card.on('pointerdown', () => {
         console.log(`Selected class: ${cls.id}`);
-        this.scene.start('BattleScene', {
-          playerClass: cls.id,
-          chapter: 1,
-          stage: 1,
-        });
+
+        // Create character from selected class
+        const character = createCharacter(cls.id, cls.name, 1);
+
+        // If first game, go to tutorial; otherwise, go directly to dungeon select
+        if (this.isFirstGame) {
+          this.scene.start('TutorialScene', {
+            party: [character],
+          });
+        } else {
+          this.scene.start('DungeonSelectScene', {
+            party: [character],
+          });
+        }
       });
     });
 

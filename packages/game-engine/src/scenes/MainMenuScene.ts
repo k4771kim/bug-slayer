@@ -92,17 +92,15 @@ export class MainMenuScene extends Phaser.Scene {
         return;
       }
 
-      // Load saved game into BattleScene
+      // Load saved game into DungeonSelectScene
       const progressionSystem = new ProgressionSystem();
       progressionSystem.loadProgress(saveData);
 
-      // Start BattleScene with saved data
-      this.scene.start('BattleScene', {
+      // Start DungeonSelectScene with saved data
+      this.scene.start('DungeonSelectScene', {
         playerClass: saveData.playerClass,
-        chapter: saveData.progress.currentChapter,
-        stage: saveData.progress.currentStage,
         player: saveData.player,
-        techDebtCarry: saveData.techDebt,
+        techDebt: saveData.techDebt,
         progression: progressionSystem,
         stagesCompleted: saveData.stagesCompleted ?? [],
         playTime: saveData.playTime ?? 0,

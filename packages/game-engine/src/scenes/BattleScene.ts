@@ -18,6 +18,8 @@ import { LevelUpSystem } from '../systems/LevelUpSystem';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { ItemSystem } from '../systems/ItemSystem';
 import { EndingScene, type EndingData } from './EndingScene';
+import { EventSystem } from '../systems/EventSystem';
+import type { EventSceneData } from './EventScene';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -73,6 +75,7 @@ export class BattleScene extends Phaser.Scene {
   private levelUpSystem: LevelUpSystem | null = null;
   private progressionSystem: ProgressionSystem | null = null;
   private itemSystem: ItemSystem | null = null;
+  private eventSystem: EventSystem | null = null;
 
   // Scene data
   private sceneData: BattleSceneData | null = null;
@@ -95,6 +98,12 @@ export class BattleScene extends Phaser.Scene {
   private buffText: Phaser.GameObjects.Text | null = null;
   private stageText: Phaser.GameObjects.Text | null = null;
 
+  // Boss phase visuals
+  private bossPhaseOverlay: Phaser.GameObjects.Rectangle | null = null;
+  private bossDialogueText: Phaser.GameObjects.Text | null = null;
+  private bossSprite: Phaser.GameObjects.Rectangle | null = null;
+  private lastBossPhase: number = 1;
+
   // Skill panel
   private skillPanelContainer: Phaser.GameObjects.Container | null = null;
   private skillPanelVisible: boolean = false;
@@ -105,8 +114,40 @@ export class BattleScene extends Phaser.Scene {
   // Action buttons (stored so we can enable/disable them)
   private actionButtons: Phaser.GameObjects.Text[] = [];
 
+  // Boss phase visual configuration
+  private readonly BOSS_PHASE_CONFIG = {
+    1: {
+      tint: 0xffffff, // normal
+      overlayAlpha: 0,
+      dialogues: ['Let\'s see what you\'ve got...', 'Is that all?'],
+      shakeIntensity: 0,
+    },
+    2: {
+      tint: 0xdcdcaa, // yellow warning
+      overlayAlpha: 0.1,
+      dialogues: ['You\'re not bad...', 'I\'m just getting started!', 'My code is evolving!'],
+      shakeIntensity: 2,
+    },
+    3: {
+      tint: 0xf48771, // red rage
+      overlayAlpha: 0.15,
+      dialogues: ['COMPILING RAGE!', 'Stack overflow incoming!', 'You can\'t refactor ME!'],
+      shakeIntensity: 4,
+    },
+    4: {
+      tint: 0xce4545, // dark red desperate
+      overlayAlpha: 0.2,
+      dialogues: ['SEGFAULT... SEGFAULT...', 'I... won\'t... crash...', 'FATAL ERROR!'],
+      shakeIntensity: 6,
+    },
+  };
+
+  // Minigame state
+  private minigameActive: boolean = false;
+
   constructor() {
     super({ key: 'BattleScene' });
+    this.eventSystem = new EventSystem();
   }
 
   // =========================================================================
@@ -194,8 +235,19 @@ export class BattleScene extends Phaser.Scene {
       color: '#4ade80',
     });
 
-    // Player placeholder sprite (32x32 square, 2x upscaled)
-    this.add.rectangle(150, 300, 64, 64, 0x4a90e2);
+    // HP/MP icons for accessibility
+    this.add.text(80, 225, '❤', { fontSize: '14px', color: '#4ec9b0' });
+    this.add.text(80, 245, '◆', { fontSize: '14px', color: '#569cd6' });
+
+    // Player sprite (use generated texture if available, fallback to rectangle)
+    const playerClass = this.sceneData?.playerClass.toLowerCase() ?? 'debugger';
+    const playerTexture = `character-${playerClass}`;
+    if (this.textures.exists(playerTexture)) {
+      this.add.image(150, 300, playerTexture).setOrigin(0.5, 0.5);
+    } else {
+      // Fallback to colored rectangle
+      this.add.rectangle(150, 300, 64, 64, 0x4a90e2);
+    }
 
     // Monster area (right)
     this.add.text(width - 200, 150, 'Bug', {
@@ -208,8 +260,28 @@ export class BattleScene extends Phaser.Scene {
       color: '#ef4444',
     });
 
-    // Monster placeholder sprite
-    this.add.rectangle(width - 150, 300, 64, 64, 0xef4444);
+    // Monster sprite (use generated texture if available, fallback to rectangle)
+    const monsterTexture = this.getMonsterTexture();
+    if (monsterTexture && this.textures.exists(monsterTexture)) {
+      this.bossSprite = this.add.image(width - 150, 300, monsterTexture).setOrigin(0.5, 0.5) as any;
+    } else {
+      // Fallback to colored rectangle
+      this.bossSprite = this.add.rectangle(width - 150, 300, 64, 64, 0xef4444);
+    }
+
+    // Boss phase overlay (initially invisible)
+    this.bossPhaseOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0)
+      .setDepth(10);
+
+    // Boss dialogue text (initially empty)
+    this.bossDialogueText = this.add.text(width / 2, 420, '', {
+      fontSize: '20px',
+      color: '#ffffff',
+      backgroundColor: '#1a1a2e',
+      padding: { x: 15, y: 10 },
+      align: 'center',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(20).setVisible(false);
 
     // Buff display (below monster area)
     this.buffText = this.add.text(width / 2, 380, '', {
@@ -260,15 +332,15 @@ export class BattleScene extends Phaser.Scene {
       padding: { x: 12, y: 8 },
     });
 
-    const attackButton = this.add.text(width / 2 - 120, buttonY1, 'Attack', btnStyle('#4a90e2'))
+    const attackButton = this.add.text(width / 2 - 120, buttonY1, '⚔ Attack', btnStyle('#4a90e2'))
       .setOrigin(0.5).setInteractive();
-    const skillsButton = this.add.text(width / 2, buttonY1, 'Skills', btnStyle('#e5c07b'))
+    const skillsButton = this.add.text(width / 2, buttonY1, '⭐ Skills', btnStyle('#e5c07b'))
       .setOrigin(0.5).setInteractive();
-    const itemButton = this.add.text(width / 2 + 120, buttonY1, 'Item', btnStyle('#4ade80'))
+    const itemButton = this.add.text(width / 2 + 120, buttonY1, '🧭 Item', btnStyle('#4ade80'))
       .setOrigin(0.5).setInteractive();
-    const focusButton = this.add.text(width / 2 - 80, buttonY2, 'Focus', btnStyle('#9333ea'))
+    const focusButton = this.add.text(width / 2 - 80, buttonY2, '🛡 Focus', btnStyle('#9333ea'))
       .setOrigin(0.5).setInteractive();
-    const fleeButton = this.add.text(width / 2 + 80, buttonY2, 'Flee', btnStyle('#f59e0b'))
+    const fleeButton = this.add.text(width / 2 + 80, buttonY2, '🏃 Flee', btnStyle('#f59e0b'))
       .setOrigin(0.5).setInteractive();
 
     attackButton.on('pointerdown', () => this.handleAttack());
@@ -289,6 +361,48 @@ export class BattleScene extends Phaser.Scene {
   // =========================================================================
   // Monster Selection
   // =========================================================================
+
+  /**
+   * Get the texture name for the current monster
+   */
+  private getMonsterTexture(): string | null {
+    if (!this.monster) return null;
+
+    const monsterId = this.monster.id.toLowerCase();
+
+    // Try to find matching texture
+    if (this.monster.type === 'boss') {
+      // Boss sprites
+      if (monsterId.includes('heisenbug') || monsterId.includes('finalcompiler')) {
+        return `bug-${monsterId}`;
+      }
+      return 'bug-boss-generic';
+    }
+
+    // Regular bug sprites - extract bug type from ID
+    // IDs are like "bug-001", "nullpointer", etc.
+    const bugName = monsterId.replace('bug-', '').replace(/\d+/g, '');
+    const textureName = `bug-${bugName}`;
+
+    // Check if texture exists, otherwise use generic
+    if (this.textures.exists(textureName)) {
+      return textureName;
+    }
+
+    // Try common bug names from palette
+    const bugTypes = ['nullpointer', 'stackoverflow', 'racecondition', 'memoryleak',
+                      'deadlock', 'offbyone', 'sqlinjection', 'xss', 'bufferoverflow',
+                      'infiniteloop', 'heisenbug'];
+
+    for (const bugType of bugTypes) {
+      if (monsterId.includes(bugType) || this.monster.name.toLowerCase().includes(bugType)) {
+        return `bug-${bugType}`;
+      }
+    }
+
+    // Fallback to first available bug sprite
+    return 'bug-nullpointer';
+  }
 
   /**
    * Select the correct monster for this chapter + stage.
@@ -774,6 +888,82 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // =========================================================================
+  // Minigame
+  // =========================================================================
+
+  /**
+   * Trigger the Merge Conflict minigame
+   * Called when boss enters a new phase
+   */
+  private triggerMinigame() {
+    if (!this.monster || !this.enemyAI) return;
+
+    this.minigameActive = true;
+
+    // Determine difficulty based on boss phase
+    const difficulty = this.enemyAI.phase;
+
+    // Launch minigame as overlay
+    this.scene.launch('MinigameScene', {
+      returnScene: 'BattleScene',
+      difficulty: difficulty,
+    });
+
+    // Pause this scene while minigame is active
+    this.scene.pause();
+
+    // Listen for minigame completion
+    this.scene.get('MinigameScene').events.once('shutdown', () => {
+      this.handleMinigameResult();
+    });
+  }
+
+  /**
+   * Handle minigame result and apply effects
+   */
+  private handleMinigameResult() {
+    if (!this.monster || !this.player) return;
+
+    this.minigameActive = false;
+
+    // Read result from minigame scene data
+    const minigameScene = this.scene.get('MinigameScene');
+    const success = minigameScene.data.get('onSuccess') as boolean;
+
+    if (success) {
+      // Success: Deal 30% of boss max HP as damage
+      const damage = Math.floor(this.monster.stats.HP * 0.3);
+      this.monster.currentHP = Math.max(0, this.monster.currentHP - damage);
+
+      this.turnText?.setText(`Shield Break! ${damage} damage to ${this.monster.name}!`);
+
+      // Check if boss died
+      if (this.monster.currentHP <= 0) {
+        this.updateUI();
+        this.time.delayedCall(1500, () => this.handleVictory());
+        return;
+      }
+    } else {
+      // Failure: Boss heals 10% of max HP
+      const healAmount = Math.floor(this.monster.stats.HP * 0.1);
+      this.monster.currentHP = Math.min(this.monster.stats.HP, this.monster.currentHP + healAmount);
+
+      this.turnText?.setText(`${this.monster.name} heals ${healAmount} HP!`);
+    }
+
+    this.updateUI();
+
+    // Continue with boss turn after delay
+    this.time.delayedCall(1500, () => {
+      // Get the action again since time has passed
+      if (this.enemyAI) {
+        const action = this.enemyAI.decideAction();
+        this.executeEnemyAction(action);
+      }
+    });
+  }
+
+  // =========================================================================
   // Monster Turn
   // =========================================================================
 
@@ -797,13 +987,21 @@ export class BattleScene extends Phaser.Scene {
 
     // Check for boss phase change
     const isBoss = this.monster.type === 'boss';
-    const phaseDesc = isBoss ? this.enemyAI.getPhaseDescription() : '';
-    const phaseChanged = isBoss && this.enemyAI.phase > 1 && this.enemyAI.turns === 1;
+    const currentPhase = this.enemyAI.phase;
+    const phaseChanged = isBoss && currentPhase > this.lastBossPhase;
 
     if (phaseChanged) {
-      this.turnText?.setText(`WARNING: ${this.monster.name} enters ${phaseDesc}!`);
-      this.updateUI();
-      this.time.delayedCall(1500, () => this.executeEnemyAction(action));
+      // Update tracked phase
+      this.lastBossPhase = currentPhase;
+
+      // Apply phase visual effects
+      this.applyBossPhaseVisuals(currentPhase);
+
+      // Trigger minigame for boss phase change
+      this.time.delayedCall(2500, () => {
+        this.triggerMinigame();
+        // Note: minigame will call executeEnemyAction via handleMinigameResult
+      });
     } else {
       this.executeEnemyAction(action);
     }
@@ -1295,24 +1493,47 @@ export class BattleScene extends Phaser.Scene {
    * @param wasVictory - true if player won, false if fled/skipped
    */
   private advanceToNextStage(wasVictory: boolean) {
-    if (!this.progressionSystem || !this.sceneData || !this.techDebt) return;
+    if (!this.progressionSystem || !this.sceneData || !this.techDebt || !this.eventSystem) return;
 
     const nextChapter = this.progressionSystem.getCurrentChapter();
     const nextStage = this.progressionSystem.getCurrentStage();
     const battleTime = Math.floor((Date.now() - this.battleStartTime) / 1000);
     const totalPlayTime = (this.sceneData.playTime ?? 0) + battleTime;
 
-    // Start next battle with carry-over data
-    this.scene.start('BattleScene', {
+    // Prepare next battle data
+    const nextBattleData: BattleSceneData = {
       playerClass: this.sceneData.playerClass,
       chapter: nextChapter,
       stage: nextStage,
-      player: wasVictory ? this.player : this.player, // always carry over
+      player: this.player ?? undefined,
       techDebtCarry: this.techDebt.current,
       progression: this.progressionSystem,
       stagesCompleted: this.stagesCompleted,
       playTime: totalPlayTime,
-    } as BattleSceneData);
+    };
+
+    // Roll for random event (only on victory)
+    if (wasVictory) {
+      const eventResult = this.eventSystem.rollEvent();
+
+      if (eventResult.event) {
+        // Store event result for application in next battle
+        this.eventSystem.setLastEventResult(eventResult);
+
+        // Transition to EventScene, which will then go to BattleScene
+        const eventData: EventSceneData = {
+          event: eventResult.event,
+          returnScene: 'BattleScene',
+          returnData: nextBattleData,
+        };
+
+        this.scene.start('EventScene', eventData);
+        return;
+      }
+    }
+
+    // No event triggered, go directly to next battle
+    this.scene.start('BattleScene', nextBattleData);
   }
 
   /**
@@ -1371,6 +1592,94 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // =========================================================================
+  // Boss Phase Visuals
+  // =========================================================================
+
+  /**
+   * Apply visual effects when boss transitions to a new phase.
+   */
+  private applyBossPhaseVisuals(newPhase: number) {
+    if (!this.bossSprite || !this.monster) return;
+
+    const phaseKey = newPhase as 1 | 2 | 3 | 4;
+    const config = this.BOSS_PHASE_CONFIG[phaseKey];
+    if (!config) return;
+
+    // 1. Camera shake based on phase intensity
+    this.cameras.main.shake(300, config.shakeIntensity / 1000);
+
+    // 2. Screen flash with phase color
+    this.cameras.main.flash(400,
+      (config.tint >> 16) & 0xFF,
+      (config.tint >> 8) & 0xFF,
+      config.tint & 0xFF,
+      false
+    );
+
+    // 3. Tween boss sprite color/tint
+    this.tweens.add({
+      targets: this.bossSprite,
+      fillColor: config.tint,
+      duration: 800,
+      ease: 'Power2',
+    });
+
+    // 4. Scale boss sprite up then back (phase transition animation)
+    this.tweens.add({
+      targets: this.bossSprite,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      duration: 400,
+      yoyo: true,
+      ease: 'Back.easeOut',
+    });
+
+    // 5. Update overlay with phase color
+    if (this.bossPhaseOverlay) {
+      this.tweens.add({
+        targets: this.bossPhaseOverlay,
+        fillColor: config.tint,
+        alpha: config.overlayAlpha,
+        duration: 600,
+      });
+    }
+
+    // 6. Show random boss dialogue
+    const dialogue = config.dialogues[Math.floor(Math.random() * config.dialogues.length)];
+    if (this.bossDialogueText && dialogue) {
+      this.bossDialogueText.setText(dialogue);
+      this.bossDialogueText.setVisible(true);
+      this.bossDialogueText.setAlpha(0);
+
+      // Fade in dialogue
+      this.tweens.add({
+        targets: this.bossDialogueText,
+        alpha: 1,
+        duration: 300,
+      });
+
+      // Fade out after 2 seconds
+      this.time.delayedCall(2000, () => {
+        if (this.bossDialogueText) {
+          this.tweens.add({
+            targets: this.bossDialogueText,
+            alpha: 0,
+            duration: 300,
+            onComplete: () => {
+              this.bossDialogueText?.setVisible(false);
+            },
+          });
+        }
+      });
+    }
+
+    // 7. Show phase warning text
+    const phaseDesc = this.enemyAI?.getPhaseDescription() ?? '';
+    this.turnText?.setText(`WARNING: ${this.monster.name} enters ${phaseDesc}!`);
+    this.updateUI();
+  }
+
+  // =========================================================================
   // UI
   // =========================================================================
 
@@ -1395,13 +1704,24 @@ export class BattleScene extends Phaser.Scene {
 
     // ---- Monster info ----
     const isBoss = this.monster.type === 'boss';
+    const currentPhase = this.enemyAI?.phase ?? 1;
     const phaseText = isBoss && this.enemyAI
-      ? `\nPhase ${this.enemyAI.phase}/4`
+      ? `\nPhase ${currentPhase}/4`
       : '';
+
+    // Color HP text based on current phase
+    let hpColor = '#ef4444'; // default red
+    if (isBoss) {
+      const phaseConfig = this.BOSS_PHASE_CONFIG[currentPhase as 1 | 2 | 3 | 4];
+      if (phaseConfig) {
+        hpColor = '#' + phaseConfig.tint.toString(16).padStart(6, '0');
+      }
+    }
 
     this.monsterHPText?.setText(
       `${this.monster.name}\nHP: ${this.monster.currentHP}/${this.monster.stats.HP}${phaseText}`
     );
+    this.monsterHPText?.setColor(hpColor);
 
     // ---- Buff display ----
     if (this.buffText) {
@@ -1434,6 +1754,39 @@ export class BattleScene extends Phaser.Scene {
 
     if (!this.turnText?.text) {
       this.turnText?.setText('Your turn! Choose an action.');
+    }
+  }
+
+  /**
+   * Continuous update loop for boss phase visual effects.
+   */
+  update(time: number, delta: number): void {
+    if (!this.bossSprite || !this.monster || this.monster.type !== 'boss' || !this.enemyAI) {
+      return;
+    }
+
+    const currentPhase = this.enemyAI.phase;
+
+    // Phase 3+: Apply continuous visual effects
+    if (currentPhase >= 3) {
+      // Calculate oscillating alpha for red pulse effect
+      const pulseSpeed = currentPhase === 4 ? 0.008 : 0.004; // Phase 4 pulses faster
+      const pulseAlpha = 0.3 + Math.sin(time * pulseSpeed) * 0.2; // Oscillate between 0.1 and 0.5
+
+      // Apply alpha pulse to boss sprite
+      this.bossSprite.setAlpha(pulseAlpha);
+
+      // Phase 4: Add slight position jitter
+      if (currentPhase === 4) {
+        const jitterX = (Math.random() - 0.5) * 2; // -1 to +1 pixel
+        const jitterY = (Math.random() - 0.5) * 2;
+        const baseX = this.cameras.main.width - 150;
+        const baseY = 300;
+        this.bossSprite.setPosition(baseX + jitterX, baseY + jitterY);
+      }
+    } else {
+      // Phase 1-2: Normal opacity
+      this.bossSprite.setAlpha(1);
     }
   }
 }

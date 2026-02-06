@@ -1,0 +1,124 @@
+{
+  "snippets": [
+    {
+      "id": "snippet-01",
+      "correct": "if (user !== null) {\n  return user.name;\n}",
+      "wrong": "if (user != null) {\n  return user.Name;\n}",
+      "hint": "Use strict equality and correct property casing"
+    },
+    {
+      "id": "snippet-02",
+      "correct": "for (let i = 0; i < arr.length; i++) {\n  console.log(arr[i]);\n}",
+      "wrong": "for (let i = 0; i <= arr.length; i++) {\n  console.log(arr[i]);\n}",
+      "hint": "Watch out for off-by-one errors in loops"
+    },
+    {
+      "id": "snippet-03",
+      "correct": "const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId]);",
+      "wrong": "const query = `SELECT * FROM users WHERE id = ${userId}`;\ndb.query(query);",
+      "hint": "Always use parameterized queries to prevent SQL injection"
+    },
+    {
+      "id": "snippet-04",
+      "correct": "const output = escapeHtml(userInput);\ndocument.innerHTML = output;",
+      "wrong": "const output = userInput;\ndocument.innerHTML = output;",
+      "hint": "Escape user input before rendering to prevent XSS"
+    },
+    {
+      "id": "snippet-05",
+      "correct": "async function fetchData() {\n  try {\n    return await api.get('/data');\n  } catch (err) {\n    console.error(err);\n  }\n}",
+      "wrong": "async function fetchData() {\n  return await api.get('/data');\n}",
+      "hint": "Always handle errors in async functions"
+    },
+    {
+      "id": "snippet-06",
+      "correct": "const handleClick = () => {\n  console.log('clicked');\n};\nbutton.addEventListener('click', handleClick);\nbutton.removeEventListener('click', handleClick);",
+      "wrong": "const handleClick = () => {\n  console.log('clicked');\n};\nbutton.addEventListener('click', handleClick);",
+      "hint": "Remove event listeners to prevent memory leaks"
+    },
+    {
+      "id": "snippet-07",
+      "correct": "let counter = 0;\nsetTimeout(() => {\n  counter++;\n}, 1000);",
+      "wrong": "var counter = 0;\nsetTimeout(() => {\n  counter++;\n}, 1000);",
+      "hint": "Use let or const instead of var for proper scoping"
+    },
+    {
+      "id": "snippet-08",
+      "correct": "const result = await Promise.all([\n  fetch('/api/users'),\n  fetch('/api/posts')\n]);",
+      "wrong": "const result = [\n  await fetch('/api/users'),\n  await fetch('/api/posts')\n];",
+      "hint": "Use Promise.all for parallel async operations"
+    },
+    {
+      "id": "snippet-09",
+      "correct": "if (typeof value === 'undefined') {\n  value = defaultValue;\n}",
+      "wrong": "if (value == undefined) {\n  value = defaultValue;\n}",
+      "hint": "Use typeof check for undefined values"
+    },
+    {
+      "id": "snippet-10",
+      "correct": "const nums = [1, 2, 3];\nconst doubled = nums.map(n => n * 2);",
+      "wrong": "const nums = [1, 2, 3];\nconst doubled = [];\nfor (let i = 0; i < nums.length; i++) {\n  doubled[i] = nums[i] * 2;\n}",
+      "hint": "Use functional array methods for cleaner code"
+    },
+    {
+      "id": "snippet-11",
+      "correct": "const mutex = new Mutex();\nawait mutex.acquire();\ntry {\n  sharedResource++;\n} finally {\n  mutex.release();\n}",
+      "wrong": "sharedResource++;",
+      "hint": "Use locks to prevent race conditions with shared state"
+    },
+    {
+      "id": "snippet-12",
+      "correct": "const obj = { a: 1, b: 2 };\nconst copy = { ...obj };",
+      "wrong": "const obj = { a: 1, b: 2 };\nconst copy = obj;",
+      "hint": "Clone objects instead of copying references"
+    },
+    {
+      "id": "snippet-13",
+      "correct": "switch (status) {\n  case 'active':\n    return true;\n  case 'inactive':\n    return false;\n  default:\n    throw new Error('Unknown status');\n}",
+      "wrong": "switch (status) {\n  case 'active':\n    return true;\n  case 'inactive':\n    return false;\n}",
+      "hint": "Always include a default case in switch statements"
+    },
+    {
+      "id": "snippet-14",
+      "correct": "const value = parseInt(input, 10);",
+      "wrong": "const value = parseInt(input);",
+      "hint": "Always specify radix parameter in parseInt"
+    },
+    {
+      "id": "snippet-15",
+      "correct": "class Component {\n  constructor() {\n    this.interval = null;\n  }\n  componentWillUnmount() {\n    clearInterval(this.interval);\n  }\n}",
+      "wrong": "class Component {\n  constructor() {\n    this.interval = setInterval(() => {\n      this.update();\n    }, 1000);\n  }\n}",
+      "hint": "Clean up timers in component lifecycle methods"
+    },
+    {
+      "id": "snippet-16",
+      "correct": "const isEmpty = arr.length === 0;",
+      "wrong": "const isEmpty = !arr.length;",
+      "hint": "Use explicit comparisons for better readability"
+    },
+    {
+      "id": "snippet-17",
+      "correct": "try {\n  const data = JSON.parse(input);\n  processData(data);\n} catch (error) {\n  console.error('Invalid JSON:', error);\n}",
+      "wrong": "const data = JSON.parse(input);\nprocessData(data);",
+      "hint": "Always wrap JSON.parse in try-catch blocks"
+    },
+    {
+      "id": "snippet-18",
+      "correct": "const result = items.find(item => item.id === targetId);",
+      "wrong": "let result = null;\nfor (let i = 0; i < items.length; i++) {\n  if (items[i].id === targetId) {\n    result = items[i];\n  }\n}",
+      "hint": "Use array methods like find() instead of manual loops"
+    },
+    {
+      "id": "snippet-19",
+      "correct": "function validateEmail(email) {\n  const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  return regex.test(email);\n}",
+      "wrong": "function validateEmail(email) {\n  return email.includes('@');\n}",
+      "hint": "Use proper validation patterns for email addresses"
+    },
+    {
+      "id": "snippet-20",
+      "correct": "const config = Object.freeze({\n  API_URL: 'https://api.example.com',\n  TIMEOUT: 5000\n});",
+      "wrong": "const config = {\n  API_URL: 'https://api.example.com',\n  TIMEOUT: 5000\n};",
+      "hint": "Freeze constant configuration objects to prevent mutation"
+    }
+  ]
+}
