@@ -267,8 +267,8 @@ export class EndingScene extends Phaser.Scene {
    * Static method to determine ending type based on Tech Debt
    */
   static determineEnding(techDebt: number, allWarningsKilled: boolean, allStagesCleared: boolean): EndingType {
-    // Secret ending: Tech Debt < 20 + all stages cleared
-    if (techDebt < 20 && allStagesCleared) {
+    // Secret ending: Tech Debt 0 + all warnings killed + all stages cleared
+    if (techDebt === 0 && allWarningsKilled && allStagesCleared) {
       return 'secret';
     }
 

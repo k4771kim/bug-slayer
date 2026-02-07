@@ -46,6 +46,7 @@ export interface GameProgress {
   totalTechDebt: number;
   playTime: number;
   lastPlayed: Date;
+  classUnlocks: Map<string, boolean>; // classId -> unlocked
 }
 
 export interface SaveData {
@@ -64,6 +65,7 @@ export interface SaveData {
     totalDefeated: number;
     totalTechDebt: number;
     playTime: number;
+    classUnlocks?: Array<[string, boolean]>;
   };
 }
 
@@ -105,6 +107,12 @@ export class ProgressionSystem {
       totalTechDebt: 0,
       playTime: 0,
       lastPlayed: new Date(),
+      classUnlocks: new Map([
+        ['gpu-warlock', false],
+        ['cat-summoner', false],
+        ['code-ninja', false],
+        ['light-mage', false],
+      ]),
     };
   }
 
@@ -284,6 +292,68 @@ export class ProgressionSystem {
   }
 
   /**
+   * Check if a hidden class is unlocked
+   */
+  isClassUnlocked(classId: string): boolean {
+    return this.progress.classUnlocks.get(classId) ?? false;
+  }
+
+  /**
+   * Unlock a hidden class
+   */
+  unlockClass(classId: string): void {
+    this.progress.classUnlocks.set(classId, true);
+  }
+
+  /**
+   * Get all unlocked class IDs
+   */
+  getUnlockedClasses(): string[] {
+    return Array.from(this.progress.classUnlocks.entries())
+      .filter(([_, unlocked]) => unlocked)
+      .map(([id, _]) => id);
+  }
+
+  /**
+   * Check unlock conditions after stage completion
+   */
+  checkClassUnlocks(battleStats: { damageDealt: number; turnsUsed: number; chapterTime?: number }): string[] {
+    const newlyUnlocked: string[] = [];
+
+    // GPU Warlock: Deal 2x damage in 3 turns (high burst damage)
+    if (!this.isClassUnlocked('gpu-warlock') && battleStats.damageDealt > 200 && battleStats.turnsUsed <= 3) {
+      this.unlockClass('gpu-warlock');
+      newlyUnlocked.push('gpu-warlock');
+    }
+
+    // Cat Summoner: Play for 1 hour (3600 seconds)
+    if (!this.isClassUnlocked('cat-summoner') && this.progress.playTime >= 3600) {
+      this.unlockClass('cat-summoner');
+      newlyUnlocked.push('cat-summoner');
+    }
+
+    // Code Ninja: Clear Chapter 1 in under 5 minutes (300 seconds)
+    if (!this.isClassUnlocked('code-ninja') && battleStats.chapterTime !== undefined && battleStats.chapterTime < 300) {
+      const ch1 = this.progress.chapters.get(1);
+      if (ch1?.completed) {
+        this.unlockClass('code-ninja');
+        newlyUnlocked.push('code-ninja');
+      }
+    }
+
+    // Light Mage: Complete any chapter with Tech Debt 0
+    if (!this.isClassUnlocked('light-mage') && this.progress.totalTechDebt === 0) {
+      const anyChapterComplete = Array.from(this.progress.chapters.values()).some(ch => ch.completed);
+      if (anyChapterComplete) {
+        this.unlockClass('light-mage');
+        newlyUnlocked.push('light-mage');
+      }
+    }
+
+    return newlyUnlocked;
+  }
+
+  /**
    * Reset progress to beginning
    */
   resetProgress(): void {
@@ -309,6 +379,7 @@ export class ProgressionSystem {
           totalDefeated: this.progress.totalDefeated,
           totalTechDebt: this.progress.totalTechDebt,
           playTime: this.progress.playTime,
+          classUnlocks: Array.from(this.progress.classUnlocks.entries()),
         },
       };
 
@@ -354,6 +425,14 @@ export class ProgressionSystem {
       data.progress.chapters.forEach(({ chapter, data }) => {
         this.progress.chapters.set(chapter as Chapter, data);
       });
+
+      // Restore class unlocks
+      if (data.progress.classUnlocks) {
+        this.progress.classUnlocks.clear();
+        data.progress.classUnlocks.forEach(([id, unlocked]: [string, boolean]) => {
+          this.progress.classUnlocks.set(id, unlocked);
+        });
+      }
 
       this.progress.lastPlayed = new Date(data.timestamp);
 

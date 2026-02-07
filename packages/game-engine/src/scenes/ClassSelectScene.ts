@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { getAllClassesInfo, createCharacter } from '../systems/CharacterFactory';
+import { ProgressionSystem } from '../systems/ProgressionSystem';
 
 /**
  * ClassSelectScene - Choose your character class
@@ -7,12 +8,16 @@ import { getAllClassesInfo, createCharacter } from '../systems/CharacterFactory'
  */
 export class ClassSelectScene extends Phaser.Scene {
   private isFirstGame = true; // TODO: Check save data to determine if tutorial needed
+  private progression = new ProgressionSystem();
 
   constructor() {
     super({ key: 'ClassSelectScene' });
   }
 
   create() {
+    // Load progression to check class unlocks
+    this.progression.loadProgress();
+
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
@@ -44,7 +49,7 @@ export class ClassSelectScene extends Phaser.Scene {
     // Row 1: Basic classes
     basicClasses.forEach((cls, index) => {
       const x = startX + (cardWidth + gap) * index;
-      this.createClassCard(x, row1Y, cardWidth, cardHeight, cls, false);
+      this.createClassCard(x, row1Y, cardWidth, cardHeight, cls, false, false);
     });
 
     // "HIDDEN CLASSES" label above row 2
@@ -56,7 +61,8 @@ export class ClassSelectScene extends Phaser.Scene {
     // Row 2: Hidden classes
     hiddenClasses.forEach((cls, index) => {
       const x = startX + (cardWidth + gap) * index;
-      this.createClassCard(x, row2Y, cardWidth, cardHeight, cls, true);
+      const isLocked = !this.progression.isClassUnlocked(cls.id);
+      this.createClassCard(x, row2Y, cardWidth, cardHeight, cls, true, isLocked);
     });
 
     // Description area
@@ -76,7 +82,44 @@ export class ClassSelectScene extends Phaser.Scene {
     cardHeight: number,
     cls: ReturnType<typeof getAllClassesInfo>[number],
     isHidden: boolean,
+    isLocked: boolean,
   ) {
+    if (isLocked) {
+      // Locked card - gray, non-interactive
+      const lockedColor = 0x585858;
+      const card = this.add.rectangle(x, y, cardWidth, cardHeight, lockedColor, 0.15);
+      card.setStrokeStyle(2, lockedColor);
+
+      // Lock icon
+      this.add.text(x, y - 50, '🔒', {
+        fontSize: '24px',
+      }).setOrigin(0.5);
+
+      // Class name hidden
+      this.add.text(x, y - 20, '???', {
+        fontSize: '18px',
+        color: '#585858',
+      }).setOrigin(0.5);
+
+      // Locked label
+      this.add.text(x, y + 10, 'LOCKED', {
+        fontSize: '14px',
+        color: '#585858',
+      }).setOrigin(0.5);
+
+      // Unlock condition hint
+      if (cls.unlockCondition) {
+        this.add.text(x, y + 40, cls.unlockCondition.description, {
+          fontSize: '9px',
+          color: '#585858',
+          wordWrap: { width: cardWidth - 10 },
+          align: 'center',
+        }).setOrigin(0.5);
+      }
+
+      return; // Don't make it interactive
+    }
+
     const colorInt = parseInt(cls.color.replace('#', '0x'), 16);
     const baseAlpha = isHidden ? 0.15 : 0.2;
     const hoverAlpha = isHidden ? 0.3 : 0.4;
