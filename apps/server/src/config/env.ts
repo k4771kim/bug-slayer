@@ -10,7 +10,7 @@ dotenv.config();
  */
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().min(1),
   DATABASE_POOL_SIZE: z.string().default('10'),
 
   // JWT Authentication

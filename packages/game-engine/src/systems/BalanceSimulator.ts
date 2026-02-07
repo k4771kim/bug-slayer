@@ -153,8 +153,9 @@ export class BalanceSimulator {
       const bugData = monsters[Math.floor(Math.random() * monsters.length)];
       if (!bugData) continue;
 
-      // Create simulation entities
-      const player = this.createSimPlayer(classId, 1);
+      // Create simulation entities (scale player level by chapter)
+      const playerLevel = chapter === 1 ? 1 : 5;
+      const player = this.createSimPlayer(classId, playerLevel);
       const monster = this.createSimMonster(bugData);
 
       // Run battle
@@ -272,8 +273,9 @@ export class BalanceSimulator {
         skill.currentCooldown = skill.cooldown;
         log.skillsUsed.push(skill.name);
 
-        // Calculate damage
-        const damage = this.calculateDamage(player, monster, skill.baseDamage);
+        // Calculate damage (scale skill baseDamage by ATK, matching BattleScene)
+        const scaledBaseDamage = Math.floor(player.ATK * (skill.baseDamage / 100));
+        const damage = this.calculateDamage(player, monster, scaledBaseDamage);
         monster.currentHP -= damage;
         log.totalDamageDealt += damage;
 
@@ -337,10 +339,9 @@ export class BalanceSimulator {
     defender: SimPlayer | SimMonster,
     baseAtk: number
   ): number {
-    // Base damage calculation
-    const baseDmg = baseAtk - (defender.DEF * 0.3);
+    // Base damage calculation (matching shared calculateDamage formula)
     const defReduction = 100 / (100 + defender.DEF * 0.7);
-    let finalDmg = Math.max(1, Math.floor(baseDmg * defReduction));
+    let finalDmg = Math.max(1, Math.floor(baseAtk * defReduction));
 
     // Focus bonus (player only)
     if ('focusActive' in attacker && attacker.focusActive) {
