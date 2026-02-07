@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { SoundManager } from '../systems/SoundManager';
 
 /**
  * Deploy Roulette Scene Data Interface
@@ -65,6 +66,7 @@ export class DeployRouletteScene extends Phaser.Scene {
   private currentOutcome?: RouletteOutcome;
   private spinning = false;
   private currentSlotIndex = 0;
+  private soundManager?: SoundManager;
 
   private rouletteSlots: Phaser.GameObjects.Container[] = [];
   private deployButton?: Phaser.GameObjects.Container;
@@ -85,6 +87,9 @@ export class DeployRouletteScene extends Phaser.Scene {
   create(): void {
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
+
+    // Initialize sound
+    this.soundManager = new SoundManager(this);
 
     // Background
     this.add.rectangle(w / 2, h / 2, w, h, C.bg);
@@ -234,6 +239,7 @@ export class DeployRouletteScene extends Phaser.Scene {
     });
     bg.on('pointerdown', () => {
       if (!this.spinning) {
+        this.soundManager?.playSFX('sfx-click');
         this.startSpin();
       }
     });
@@ -267,6 +273,7 @@ export class DeployRouletteScene extends Phaser.Scene {
 
     // Highlight current slot
     this.highlightSlot(this.currentSlotIndex, false);
+    this.soundManager?.playSFX('sfx-click');
 
     spinCount++;
 
@@ -334,6 +341,17 @@ export class DeployRouletteScene extends Phaser.Scene {
     const slot = SLOTS.find(s => s.outcome === this.currentOutcome)!;
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
+
+    // Play outcome sound
+    if (this.currentOutcome === 'SUCCESS') {
+      this.soundManager?.playSFX('sfx-victory');
+    } else if (this.currentOutcome === 'SERVER_CRASH') {
+      this.soundManager?.playSFX('sfx-defeat');
+    } else if (this.currentOutcome === 'AWS_BILL') {
+      this.soundManager?.playSFX('sfx-debuff');
+    } else {
+      this.soundManager?.playSFX('sfx-buff');
+    }
 
     // Apply outcome effects
     this.applyOutcome(this.currentOutcome);
@@ -407,7 +425,10 @@ export class DeployRouletteScene extends Phaser.Scene {
 
     btnBg.on('pointerover', () => btnBg.setFillStyle(C.blueHex, 1));
     btnBg.on('pointerout', () => btnBg.setFillStyle(C.blueHex, 0.8));
-    btnBg.on('pointerdown', () => this.exitScene());
+    btnBg.on('pointerdown', () => {
+      this.soundManager?.playSFX('sfx-click');
+      this.exitScene();
+    });
 
     // Entrance animation
     container.setAlpha(0).setScale(0.8);
