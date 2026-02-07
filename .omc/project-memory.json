@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1770358864356,
+  "lastScanned": 1770466673136,
   "projectRoot": "/home/claude/Claude/ai-gdd/bug-slayer",
   "techStack": {
     "languages": [
@@ -53,341 +53,110 @@
       "apps/*",
       "packages/*"
     ],
-    "mainDirectories": [],
+    "mainDirectories": [
+      "assets",
+      "docs"
+    ],
     "gitBranches": null
   },
   "customNotes": [],
   "directoryMap": {
+    "_next": {
+      "path": "_next",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1770466673087,
+      "keyFiles": []
+    },
     "apps": {
       "path": "apps",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1770358864347,
+      "lastAccessed": 1770466673087,
+      "keyFiles": []
+    },
+    "assets": {
+      "path": "assets",
+      "purpose": "Static assets",
+      "fileCount": 0,
+      "lastAccessed": 1770466673088,
       "keyFiles": []
     },
     "data": {
       "path": "data",
       "purpose": "Data files",
       "fileCount": 0,
-      "lastAccessed": 1770358864347,
+      "lastAccessed": 1770466673088,
       "keyFiles": []
     },
-    "dist": {
-      "path": "dist",
-      "purpose": "Distribution/build output",
-      "fileCount": 1,
-      "lastAccessed": 1770358864347,
-      "keyFiles": [
-        "tsconfig.tsbuildinfo"
-      ]
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 2,
+      "lastAccessed": 1770466673088,
+      "keyFiles": []
     },
     "packages": {
       "path": "packages",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1770358864353,
+      "lastAccessed": 1770466673088,
       "keyFiles": []
     }
   },
   "hotPaths": [
     {
-      "path": "packages/game-engine/src/scenes/BattleScene.ts",
-      "accessCount": 24,
-      "lastAccessed": 1770434365410,
+      "path": "packages/game-engine/src/systems/BalanceSimulator.ts",
+      "accessCount": 8,
+      "lastAccessed": 1770466787407,
       "type": "file"
     },
     {
-      "path": "packages/game-engine/src/index.ts",
-      "accessCount": 17,
-      "lastAccessed": 1770386692124,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/data/bugs.json",
-      "accessCount": 11,
-      "lastAccessed": 1770421581514,
-      "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 10,
-      "lastAccessed": 1770434332427,
-      "type": "directory"
-    },
-    {
-      "path": "packages/game-engine/src",
-      "accessCount": 7,
-      "lastAccessed": 1770384993623,
-      "type": "directory"
-    },
-    {
-      "path": "apps/web/src/app/layout.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1770385102586,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/scenes/ClassSelectScene.ts",
-      "accessCount": 7,
-      "lastAccessed": 1770386569919,
-      "type": "file"
-    },
-    {
-      "path": "apps/server/prisma/schema.prisma",
-      "accessCount": 7,
-      "lastAccessed": 1770421056401,
-      "type": "file"
-    },
-    {
-      "path": "packages/shared/src/types/index.ts",
-      "accessCount": 7,
-      "lastAccessed": 1770434287987,
-      "type": "file"
-    },
-    {
-      "path": "apps/web/src/app/game/page.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1770420971938,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/data/palette.json",
-      "accessCount": 5,
-      "lastAccessed": 1770386484383,
-      "type": "file"
-    },
-    {
-      "path": "apps/web/src/components/PhaserGame.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1770387038056,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/loaders/DataLoader.ts",
-      "accessCount": 5,
-      "lastAccessed": 1770387086237,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/data/skills.json",
-      "accessCount": 4,
-      "lastAccessed": 1770386512065,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/systems/CharacterFactory.ts",
-      "accessCount": 4,
-      "lastAccessed": 1770386543520,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/scenes/BootScene.ts",
-      "accessCount": 4,
-      "lastAccessed": 1770386688379,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/systems/ItemSystem.ts",
+      "path": "apps/server/src/services/gameService.ts",
       "accessCount": 3,
-      "lastAccessed": 1770367614721,
+      "lastAccessed": 1770474256474,
       "type": "file"
     },
     {
-      "path": "packages/game-engine/src/systems/TechDebt.ts",
-      "accessCount": 3,
-      "lastAccessed": 1770367615235,
-      "type": "file"
-    },
-    {
-      "path": "apps/web/src/app/page.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1770384988540,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/data/classes.json",
-      "accessCount": 3,
-      "lastAccessed": 1770386511606,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/systems/EnemyAI.ts",
-      "accessCount": 3,
-      "lastAccessed": 1770386531326,
-      "type": "file"
-    },
-    {
-      "path": "apps/server/src/index.ts",
-      "accessCount": 3,
-      "lastAccessed": 1770387074660,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/systems/LevelUpSystem.ts",
-      "accessCount": 3,
-      "lastAccessed": 1770434272319,
-      "type": "file"
-    },
-    {
-      "path": "packages/shared",
-      "accessCount": 3,
-      "lastAccessed": 1770434280321,
-      "type": "directory"
-    },
-    {
-      "path": "packages/game-engine/src/systems/ProgressionSystem.ts",
+      "path": "apps/web/next.config.js",
       "accessCount": 2,
-      "lastAccessed": 1770367245323,
+      "lastAccessed": 1770466706198,
       "type": "file"
     },
     {
-      "path": "packages/game-engine/src/scenes/EndingScene.ts",
+      "path": "packages/shared/src/constants/index.ts",
       "accessCount": 2,
-      "lastAccessed": 1770367258064,
+      "lastAccessed": 1770466711726,
       "type": "file"
     },
     {
-      "path": "apps/server/package.json",
+      "path": "apps/server/src/middleware/errorHandler.ts",
       "accessCount": 2,
-      "lastAccessed": 1770374845913,
+      "lastAccessed": 1770474253739,
       "type": "file"
     },
     {
-      "path": "apps/web/src/stores/useAuthStore.ts",
+      "path": "apps/server/Dockerfile",
       "accessCount": 2,
-      "lastAccessed": 1770374854548,
-      "type": "file"
-    },
-    {
-      "path": "apps/server/.env",
-      "accessCount": 2,
-      "lastAccessed": 1770374916506,
+      "lastAccessed": 1770474406379,
       "type": "file"
     },
     {
       "path": "apps/web/package.json",
-      "accessCount": 2,
-      "lastAccessed": 1770384978224,
+      "accessCount": 1,
+      "lastAccessed": 1770472036911,
       "type": "file"
     },
     {
-      "path": "apps/web/src",
-      "accessCount": 2,
-      "lastAccessed": 1770385054861,
-      "type": "directory"
-    },
-    {
-      "path": "packages/game-engine/data/items.json",
-      "accessCount": 2,
-      "lastAccessed": 1770386513125,
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1770472049865,
       "type": "file"
     },
     {
-      "path": "packages/game-engine/src/scenes/DungeonSelectScene.ts",
-      "accessCount": 2,
-      "lastAccessed": 1770386594282,
-      "type": "file"
-    },
-    {
-      "path": "packages",
-      "accessCount": 2,
-      "lastAccessed": 1770434282521,
-      "type": "directory"
-    },
-    {
-      "path": "packages/shared/src",
+      "path": "railway.toml",
       "accessCount": 1,
-      "lastAccessed": 1770366731130,
-      "type": "directory"
-    },
-    {
-      "path": "packages/game-engine/data",
-      "accessCount": 1,
-      "lastAccessed": 1770366731714,
-      "type": "directory"
-    },
-    {
-      "path": "apps/server/src",
-      "accessCount": 1,
-      "lastAccessed": 1770366733115,
-      "type": "directory"
-    },
-    {
-      "path": "apps/server/src/routes/auth.ts",
-      "accessCount": 1,
-      "lastAccessed": 1770366755495,
-      "type": "file"
-    },
-    {
-      "path": "apps/server",
-      "accessCount": 1,
-      "lastAccessed": 1770366782795,
-      "type": "directory"
-    },
-    {
-      "path": "apps",
-      "accessCount": 1,
-      "lastAccessed": 1770366783680,
-      "type": "directory"
-    },
-    {
-      "path": "packages/game-engine/src/types/index.ts",
-      "accessCount": 1,
-      "lastAccessed": 1770366805171,
-      "type": "file"
-    },
-    {
-      "path": "package.json",
-      "accessCount": 1,
-      "lastAccessed": 1770366823821,
-      "type": "directory"
-    },
-    {
-      "path": "apps/web/src/app/login/page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1770374847050,
-      "type": "file"
-    },
-    {
-      "path": "apps/web/src/lib/api-client.ts",
-      "accessCount": 1,
-      "lastAccessed": 1770374855142,
-      "type": "file"
-    },
-    {
-      "path": "apps/server/src/config/env.ts",
-      "accessCount": 1,
-      "lastAccessed": 1770374856173,
-      "type": "file"
-    },
-    {
-      "path": "apps/web/public/manifest.json",
-      "accessCount": 1,
-      "lastAccessed": 1770385047215,
-      "type": "file"
-    },
-    {
-      "path": "apps/web",
-      "accessCount": 1,
-      "lastAccessed": 1770385050034,
-      "type": "directory"
-    },
-    {
-      "path": "apps/web/public/icons/icon.svg",
-      "accessCount": 1,
-      "lastAccessed": 1770385059453,
-      "type": "file"
-    },
-    {
-      "path": "apps/web/public/sw.js",
-      "accessCount": 1,
-      "lastAccessed": 1770385068356,
-      "type": "file"
-    },
-    {
-      "path": "packages/game-engine/src/scenes/TutorialScene.ts",
-      "accessCount": 1,
-      "lastAccessed": 1770386528277,
+      "lastAccessed": 1770474181020,
       "type": "file"
     }
   ],

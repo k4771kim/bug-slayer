@@ -133,6 +133,18 @@
       "accessCount": 1,
       "lastAccessed": 1770421116176,
       "type": "file"
+    },
+    {
+      "path": "src/middleware/auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770456352251,
+      "type": "file"
+    },
+    {
+      "path": "src/routes/game.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770456352659,
+      "type": "file"
     }
   ],
   "userDirectives": []

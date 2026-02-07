@@ -116,7 +116,7 @@ export async function loadGame(userId: string): Promise<GameSaveData | null> {
     techDebt: session.techDebt,
     gold: session.gold,
     playTime: session.playTime,
-    characters: session.characters.map((c) => ({
+    characters: session.characters.map((c: CharacterData & { id?: string; sessionId?: string }) => ({
       name: c.name,
       class: c.class,
       level: c.level,
@@ -129,7 +129,7 @@ export async function loadGame(userId: string): Promise<GameSaveData | null> {
       currentHP: c.currentHP,
       currentMP: c.currentMP,
     })),
-    inventory: session.inventory.map((i) => ({
+    inventory: session.inventory.map((i: InventoryItemData & { id?: string; sessionId?: string }) => ({
       itemId: i.itemId,
       quantity: i.quantity,
     })),

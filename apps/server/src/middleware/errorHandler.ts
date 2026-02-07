@@ -1,6 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
+
+interface PrismaError extends Error {
+  code?: string;
+}
 
 /**
  * Global error handler middleware
@@ -27,9 +30,10 @@ export function errorHandler(
   }
 
   // Prisma errors
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err.constructor.name === 'PrismaClientKnownRequestError') {
+    const prismaErr = err as PrismaError;
     // Unique constraint violation
-    if (err.code === 'P2002') {
+    if (prismaErr.code === 'P2002') {
       res.status(409).json({
         error: {
           code: 'EMAIL_ALREADY_EXISTS',
@@ -40,7 +44,7 @@ export function errorHandler(
     }
 
     // Record not found
-    if (err.code === 'P2025') {
+    if (prismaErr.code === 'P2025') {
       res.status(404).json({
         error: {
           code: 'NOT_FOUND',
