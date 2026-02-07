@@ -1,0 +1,49 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1e1e1e" rx="64"/>
+
+  <!-- Bug body (using VS Code Dark+ colors) -->
+  <g>
+    <!-- Main bug body -->
+    <ellipse cx="256" cy="280" rx="80" ry="100" fill="#ce9178"/>
+
+    <!-- Bug head -->
+    <circle cx="256" cy="200" r="60" fill="#ce9178"/>
+
+    <!-- Bug eyes -->
+    <circle cx="236" cy="190" r="12" fill="#d16969"/>
+    <circle cx="276" cy="190" r="12" fill="#d16969"/>
+
+    <!-- Antennae -->
+    <path d="M 236 160 Q 220 120 210 100" stroke="#ce9178" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 276 160 Q 292 120 302 100" stroke="#ce9178" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <circle cx="210" cy="100" r="8" fill="#ce9178"/>
+    <circle cx="302" cy="100" r="8" fill="#ce9178"/>
+
+    <!-- Bug legs -->
+    <path d="M 176 260 L 120 280" stroke="#ce9178" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 176 300 L 110 330" stroke="#ce9178" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 176 340 L 130 380" stroke="#ce9178" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 336 260 L 392 280" stroke="#ce9178" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 336 300 L 402 330" stroke="#ce9178" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 336 340 L 382 380" stroke="#ce9178" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Sword crossing over bug (using VS Code blue accent) -->
+  <g>
+    <!-- Sword blade -->
+    <rect x="320" y="140" width="30" height="200" fill="#569cd6" transform="rotate(45 335 240)"/>
+
+    <!-- Sword guard -->
+    <rect x="310" y="310" width="50" height="12" fill="#4ec9b0" transform="rotate(45 335 316)"/>
+
+    <!-- Sword handle -->
+    <rect x="318" y="320" width="34" height="60" fill="#dcdcaa" transform="rotate(45 335 350)"/>
+
+    <!-- Sword pommel -->
+    <circle cx="378" cy="408" r="12" fill="#c586c0"/>
+  </g>
+
+  <!-- "X" slash effect -->
+  <path d="M 360 180 L 420 240" stroke="#d16969" stroke-width="8" opacity="0.7" stroke-linecap="round"/>
+</svg>
