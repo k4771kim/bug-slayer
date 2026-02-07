@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import type { SaveData } from '../systems/ProgressionSystem';
+import { SoundManager } from '../systems/SoundManager';
 
 /**
  * MainMenuScene - Main menu with New Game, Continue, and Credits
@@ -8,6 +9,8 @@ import type { SaveData } from '../systems/ProgressionSystem';
  */
 export class MainMenuScene extends Phaser.Scene {
   private creditsOverlay: Phaser.GameObjects.Container | null = null;
+  private settingsOverlay: Phaser.GameObjects.Container | null = null;
+  private soundManager?: SoundManager;
 
   constructor() {
     super({ key: 'MainMenuScene' });
@@ -69,6 +72,18 @@ export class MainMenuScene extends Phaser.Scene {
     creditsBtn.on('pointerover', () => creditsBtn.setBackgroundColor('#d596d0'));
     creditsBtn.on('pointerout', () => creditsBtn.setBackgroundColor('#c586c0'));
     creditsBtn.on('pointerdown', () => this.showCredits());
+
+    // Settings button
+    const settingsBtn = this.add.text(width / 2, 490, 'Settings', btnStyle('#569cd6'))
+      .setOrigin(0.5)
+      .setInteractive();
+
+    settingsBtn.on('pointerover', () => settingsBtn.setBackgroundColor('#6aace6'));
+    settingsBtn.on('pointerout', () => settingsBtn.setBackgroundColor('#569cd6'));
+    settingsBtn.on('pointerdown', () => this.showSettings());
+
+    // Initialize sound manager
+    this.soundManager = new SoundManager(this);
 
     // Version text
     this.add.text(width / 2, height - 30, 'v1.0.0 MVP', {
@@ -197,6 +212,123 @@ export class MainMenuScene extends Phaser.Scene {
     if (this.creditsOverlay) {
       this.creditsOverlay.destroy();
       this.creditsOverlay = null;
+    }
+  }
+
+  private showSettings() {
+    if (this.settingsOverlay) return;
+
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    this.settingsOverlay = this.add.container(width / 2, height / 2);
+
+    // Background
+    const bg = this.add.rectangle(0, 0, 450, 300, 0x1a1a2e, 0.95);
+    bg.setStrokeStyle(2, 0x569cd6);
+    this.settingsOverlay.add(bg);
+
+    // Title
+    const title = this.add.text(0, -120, 'Settings', {
+      fontSize: '24px', color: '#569cd6', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.settingsOverlay.add(title);
+
+    // SFX Volume
+    this.settingsOverlay.add(
+      this.add.text(-180, -60, 'SFX Volume', { fontSize: '16px', color: '#d4d4d4' })
+    );
+    this.createVolumeSlider(-60, 'sfx');
+
+    // BGM Volume
+    this.settingsOverlay.add(
+      this.add.text(-180, 0, 'BGM Volume', { fontSize: '16px', color: '#d4d4d4' })
+    );
+    this.createVolumeSlider(0, 'bgm');
+
+    // Mute toggle
+    const muteState = this.soundManager?.isMuted() ? 'ON' : 'OFF';
+    const muteBtn = this.add.text(0, 60, `Mute: ${muteState}`, {
+      fontSize: '18px', color: '#ffffff',
+      backgroundColor: this.soundManager?.isMuted() ? '#f48771' : '#4ec9b0',
+      padding: { x: 20, y: 8 },
+    }).setOrigin(0.5).setInteractive();
+
+    muteBtn.on('pointerdown', () => {
+      const muted = this.soundManager?.toggleMute();
+      muteBtn.setText(`Mute: ${muted ? 'ON' : 'OFF'}`);
+      muteBtn.setBackgroundColor(muted ? '#f48771' : '#4ec9b0');
+    });
+    this.settingsOverlay.add(muteBtn);
+
+    // Close button
+    const closeBtn = this.add.text(0, 110, 'Close', {
+      fontSize: '18px', color: '#ffffff',
+      backgroundColor: '#4a90e2', padding: { x: 20, y: 8 },
+    }).setOrigin(0.5).setInteractive();
+
+    closeBtn.on('pointerover', () => closeBtn.setBackgroundColor('#5aa0f2'));
+    closeBtn.on('pointerout', () => closeBtn.setBackgroundColor('#4a90e2'));
+    closeBtn.on('pointerdown', () => this.hideSettings());
+    this.settingsOverlay.add(closeBtn);
+  }
+
+  private createVolumeSlider(y: number, type: 'sfx' | 'bgm') {
+    if (!this.settingsOverlay || !this.soundManager) return;
+
+    const currentVol = type === 'sfx'
+      ? this.soundManager.getSFXVolume()
+      : this.soundManager.getBGMVolume();
+
+    // Slider track
+    const trackWidth = 200;
+    const trackX = 20;
+
+    const track = this.add.rectangle(trackX + trackWidth / 2, y, trackWidth, 8, 0x3e3e42);
+    this.settingsOverlay.add(track);
+
+    // Slider fill
+    const fill = this.add.rectangle(
+      trackX, y, trackWidth * currentVol, 8, type === 'sfx' ? 0x4ec9b0 : 0x569cd6
+    ).setOrigin(0, 0.5);
+    this.settingsOverlay.add(fill);
+
+    // Slider handle
+    const handleX = trackX + trackWidth * currentVol;
+    const handle = this.add.circle(handleX, y, 10, 0xffffff)
+      .setInteractive({ draggable: true, useHandCursor: true });
+    this.settingsOverlay.add(handle);
+
+    // Value text
+    const valText = this.add.text(trackX + trackWidth + 15, y,
+      `${Math.round(currentVol * 100)}%`, {
+      fontSize: '14px', color: '#d4d4d4',
+    }).setOrigin(0, 0.5);
+    this.settingsOverlay.add(valText);
+
+    // Drag handler
+    handle.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number) => {
+      const minX = trackX - trackWidth / 2;
+      const maxX = trackX + trackWidth / 2;
+      const clampedX = Phaser.Math.Clamp(dragX, minX, maxX);
+      handle.x = clampedX;
+
+      const value = (clampedX - minX) / trackWidth;
+      fill.width = trackWidth * value;
+      valText.setText(`${Math.round(value * 100)}%`);
+
+      if (type === 'sfx') {
+        this.soundManager?.setSFXVolume(value);
+      } else {
+        this.soundManager?.setBGMVolume(value);
+      }
+    });
+  }
+
+  private hideSettings() {
+    if (this.settingsOverlay) {
+      this.settingsOverlay.destroy();
+      this.settingsOverlay = null;
     }
   }
 }

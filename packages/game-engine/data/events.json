@@ -179,6 +179,30 @@
           "resultText": "Out of sight, out of mind... +15 Tech Debt"
         }
       ]
+    },
+    {
+      "id": "deploy-roulette",
+      "name": "Deploy Roulette",
+      "description": "It's deploy time! Spin the roulette and pray to the CI/CD gods...",
+      "icon": "🎰",
+      "chapter": 3,
+      "probability": 20,
+      "effects": [],
+      "resultText": "",
+      "isMinigame": true,
+      "minigameScene": "DeployRouletteScene"
+    },
+    {
+      "id": "deploy-roulette-ch4",
+      "name": "Deploy Roulette",
+      "description": "Production deploy incoming! Higher stakes this time...",
+      "icon": "🎰",
+      "chapter": 4,
+      "probability": 20,
+      "effects": [],
+      "resultText": "",
+      "isMinigame": true,
+      "minigameScene": "DeployRouletteScene"
     }
   ]
 }

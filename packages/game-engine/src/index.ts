@@ -13,9 +13,11 @@ import { BattleScene } from './scenes/BattleScene';
 import { EndingScene } from './scenes/EndingScene';
 import { MinigameScene } from './scenes/MinigameScene';
 import { EventScene } from './scenes/EventScene';
+import { DeployRouletteScene } from './scenes/DeployRouletteScene';
 
-export { BootScene, MainMenuScene, ClassSelectScene, TutorialScene, DungeonSelectScene, BattleScene, EndingScene, MinigameScene, EventScene };
+export { BootScene, MainMenuScene, ClassSelectScene, TutorialScene, DungeonSelectScene, BattleScene, EndingScene, MinigameScene, EventScene, DeployRouletteScene };
 export type { MinigameSceneData } from './scenes/MinigameScene';
+export type { DeployRouletteSceneData } from './scenes/DeployRouletteScene';
 export { TechDebt } from './systems/TechDebt';
 export type { TechDebtLevel, TechDebtStatus } from './systems/TechDebt';
 export { EnemyAI } from './systems/EnemyAI';
@@ -36,6 +38,7 @@ export { SpriteSystem } from './systems/SpriteSystem';
 export type { ClassPalette, SpriteConfig } from './systems/SpriteSystem';
 export { BalanceSimulator } from './systems/BalanceSimulator';
 export type { SimulationConfig, BattleSimResult, SimulationReport } from './systems/BalanceSimulator';
+export { SoundManager } from './systems/SoundManager';
 
 /**
  * Create Phaser game configuration
@@ -48,7 +51,7 @@ export function createGameConfig(parentElement: string): Phaser.Types.Core.GameC
     height: 600,
     parent: parentElement,
     backgroundColor: '#1e1e1e',
-    scene: [BootScene, MainMenuScene, ClassSelectScene, TutorialScene, DungeonSelectScene, BattleScene, EventScene, EndingScene, MinigameScene],
+    scene: [BootScene, MainMenuScene, ClassSelectScene, TutorialScene, DungeonSelectScene, BattleScene, EventScene, EndingScene, MinigameScene, DeployRouletteScene],
     physics: {
       default: 'arcade',
       arcade: {

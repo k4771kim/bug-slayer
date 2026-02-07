@@ -20,6 +20,7 @@ import { ItemSystem } from '../systems/ItemSystem';
 import { EndingScene, type EndingData } from './EndingScene';
 import { EventSystem } from '../systems/EventSystem';
 import type { EventSceneData } from './EventScene';
+import { SoundManager } from '../systems/SoundManager';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -82,6 +83,7 @@ export class BattleScene extends Phaser.Scene {
   private progressionSystem: ProgressionSystem | null = null;
   private itemSystem: ItemSystem | null = null;
   private eventSystem: EventSystem | null = null;
+  private soundManager?: SoundManager;
 
   // Scene data
   private sceneData: BattleSceneData | null = null;
@@ -399,6 +401,14 @@ export class BattleScene extends Phaser.Scene {
 
     // Update UI
     this.updateUI();
+
+    // Initialize sound manager and play battle music
+    this.soundManager = new SoundManager(this);
+    const isBoss = this.monster?.type === 'boss';
+    this.soundManager.playBGM(isBoss ? 'bgm-boss' : 'bgm-battle');
+    if (isBoss) {
+      this.soundManager.playSFX('sfx-boss-appear');
+    }
   }
 
   // =========================================================================
@@ -704,6 +714,7 @@ export class BattleScene extends Phaser.Scene {
     const monsterSPD = this.monster.stats.SPD ?? 0;
     const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
     if (this.rollEvasion(monsterSPD, playerSPD)) {
+      this.soundManager?.playSFX('sfx-evade');
       this.techDebt.turnPassed();
       this.autoRestoreMP();
       this.turnText?.setText(`${this.monster.name} evaded! MISS!`);
@@ -722,6 +733,9 @@ export class BattleScene extends Phaser.Scene {
     if (critResult) {
       damage = Math.floor(damage * CRIT_MULTIPLIER);
       critText = ' CRITICAL HIT!';
+      this.soundManager?.playSFX('sfx-critical');
+    } else {
+      this.soundManager?.playSFX('sfx-attack');
     }
 
     // Focus bonus text
@@ -806,6 +820,7 @@ export class BattleScene extends Phaser.Scene {
           const monsterSPD = this.monster.stats.SPD ?? 0;
           const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
           if (this.rollEvasion(monsterSPD, playerSPD)) {
+            this.soundManager?.playSFX('sfx-evade');
             effectTexts.push('MISS!');
             break;
           }
@@ -831,6 +846,7 @@ export class BattleScene extends Phaser.Scene {
           this.player.currentHP = Math.min(this.player.stats.HP, this.player.currentHP + healAmount);
           totalHeal += healAmount;
           effectTexts.push(`Healed ${healAmount} HP`);
+          this.soundManager?.playSFX('sfx-heal');
           break;
         }
 
@@ -843,6 +859,7 @@ export class BattleScene extends Phaser.Scene {
               target: skillData.targetType === 'self' ? 'player' : 'player',
             });
             effectTexts.push(`+${effect.value} ${effect.stat} for ${effect.duration} turns`);
+            this.soundManager?.playSFX('sfx-buff');
           }
           break;
         }
@@ -856,6 +873,7 @@ export class BattleScene extends Phaser.Scene {
               target: 'monster',
             });
             effectTexts.push(`${effect.value} ${effect.stat} on enemy for ${effect.duration} turns`);
+            this.soundManager?.playSFX('sfx-debuff');
           }
           break;
         }
@@ -1159,6 +1177,8 @@ export class BattleScene extends Phaser.Scene {
         const passive = this.applyPassiveToIncomingDamage(damage);
         damage = passive.damage;
 
+        this.soundManager?.playSFX('sfx-hit');
+
         actionText = `${this.monster.name} attacked!${critText} ${damage} damage${passive.text}`;
 
         const modifierText = techDebtModifier !== 1.0
@@ -1179,6 +1199,7 @@ export class BattleScene extends Phaser.Scene {
         const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
         const monsterSPD = this.monster.stats.SPD ?? 0;
         if (this.rollEvasion(playerSPD, monsterSPD)) {
+          this.soundManager?.playSFX('sfx-evade');
           actionText = `${this.monster.name} used ${action.skillId} but you evaded! MISS!`;
           break;
         }
@@ -1195,6 +1216,8 @@ export class BattleScene extends Phaser.Scene {
         // Apply Debugger passive (20% chance -50% incoming damage)
         const skillPassive = this.applyPassiveToIncomingDamage(damage);
         damage = skillPassive.damage;
+
+        this.soundManager?.playSFX('sfx-hit');
 
         actionText = `${this.monster.name} used ${action.skillId}!${skillCritText} ${damage} damage${skillPassive.text}`;
 
@@ -1561,6 +1584,10 @@ export class BattleScene extends Phaser.Scene {
   private handleVictory() {
     if (!this.player || !this.monster || !this.levelUpSystem || !this.techDebt) return;
 
+    // Stop BGM and play victory sound
+    this.soundManager?.stopBGM();
+    this.soundManager?.playSFX('sfx-victory');
+
     // Restore MP to 100% on victory
     this.player.currentMP = this.player.stats.MP;
 
@@ -1583,6 +1610,7 @@ export class BattleScene extends Phaser.Scene {
         const itemNames = collected.collected.map(i => i.name).join(', ');
         if (itemNames) {
           dropText = `\nItems: ${itemNames}`;
+          this.soundManager?.playSFX('sfx-item-drop');
         }
       }
     }
@@ -1599,6 +1627,8 @@ export class BattleScene extends Phaser.Scene {
       const levelUpResult = this.levelUpSystem.addExp(expReward);
 
       if (levelUpResult) {
+        this.soundManager?.playSFX('sfx-levelup');
+
         const statsText = Object.entries(levelUpResult.statsGained)
           .filter(([_, value]) => value && value > 0)
           .map(([stat, value]) => `${stat}+${value}`)
@@ -1743,6 +1773,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleDefeat() {
+    this.soundManager?.stopBGM();
+    this.soundManager?.playSFX('sfx-defeat');
+
     this.turnText?.setText('Defeat... The bug won.\nReturning to try again...');
 
     this.time.delayedCall(2000, () => {
@@ -1777,6 +1810,9 @@ export class BattleScene extends Phaser.Scene {
     const phaseKey = newPhase as 1 | 2 | 3 | 4;
     const config = this.BOSS_PHASE_CONFIG[phaseKey];
     if (!config) return;
+
+    // Play boss phase sound
+    this.soundManager?.playSFX('sfx-boss-phase');
 
     // 1. Camera shake based on phase intensity
     this.cameras.main.shake(300, config.shakeIntensity / 1000);

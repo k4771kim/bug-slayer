@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import minigameData from '../../data/minigame-snippets.json';
+import { SoundManager } from '../systems/SoundManager';
 
 /**
  * Minigame Scene Data Interface
@@ -82,6 +83,7 @@ export class MinigameScene extends Phaser.Scene {
   private roundLabel?: Phaser.GameObjects.Text;
   private scoreLabel?: Phaser.GameObjects.Text;
   private titleText?: Phaser.GameObjects.Text;
+  private soundManager?: SoundManager;
 
   constructor() {
     super({ key: 'MinigameScene' });
@@ -105,6 +107,9 @@ export class MinigameScene extends Phaser.Scene {
     const h = this.cameras.main.height;
 
     this.add.rectangle(w / 2, h / 2, w, h, C.bg);
+
+    // Initialize sound manager
+    this.soundManager = new SoundManager(this);
 
     this.add.rectangle(w / 2, 25, w, 50, C.bgSecondary);
     this.titleText = this.add.text(w / 2, 25, 'MERGE CONFLICT', {
@@ -300,6 +305,7 @@ export class MinigameScene extends Phaser.Scene {
       });
       bg.on('pointerdown', () => {
         if (!this.roundActive) return;
+        this.soundManager?.playSFX('sfx-click');
         this.handleAnswer(isCorrect, bg);
       });
 
@@ -307,6 +313,7 @@ export class MinigameScene extends Phaser.Scene {
       if (key) {
         const handler = (): void => {
           if (!this.roundActive) return;
+          this.soundManager?.playSFX('sfx-click');
           this.handleAnswer(isCorrect, bg);
         };
         key.on('down', handler);
@@ -326,6 +333,7 @@ export class MinigameScene extends Phaser.Scene {
 
     if (correct) {
       this.score++;
+      this.soundManager?.playSFX('sfx-minigame-success');
       selectedBg.setStrokeStyle(3, C.greenHex);
       selectedBg.setFillStyle(C.greenHex, 0.2);
 
@@ -343,6 +351,7 @@ export class MinigameScene extends Phaser.Scene {
       this.roundUI.push(flash);
       this.tweens.add({ targets: flash, alpha: 0, duration: 500 });
     } else {
+      this.soundManager?.playSFX('sfx-minigame-fail');
       selectedBg.setStrokeStyle(3, C.redHex);
       selectedBg.setFillStyle(C.redHex, 0.2);
 
@@ -370,6 +379,8 @@ export class MinigameScene extends Phaser.Scene {
   private handleTimeout(): void {
     if (!this.roundActive) return;
     this.roundActive = false;
+
+    this.soundManager?.playSFX('sfx-minigame-fail');
 
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
@@ -404,6 +415,12 @@ export class MinigameScene extends Phaser.Scene {
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;
     const success = this.score >= 3;
+
+    if (success) {
+      this.soundManager?.playSFX('sfx-chapter-clear');
+    } else {
+      this.soundManager?.playSFX('sfx-defeat');
+    }
 
     this.titleText?.setText(success ? 'MERGE COMPLETE!' : 'BUILD FAILED!');
     this.titleText?.setColor(success ? C.green : C.red);

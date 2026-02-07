@@ -28,6 +28,8 @@ export interface GameEvent {
   effects: EventEffect[];
   resultText: string;
   choices?: EventChoice[];
+  isMinigame?: boolean;
+  minigameScene?: string;
 }
 
 export interface EventEffect {
@@ -223,5 +225,19 @@ export class EventSystem {
 
   clearLastEventResult(): void {
     this.lastEventResult = null;
+  }
+
+  /**
+   * Check if the rolled event is a minigame event
+   */
+  isMinigameEvent(event: GameEvent): boolean {
+    return (event as any).isMinigame === true;
+  }
+
+  /**
+   * Get the minigame scene name for a minigame event
+   */
+  getMinigameScene(event: GameEvent): string | null {
+    return (event as any).minigameScene || null;
   }
 }

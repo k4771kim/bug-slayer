@@ -15,6 +15,7 @@
  */
 
 import Phaser from 'phaser'
+import { SoundManager } from '../systems/SoundManager';
 
 export type EndingType = 'good' | 'normal' | 'bad' | 'secret';
 
@@ -44,6 +45,7 @@ export class EndingScene extends Phaser.Scene {
   private titleText: Phaser.GameObjects.Text | null = null;
   private storyText: Phaser.GameObjects.Text | null = null;
   private statsText: Phaser.GameObjects.Text | null = null;
+  private soundManager?: SoundManager;
 
   constructor() {
     super({ key: 'EndingScene' });
@@ -61,6 +63,10 @@ export class EndingScene extends Phaser.Scene {
     }
 
     const { width, height } = this.cameras.main;
+
+    // Initialize sound manager and play ending sound
+    this.soundManager = new SoundManager(this);
+    this.soundManager.playSFX('sfx-ending');
 
     // Get ending content based on type
     const content = this.getEndingContent(this.endingData.endingType);

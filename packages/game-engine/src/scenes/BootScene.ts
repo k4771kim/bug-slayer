@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { SpriteSystem, type ClassPalette } from '../systems/SpriteSystem';
+import { SoundManager } from '../systems/SoundManager';
 import paletteData from '../../data/palette.json';
 
 /**
@@ -62,6 +63,15 @@ export class BootScene extends Phaser.Scene {
 
     // Generate icon sprites
     this.generateIconSprites();
+
+    // Generate programmatic sounds
+    console.log('BootScene: Generating programmatic sounds...');
+    try {
+      SoundManager.generateAllSounds(this);
+      console.log('BootScene: Sound generation complete');
+    } catch (e) {
+      console.warn('BootScene: Sound generation failed (Web Audio may not be available):', e);
+    }
 
     console.log('BootScene: Assets loaded, transitioning to MainMenuScene');
 
