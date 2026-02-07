@@ -11,9 +11,25 @@ const gameSaveSchema = z.object({
     chapter: z.number().int().min(1),
     stage: z.number().int().min(1),
     techDebt: z.number().int().min(0),
-    partyData: z.object({}).passthrough(),
-    inventory: z.object({}).passthrough(),
     gold: z.number().int().min(0),
+    playTime: z.number().int().min(0),
+    characters: z.array(z.object({
+      name: z.string(),
+      class: z.string(),
+      level: z.number().int().min(1),
+      exp: z.number().int().min(0),
+      hp: z.number().int(),
+      mp: z.number().int(),
+      atk: z.number().int(),
+      def: z.number().int(),
+      spd: z.number().int(),
+      currentHP: z.number().int(),
+      currentMP: z.number().int(),
+    })),
+    inventory: z.array(z.object({
+      itemId: z.string(),
+      quantity: z.number().int().min(1),
+    })),
   }),
 });
 

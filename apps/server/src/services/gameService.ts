@@ -2,13 +2,33 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export interface CharacterData {
+  name: string;
+  class: string;
+  level: number;
+  exp: number;
+  hp: number;
+  mp: number;
+  atk: number;
+  def: number;
+  spd: number;
+  currentHP: number;
+  currentMP: number;
+}
+
+export interface InventoryItemData {
+  itemId: string;
+  quantity: number;
+}
+
 export interface GameSaveData {
   chapter: number;
   stage: number;
   techDebt: number;
-  partyData: object;
-  inventory: object;
   gold: number;
+  playTime: number;
+  characters: CharacterData[];
+  inventory: InventoryItemData[];
 }
 
 /**
@@ -27,17 +47,23 @@ export async function saveGame(
   let session;
 
   if (existingSession) {
-    // Update existing session
+    // Update existing session: clear old characters/inventory, write new
     session = await prisma.gameSession.update({
       where: { id: existingSession.id },
       data: {
         chapter: saveData.chapter,
         stage: saveData.stage,
         techDebt: saveData.techDebt,
-        partyData: JSON.stringify(saveData.partyData),
-        inventory: JSON.stringify(saveData.inventory),
         gold: saveData.gold,
-        updatedAt: new Date(),
+        playTime: saveData.playTime,
+        characters: {
+          deleteMany: {},
+          create: saveData.characters,
+        },
+        inventory: {
+          deleteMany: {},
+          create: saveData.inventory,
+        },
       },
     });
   } else {
@@ -48,9 +74,14 @@ export async function saveGame(
         chapter: saveData.chapter,
         stage: saveData.stage,
         techDebt: saveData.techDebt,
-        partyData: JSON.stringify(saveData.partyData),
-        inventory: JSON.stringify(saveData.inventory),
         gold: saveData.gold,
+        playTime: saveData.playTime,
+        characters: {
+          create: saveData.characters,
+        },
+        inventory: {
+          create: saveData.inventory,
+        },
       },
     });
   }
@@ -69,6 +100,10 @@ export async function loadGame(userId: string): Promise<GameSaveData | null> {
   const session = await prisma.gameSession.findFirst({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
+    include: {
+      characters: true,
+      inventory: true,
+    },
   });
 
   if (!session) {
@@ -79,9 +114,25 @@ export async function loadGame(userId: string): Promise<GameSaveData | null> {
     chapter: session.chapter,
     stage: session.stage,
     techDebt: session.techDebt,
-    partyData: JSON.parse(session.partyData),
-    inventory: JSON.parse(session.inventory),
     gold: session.gold,
+    playTime: session.playTime,
+    characters: session.characters.map((c) => ({
+      name: c.name,
+      class: c.class,
+      level: c.level,
+      exp: c.exp,
+      hp: c.hp,
+      mp: c.mp,
+      atk: c.atk,
+      def: c.def,
+      spd: c.spd,
+      currentHP: c.currentHP,
+      currentMP: c.currentMP,
+    })),
+    inventory: session.inventory.map((i) => ({
+      itemId: i.itemId,
+      quantity: i.quantity,
+    })),
   };
 }
 

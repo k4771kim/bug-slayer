@@ -30,7 +30,7 @@ export async function register(
   const user = await prisma.user.create({
     data: {
       email,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       displayName,
     },
   });
@@ -54,7 +54,6 @@ export async function register(
       email: user.email,
       displayName: user.displayName,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
     },
     token,
   };
@@ -77,7 +76,7 @@ export async function login(
   }
 
   // Verify password
-  const isValidPassword = await bcrypt.compare(password, user.password);
+  const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValidPassword) {
     throw new Error('INVALID_CREDENTIALS');
@@ -102,7 +101,6 @@ export async function login(
       email: user.email,
       displayName: user.displayName,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
     },
     token,
   };
@@ -125,6 +123,5 @@ export async function getUserById(userId: string): Promise<Omit<User, 'password'
     email: user.email,
     displayName: user.displayName,
     createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
   };
 }

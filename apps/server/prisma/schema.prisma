@@ -10,41 +10,54 @@ datasource db {
 model User {
   id            String        @id @default(uuid())
   email         String        @unique
-  password      String
   displayName   String
+  passwordHash  String
   createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
   gameSessions  GameSession[]
   @@index([email])
 }
 
 model GameSession {
-  id          String    @id @default(uuid())
+  id          String          @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chapter     Int       @default(1)
-  stage       Int       @default(1)
-  techDebt    Int       @default(0)
-  partyData   String
-  inventory   String
-  gold        Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  combatLogs  CombatLog[]
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter     Int             @default(1)
+  stage       Int             @default(1)
+  techDebt    Int             @default(0)
+  gold        Int             @default(0)
+  playTime    Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  characters  Character[]
+  inventory   InventoryItem[]
   @@index([userId])
   @@index([createdAt])
 }
 
-model CombatLog {
-  id            String      @id @default(uuid())
-  sessionId     String
-  session       GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  turn          Int
-  actor         String
-  action        String
-  target        String
-  logData       String
-  createdAt     DateTime    @default(now())
+model Character {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name        String
+  class       String
+  level       Int         @default(1)
+  exp         Int         @default(0)
+  hp          Int
+  mp          Int
+  atk         Int
+  def         Int
+  spd         Int
+  currentHP   Int
+  currentMP   Int
   @@index([sessionId])
-  @@index([createdAt])
+}
+
+model InventoryItem {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  itemId      String
+  quantity    Int         @default(1)
+  @@index([sessionId])
+  @@index([itemId])
 }

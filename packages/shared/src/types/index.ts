@@ -225,7 +225,6 @@ export interface User {
   email: string;
   displayName: string;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface AuthResponse {
