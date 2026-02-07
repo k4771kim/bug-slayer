@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import type { SaveData } from '../systems/ProgressionSystem';
 

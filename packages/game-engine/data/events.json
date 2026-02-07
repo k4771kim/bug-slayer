@@ -25,55 +25,6 @@
       "resultText": "Lost 10% HP from the stress!"
     },
     {
-      "id": "code-review",
-      "name": "Code Review Request",
-      "description": "A senior developer reviewed your code. Great feedback!",
-      "icon": "📝",
-      "chapter": 1,
-      "probability": 15,
-      "effects": [
-        { "type": "buff", "stat": "DEF", "value": 15, "duration": 3, "target": "player" }
-      ],
-      "resultText": "Improved defense! DEF +15% for 3 turns"
-    },
-    {
-      "id": "legacy-code",
-      "name": "Legacy Code Discovery",
-      "description": "You discovered ancient legacy code. It's full of secrets... and bugs.",
-      "icon": "📜",
-      "chapter": 2,
-      "probability": 10,
-      "effects": [
-        { "type": "techDebt", "value": 5 },
-        { "type": "gold", "value": 2, "multiplier": true }
-      ],
-      "resultText": "Tech Debt +5, but next battle gold x2!"
-    },
-    {
-      "id": "coffee-break",
-      "name": "Coffee Break",
-      "description": "You took a quick coffee break. Feeling refreshed!",
-      "icon": "☕",
-      "chapter": 1,
-      "probability": 12,
-      "effects": [
-        { "type": "heal", "stat": "HP", "value": 15, "target": "player" }
-      ],
-      "resultText": "Recovered 15% HP!"
-    },
-    {
-      "id": "stack-overflow",
-      "name": "Stack Overflow Savior",
-      "description": "Found the perfect answer on Stack Overflow!",
-      "icon": "💡",
-      "chapter": 1,
-      "probability": 8,
-      "effects": [
-        { "type": "buff", "stat": "SPD", "value": 25, "duration": 2, "target": "player" }
-      ],
-      "resultText": "Coding speed increased! SPD +25% for 2 turns"
-    },
-    {
       "id": "merge-conflict",
       "name": "Merge Conflict Hell",
       "description": "A massive merge conflict appeared. This will take time...",
@@ -97,6 +48,137 @@
         { "type": "buff", "stat": "DEF", "value": 10, "duration": 4, "target": "player" }
       ],
       "resultText": "Learned new skills! ATK +15%, DEF +10% for 4 turns"
+    },
+    {
+      "id": "code-review-quiz",
+      "name": "Code Review Quiz",
+      "description": "A senior dev quizzes you: \"What's the time complexity of binary search?\"",
+      "icon": "📝",
+      "chapter": 1,
+      "probability": 15,
+      "effects": [],
+      "resultText": "",
+      "choices": [
+        {
+          "id": "correct-ologn",
+          "text": "O(log n)",
+          "effects": [
+            { "type": "exp", "value": 50, "target": "player" }
+          ],
+          "resultText": "Correct! The senior dev is impressed. +50 EXP!"
+        },
+        {
+          "id": "wrong-on",
+          "text": "O(n)",
+          "effects": [
+            { "type": "techDebt", "value": 5 }
+          ],
+          "resultText": "Wrong... that's linear search. +5 Tech Debt"
+        },
+        {
+          "id": "wrong-on2",
+          "text": "O(n²)",
+          "effects": [
+            { "type": "techDebt", "value": 5 }
+          ],
+          "resultText": "Wrong... that's bubble sort territory. +5 Tech Debt"
+        }
+      ]
+    },
+    {
+      "id": "coffee-break-choice",
+      "name": "Coffee Break",
+      "description": "The break room has two options. What do you grab?",
+      "icon": "☕",
+      "chapter": 1,
+      "probability": 12,
+      "effects": [],
+      "resultText": "",
+      "choices": [
+        {
+          "id": "regular-coffee",
+          "text": "Regular Coffee",
+          "effects": [
+            { "type": "heal", "stat": "HP", "value": 50, "target": "player" }
+          ],
+          "resultText": "A warm cup of coffee. Recovered 50% HP!"
+        },
+        {
+          "id": "energy-drink",
+          "text": "Energy Drink",
+          "effects": [
+            { "type": "heal", "stat": "HP", "value": 30, "target": "player" },
+            { "type": "gold", "value": 1.25, "multiplier": true }
+          ],
+          "resultText": "Buzzing with energy! +30% HP and next battle gold x1.25!"
+        }
+      ]
+    },
+    {
+      "id": "stackoverflow-search",
+      "name": "Stack Overflow Search",
+      "description": "You search: \"TypeError: undefined is not a function\". Which answer looks right?",
+      "icon": "💡",
+      "chapter": 1,
+      "probability": 8,
+      "effects": [],
+      "resultText": "",
+      "choices": [
+        {
+          "id": "accepted-answer",
+          "text": "Check if the function exists before calling it",
+          "effects": [
+            { "type": "gold", "value": 1.5, "multiplier": true },
+            { "type": "heal", "stat": "HP", "value": 20, "target": "player" }
+          ],
+          "resultText": "The accepted answer works! +20% HP, next gold x1.5!"
+        },
+        {
+          "id": "bad-answer-1",
+          "text": "Just wrap everything in try-catch",
+          "effects": [
+            { "type": "techDebt", "value": 3 }
+          ],
+          "resultText": "That just hides the bug... +3 Tech Debt"
+        },
+        {
+          "id": "bad-answer-2",
+          "text": "Downgrade to an older version",
+          "effects": [
+            { "type": "techDebt", "value": 3 }
+          ],
+          "resultText": "That introduces security vulnerabilities! +3 Tech Debt"
+        }
+      ]
+    },
+    {
+      "id": "legacy-code-dilemma",
+      "name": "Legacy Code Dilemma",
+      "description": "You found a 2000-line function with no tests. What do you do?",
+      "icon": "📜",
+      "chapter": 2,
+      "probability": 10,
+      "effects": [],
+      "resultText": "",
+      "choices": [
+        {
+          "id": "refactor",
+          "text": "Refactor It",
+          "effects": [
+            { "type": "techDebt", "value": -10 },
+            { "type": "damage", "stat": "HP", "value": 20, "target": "player" }
+          ],
+          "resultText": "Hard work pays off! -10 Tech Debt, but lost 20% HP from exhaustion."
+        },
+        {
+          "id": "ignore",
+          "text": "Leave It Alone",
+          "effects": [
+            { "type": "techDebt", "value": 15 }
+          ],
+          "resultText": "Out of sight, out of mind... +15 Tech Debt"
+        }
+      ]
     }
   ]
 }

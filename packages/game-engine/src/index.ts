@@ -3,7 +3,7 @@
  * Exports Phaser configuration and scenes
  */
 
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 import { BootScene } from './scenes/BootScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
 import { ClassSelectScene } from './scenes/ClassSelectScene';

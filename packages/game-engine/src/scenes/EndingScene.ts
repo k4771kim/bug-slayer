@@ -14,7 +14,7 @@
  * - Secret Ending: Tech Debt 0 + All Warnings Killed + Boss Defeated
  */
 
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 
 export type EndingType = 'good' | 'normal' | 'bad' | 'secret';
 

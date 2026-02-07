@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 import { SpriteSystem, type ClassPalette } from '../systems/SpriteSystem';
 import paletteData from '../../data/palette.json';
 

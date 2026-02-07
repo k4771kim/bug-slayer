@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 import { DataLoader } from '../loaders/DataLoader';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { TechDebt } from '../systems/TechDebt';

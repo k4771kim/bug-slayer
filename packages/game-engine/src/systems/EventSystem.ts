@@ -12,6 +12,13 @@
 
 import eventsData from '../../data/events.json';
 
+export interface EventChoice {
+  id: string;
+  text: string;
+  effects: EventEffect[];
+  resultText: string;
+}
+
 export interface GameEvent {
   id: string;
   name: string;
@@ -20,10 +27,11 @@ export interface GameEvent {
   probability: number;
   effects: EventEffect[];
   resultText: string;
+  choices?: EventChoice[];
 }
 
 export interface EventEffect {
-  type: 'buff' | 'debuff' | 'damage' | 'heal' | 'techDebt' | 'gold';
+  type: 'buff' | 'debuff' | 'damage' | 'heal' | 'techDebt' | 'gold' | 'exp';
   stat?: string;
   value: number;
   duration?: number;
@@ -61,23 +69,18 @@ export class EventSystem {
    * Returns the first event that triggers (if any)
    */
   rollEvent(): EventResult {
-    // Shuffle events to randomize which one triggers first
-    const shuffled = [...this.events].sort(() => Math.random() - 0.5);
-
-    for (const event of shuffled) {
-      const roll = Math.random() * 100;
-      if (roll < event.probability) {
-        return {
-          event,
-          applied: false,
-        };
-      }
+    // 30% overall chance for an event to trigger between battles
+    if (Math.random() * 100 >= 30) {
+      return { event: null, applied: false };
     }
 
-    return {
-      event: null,
-      applied: false,
-    };
+    // Pick a random event from the pool
+    const event = this.events[Math.floor(Math.random() * this.events.length)];
+    if (!event) {
+      return { event: null, applied: false };
+    }
+
+    return { event, applied: false };
   }
 
   /**
