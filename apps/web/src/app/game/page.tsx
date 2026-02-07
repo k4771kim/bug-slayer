@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { GameErrorBoundary } from '@/components/game/GameErrorBoundary';
 
 const PhaserGame = dynamic(() => import('@/components/PhaserGame').then(m => ({ default: m.PhaserGame })), {
   ssr: false,
@@ -65,7 +66,9 @@ export default function GamePage() {
 
       {/* Game container - fills remaining space */}
       <main className="flex-1 flex items-center justify-center min-h-0">
-        <PhaserGame className="w-full h-full max-w-[800px] max-h-[600px] md:p-4" />
+        <GameErrorBoundary>
+          <PhaserGame className="w-full h-full max-w-[800px] max-h-[600px] md:p-4" />
+        </GameErrorBoundary>
       </main>
     </div>
   );

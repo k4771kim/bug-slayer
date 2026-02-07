@@ -133,20 +133,24 @@ export const useBattleStore = create<BattleState>((set) => ({
  */
 export function initBattleBridge(): () => void {
   const handler = (e: Event) => {
-    const detail = (e as CustomEvent).detail;
-    if (!detail) return;
+    if (!(e instanceof CustomEvent) || !e.detail || typeof e.detail !== 'object') return;
 
+    const detail = e.detail;
     const store = useBattleStore.getState();
 
-    if (detail.player) store.updatePlayer(detail.player);
-    if (detail.monster) store.updateMonster(detail.monster);
-    if (detail.skills) store.setSkills(detail.skills);
-    if (detail.techDebt !== undefined) store.setTechDebt(detail.techDebt);
-    if (detail.statusEffects) store.setStatusEffects(detail.statusEffects);
-    if (detail.log) store.addLog(detail.log.message, detail.log.type);
-    if (detail.isPlayerTurn !== undefined) store.setTurn(detail.isPlayerTurn);
-    if (detail.battleActive !== undefined) store.setBattleActive(detail.battleActive);
-    if (detail.stage) store.setStageInfo(detail.stage.chapter, detail.stage.stage);
+    if (detail.player && typeof detail.player === 'object') store.updatePlayer(detail.player);
+    if (detail.monster && typeof detail.monster === 'object') store.updateMonster(detail.monster);
+    if (detail.skills && Array.isArray(detail.skills)) store.setSkills(detail.skills);
+    if (typeof detail.techDebt === 'number') store.setTechDebt(detail.techDebt);
+    if (detail.statusEffects && Array.isArray(detail.statusEffects)) store.setStatusEffects(detail.statusEffects);
+    if (detail.log && typeof detail.log.message === 'string' && typeof detail.log.type === 'string') {
+      store.addLog(detail.log.message, detail.log.type as LogEntry['type']);
+    }
+    if (typeof detail.isPlayerTurn === 'boolean') store.setTurn(detail.isPlayerTurn);
+    if (typeof detail.battleActive === 'boolean') store.setBattleActive(detail.battleActive);
+    if (detail.stage && typeof detail.stage.chapter === 'number' && typeof detail.stage.stage === 'number') {
+      store.setStageInfo(detail.stage.chapter, detail.stage.stage);
+    }
   };
 
   window.addEventListener('battle:update', handler);
