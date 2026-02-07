@@ -22,15 +22,21 @@ RUN pnpm --filter @bug-slayer/server build
 RUN cd apps/server && npx prisma generate
 
 # Production
-FROM node:20-slim AS runner
+FROM base AS runner
 WORKDIR /app
-RUN npm i -g pnpm@9
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/apps/server/dist ./dist
-COPY --from=builder /app/apps/server/prisma ./prisma
-COPY --from=builder /app/apps/server/package.json ./
-COPY --from=builder /app/apps/server/node_modules ./node_modules
-COPY --from=builder /app/node_modules/.pnpm ./node_modules/.pnpm
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/apps/server/node_modules ./apps/server/node_modules
+COPY --from=builder /app/apps/server/dist ./apps/server/dist
+COPY --from=builder /app/apps/server/prisma ./apps/server/prisma
+COPY --from=builder /app/apps/server/package.json ./apps/server/package.json
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN cd apps/server && npx prisma generate
+WORKDIR /app/apps/server
 
 ENV NODE_ENV=production
 ENV PORT=3001
