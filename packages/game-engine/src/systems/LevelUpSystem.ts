@@ -7,10 +7,10 @@
  * - Stat growth application based on class
  * - Level-up notifications
  *
- * EXP Formula:
- * - Required EXP = baseEXP * (level ^ exponent)
- * - baseEXP = 100, exponent = 1.5
- * - Example: Lv1->2 = 100, Lv2->3 = 282, Lv3->4 = 519
+ * EXP Formula (linear):
+ * - Required EXP = baseEXP + (level - 2) * 20
+ * - baseEXP = 100
+ * - Example: Lv1->2 = 100, Lv2->3 = 120, Lv3->4 = 140
  */
 
 import type { Character, CharacterStats } from '@bug-slayer/shared';
