@@ -660,10 +660,10 @@ export class BalanceSimulator {
     }));
 
     classWinRates.forEach(({ id, winRate }) => {
-      if (winRate < 60) {
+      if (winRate < 40) {
         issues.push(`Class "${id}" win rate too low (${winRate.toFixed(1)}%) - May need buffs`);
       }
-      if (winRate > 95) {
+      if (winRate > 90) {
         issues.push(`Class "${id}" win rate too high (${winRate.toFixed(1)}%) - May need nerfs`);
       }
     });

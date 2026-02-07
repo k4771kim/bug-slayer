@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 import minigameSnippetsData from '../../data/minigame-snippets.json';
 
 /**
@@ -56,7 +56,12 @@ export class MinigameScene extends Phaser.Scene {
 
   init(data: MinigameSceneData) {
     // Load snippets from data file
-    this.snippets = minigameSnippetsData.snippets as CodeSnippet[];
+    this.snippets = minigameSnippetsData.conflicts.map(c => ({
+      id: c.id,
+      correct: c.options[c.correctIndex] ?? c.head,
+      wrong: c.options[1 - c.correctIndex] ?? c.incoming,
+      hint: c.hint,
+    }));
 
     // Set timer duration based on difficulty
     const difficulty = data.difficulty ?? 1;

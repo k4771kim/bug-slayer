@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from 'phaser'
 import type { Character, Monster, Skill, SkillEffect } from '@bug-slayer/shared';
 import {
   calculateDamage as sharedCalculateDamage,
@@ -137,16 +137,16 @@ export class BattleScene extends Phaser.Scene {
       shakeIntensity: 2,
     },
     3: {
-      tint: 0xf48771, // red rage
+      tint: 0xce9178, // orange rage
       overlayAlpha: 0.15,
       dialogues: ['COMPILING RAGE!', 'Stack overflow incoming!', 'You can\'t refactor ME!'],
       shakeIntensity: 4,
     },
     4: {
-      tint: 0xce4545, // dark red desperate
-      overlayAlpha: 0.2,
+      tint: 0xf44747, // red desperate
+      overlayAlpha: 0.25,
       dialogues: ['SEGFAULT... SEGFAULT...', 'I... won\'t... crash...', 'FATAL ERROR!'],
-      shakeIntensity: 6,
+      shakeIntensity: 8,
     },
   };
 
