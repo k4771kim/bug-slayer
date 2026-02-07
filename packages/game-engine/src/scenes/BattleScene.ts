@@ -49,6 +49,12 @@ interface ActiveBuff {
   target: 'player' | 'monster';
 }
 
+interface ActiveStatusEffect {
+  type: 'stun' | 'confusion';
+  turnsRemaining: number;
+  target: 'player' | 'monster';
+}
+
 // ---------------------------------------------------------------------------
 // BattleScene
 // ---------------------------------------------------------------------------
@@ -88,6 +94,7 @@ export class BattleScene extends Phaser.Scene {
   private stagesCompleted: number[] = [];
   private skillCooldowns: Map<string, number> = new Map();
   private attackCount: number = 0; // for Refactorer passive
+  private statusEffects: ActiveStatusEffect[] = [];
 
   // UI elements
   private turnText: Phaser.GameObjects.Text | null = null;
@@ -96,6 +103,7 @@ export class BattleScene extends Phaser.Scene {
   private techDebtText: Phaser.GameObjects.Text | null = null;
   private techDebtBar: Phaser.GameObjects.Graphics | null = null;
   private buffText: Phaser.GameObjects.Text | null = null;
+  private statusEffectText: Phaser.GameObjects.Text | null = null;
   private stageText: Phaser.GameObjects.Text | null = null;
 
   // Boss phase visuals
@@ -161,6 +169,7 @@ export class BattleScene extends Phaser.Scene {
     // Reset combat state
     this.focusBuff = false;
     this.activeBuffs = [];
+    this.statusEffects = [];
     this.isPlayerTurn = true;
     this.battleStartTime = Date.now();
     this.skillPanelVisible = false;
@@ -269,6 +278,11 @@ export class BattleScene extends Phaser.Scene {
       this.bossSprite = this.add.rectangle(width - 150, 300, 64, 64, 0xef4444);
     }
 
+    // Yellow tint for Warning-type monsters
+    if ((this.monster as any)?.type === 'warning' && this.bossSprite) {
+      (this.bossSprite as any).fillColor = 0xdcdcaa;
+    }
+
     // Boss phase overlay (initially invisible)
     this.bossPhaseOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0)
       .setDepth(10);
@@ -287,6 +301,13 @@ export class BattleScene extends Phaser.Scene {
     this.buffText = this.add.text(width / 2, 380, '', {
       fontSize: '14px',
       color: '#c586c0',
+      align: 'center',
+    }).setOrigin(0.5);
+
+    // Status effect display
+    this.statusEffectText = this.add.text(width / 2, 400, '', {
+      fontSize: '14px',
+      color: '#f48771',
       align: 'center',
     }).setOrigin(0.5);
 
@@ -615,6 +636,22 @@ export class BattleScene extends Phaser.Scene {
 
     // Close skill panel if open
     if (this.skillPanelVisible) this.toggleSkillPanel();
+
+    // Confusion: 50% chance to attack self
+    if (this.hasStatusEffect('confusion', 'player') && Math.random() < 0.5) {
+      const selfDmg = Math.floor(this.player.stats.ATK * 0.5);
+      this.player.currentHP = Math.max(0, this.player.currentHP - selfDmg);
+      this.techDebt.turnPassed();
+      this.autoRestoreMP();
+      this.turnText?.setText(`CONFUSED! You hit yourself for ${selfDmg} damage!`);
+      this.updateUI();
+      if (this.player.currentHP <= 0) {
+        this.time.delayedCall(1000, () => this.handleDefeat());
+        return;
+      }
+      this.time.delayedCall(1000, () => this.monsterTurn());
+      return;
+    }
 
     // Calculate base damage
     let baseDamage = this.getEffectiveStat(this.player.stats.ATK, 'ATK', 'player');
@@ -970,6 +1007,30 @@ export class BattleScene extends Phaser.Scene {
   private monsterTurn() {
     if (!this.player || !this.monster || !this.techDebt || !this.enemyAI) return;
 
+    // Tick status effects on monster
+    this.tickStatusEffects('monster');
+
+    // Check if monster is stunned
+    if (this.hasStatusEffect('stun', 'monster')) {
+      this.turnText?.setText(`${this.monster.name} is STUNNED! Turn skipped!`);
+      this.updateUI();
+      this.time.delayedCall(1500, () => {
+        this.tickStatusEffects('player');
+        if (this.hasStatusEffect('stun', 'player')) {
+          this.turnText?.setText('You are STUNNED! Turn skipped!');
+          this.updateUI();
+          this.time.delayedCall(1500, () => this.monsterTurn());
+          return;
+        }
+        this.isPlayerTurn = true;
+        this.setActionsEnabled(true);
+        this.tickCooldowns();
+        const confusedText = this.hasStatusEffect('confusion', 'player') ? ' [CONFUSED]' : '';
+        this.turnText?.setText(`Your turn! Choose an action.${confusedText}`);
+      });
+      return;
+    }
+
     // Tick buffs/debuffs at start of monster turn
     this.tickBuffs();
 
@@ -1009,6 +1070,25 @@ export class BattleScene extends Phaser.Scene {
 
   private executeEnemyAction(action: EnemyAction) {
     if (!this.player || !this.monster || !this.techDebt) return;
+
+    // Monster confusion: 50% chance to hit self on attack/skill
+    if (this.hasStatusEffect('confusion', 'monster') && (action.type === 'attack' || action.type === 'skill') && Math.random() < 0.5) {
+      const selfDmg = Math.floor(this.monster.stats.ATK * 0.5);
+      this.monster.currentHP = Math.max(0, this.monster.currentHP - selfDmg);
+      this.turnText?.setText(`${this.monster.name} is CONFUSED! Hit itself for ${selfDmg} damage!`);
+      this.updateUI();
+      if (this.monster.currentHP <= 0) {
+        this.time.delayedCall(1000, () => this.handleVictory());
+        return;
+      }
+      this.time.delayedCall(1500, () => {
+        this.isPlayerTurn = true;
+        this.setActionsEnabled(true);
+        this.tickCooldowns();
+        this.turnText?.setText('Your turn! Choose an action.');
+      });
+      return;
+    }
 
     const techDebtModifier = this.techDebt.enemyAtkModifier;
     let actionText = '';
@@ -1081,6 +1161,19 @@ export class BattleScene extends Phaser.Scene {
         actionText = `${this.monster.name} used ${action.skillId}!${skillCritText} ${damage} damage${skillPassive.text}`;
 
         this.player.currentHP = Math.max(0, this.player.currentHP - damage);
+
+        // Boss skills that apply status effects
+        if (action.skillId === 'boundary-breach') {
+          this.applyStatusEffect('stun', 1, 'player');
+          actionText += ' You are STUNNED!';
+        } else if (action.skillId === 'uncertainty') {
+          this.applyStatusEffect('confusion', 2, 'player');
+          actionText += ' You are CONFUSED!';
+        } else if (action.skillId === 'observer-effect') {
+          this.applyStatusEffect('confusion', 1, 'player');
+          actionText += ' You are CONFUSED!';
+        }
+
         break;
       }
 
@@ -1118,11 +1211,24 @@ export class BattleScene extends Phaser.Scene {
 
     // Back to player turn
     this.time.delayedCall(1500, () => {
+      // Tick status effects on player
+      this.tickStatusEffects('player');
+      this.updateUI();
+
+      // Check if player is stunned
+      if (this.hasStatusEffect('stun', 'player')) {
+        this.turnText?.setText('You are STUNNED! Turn skipped!');
+        this.updateUI();
+        this.time.delayedCall(1500, () => this.monsterTurn());
+        return;
+      }
+
       this.isPlayerTurn = true;
       this.setActionsEnabled(true);
       // Tick cooldowns at start of player turn
       this.tickCooldowns();
-      this.turnText?.setText('Your turn! Choose an action.');
+      const confusedText = this.hasStatusEffect('confusion', 'player') ? ' [CONFUSED]' : '';
+      this.turnText?.setText(`Your turn! Choose an action.${confusedText}`);
     });
   }
 
@@ -1218,6 +1324,33 @@ export class BattleScene extends Phaser.Scene {
         this.skillCooldowns.delete(skillId);
       }
     }
+  }
+
+  // =========================================================================
+  // Status Effects
+  // =========================================================================
+
+  private applyStatusEffect(type: 'stun' | 'confusion', duration: number, target: 'player' | 'monster') {
+    // Don't stack same effect on same target — refresh duration instead
+    const existing = this.statusEffects.find(e => e.type === type && e.target === target);
+    if (existing) {
+      existing.turnsRemaining = Math.max(existing.turnsRemaining, duration);
+      return;
+    }
+    this.statusEffects.push({ type, turnsRemaining: duration, target });
+  }
+
+  private hasStatusEffect(type: 'stun' | 'confusion', target: 'player' | 'monster'): boolean {
+    return this.statusEffects.some(e => e.type === type && e.target === target && e.turnsRemaining > 0);
+  }
+
+  private tickStatusEffects(target: 'player' | 'monster') {
+    for (const effect of this.statusEffects) {
+      if (effect.target === target) {
+        effect.turnsRemaining -= 1;
+      }
+    }
+    this.statusEffects = this.statusEffects.filter(e => e.turnsRemaining > 0);
   }
 
   // =========================================================================
@@ -1735,6 +1868,17 @@ export class BattleScene extends Phaser.Scene {
         }
       }
       this.buffText.setText(buffLines.join('\n'));
+    }
+
+    // ---- Status effects display ----
+    if (this.statusEffectText) {
+      const effectLines: string[] = [];
+      for (const effect of this.statusEffects) {
+        const icon = effect.type === 'stun' ? '⚡' : '❓';
+        const label = effect.type.toUpperCase();
+        effectLines.push(`${icon} [${effect.target}] ${label} (${effect.turnsRemaining}t)`);
+      }
+      this.statusEffectText.setText(effectLines.join('  '));
     }
 
     // ---- Tech Debt bar ----

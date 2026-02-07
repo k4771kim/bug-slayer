@@ -18,7 +18,7 @@
  * - heal: Heal self
  */
 
-import type { Monster, BehaviorCondition, BehaviorAction, BehaviorTree } from '@bug-slayer/shared';
+import type { Monster, BehaviorCondition, BehaviorAction, BehaviorPhase, BehaviorTree } from '@bug-slayer/shared';
 
 export type EnemyAction = {
   type: 'attack';
@@ -112,9 +112,36 @@ export class EnemyAI {
   }
 
   /**
+   * Update boss phase based on HP thresholds from phases data
+   */
+  private updateBossPhase(): void {
+    const phases = this.monster.behaviorTree?.phases;
+    if (!phases || phases.length === 0) return;
+
+    const hpPercent = this.getHPPercentage();
+
+    // Find the lowest threshold the boss has crossed (phases sorted high→low)
+    // Phase index: 0=phase1(100%), 1=phase2(75%), 2=phase3(50%), 3=phase4(25%)
+    let newPhase = 1;
+    for (let i = phases.length - 1; i >= 0; i--) {
+      if (hpPercent <= phases[i]!.hpThreshold) {
+        newPhase = i + 1;
+      }
+    }
+
+    this.currentPhase = newPhase;
+  }
+
+  /**
    * Evaluate all conditions
    */
   private evaluateConditions(): boolean {
+    // Boss with phases: update phase and always proceed
+    if (this.monster.behaviorTree?.phases) {
+      this.updateBossPhase();
+      return true;
+    }
+
     if (!this.monster.behaviorTree?.conditions) return true;
 
     // All conditions must be met (AND logic)
@@ -135,14 +162,30 @@ export class EnemyAI {
   }
 
   /**
+   * Get actions for the current boss phase, or fallback to flat actions
+   */
+  private getActionsForCurrentPhase(): BehaviorAction[] | null {
+    const phases = this.monster.behaviorTree?.phases;
+    if (phases && phases.length > 0) {
+      // Phase index is currentPhase - 1 (phase 1 = index 0)
+      const phaseIndex = Math.min(this.currentPhase - 1, phases.length - 1);
+      const phase = phases[phaseIndex];
+      if (phase?.actions && phase.actions.length > 0) {
+        return phase.actions;
+      }
+    }
+
+    return this.monster.behaviorTree?.actions || null;
+  }
+
+  /**
    * Select action based on weights (weighted random)
    */
   private selectAction(): BehaviorAction | null {
-    if (!this.monster.behaviorTree?.actions || this.monster.behaviorTree.actions.length === 0) {
+    const actions = this.getActionsForCurrentPhase();
+    if (!actions || actions.length === 0) {
       return null;
     }
-
-    const actions = this.monster.behaviorTree.actions;
 
     // Calculate total weight
     const totalWeight = actions.reduce((sum, action) => sum + action.weight, 0);

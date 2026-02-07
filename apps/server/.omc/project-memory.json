@@ -1,0 +1,139 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1770384961268,
+  "projectRoot": "/home/claude/Claude/ai-gdd/bug-slayer/apps/server",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "express",
+        "version": "4.18.2",
+        "category": "backend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "tsx watch src/index.ts",
+      "build": "tsc",
+      "start": "node dist/index.js",
+      "lint": "eslint src --ext .ts",
+      "type-check": "tsc --noEmit",
+      "db:generate": "prisma generate",
+      "db:push": "prisma db push",
+      "db:migrate": "prisma migrate dev",
+      "db:studio": "prisma studio"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "prisma": {
+      "path": "prisma",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1770384961253,
+      "keyFiles": [
+        "dev.db",
+        "schema.prisma"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 1,
+      "lastAccessed": 1770384961253,
+      "keyFiles": [
+        "index.ts"
+      ]
+    },
+    "src/config": {
+      "path": "src/config",
+      "purpose": "Configuration files",
+      "fileCount": 1,
+      "lastAccessed": 1770384961253,
+      "keyFiles": [
+        "env.ts"
+      ]
+    },
+    "src/middleware": {
+      "path": "src/middleware",
+      "purpose": "Middleware",
+      "fileCount": 2,
+      "lastAccessed": 1770384961253,
+      "keyFiles": [
+        "auth.ts",
+        "errorHandler.ts"
+      ]
+    },
+    "src/routes": {
+      "path": "src/routes",
+      "purpose": "Route handlers",
+      "fileCount": 1,
+      "lastAccessed": 1770384961253,
+      "keyFiles": [
+        "auth.ts"
+      ]
+    },
+    "src/services": {
+      "path": "src/services",
+      "purpose": "Business logic services",
+      "fileCount": 1,
+      "lastAccessed": 1770384961253,
+      "keyFiles": [
+        "authService.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/services/gameService.ts",
+      "accessCount": 1,
+      "lastAccessed": 1770421115735,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 1,
+      "lastAccessed": 1770421116176,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

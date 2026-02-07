@@ -97,7 +97,7 @@ export interface Monster {
 // AI Behavior Types
 // ============================================================================
 
-export type BehaviorConditionType = 'hp_below' | 'hp_above' | 'phase_change' | 'turn_count';
+export type BehaviorConditionType = 'hp_below' | 'hp_above' | 'hp_check' | 'phase_change' | 'turn_count';
 export type BehaviorActionType = 'attack' | 'skill' | 'buff' | 'heal';
 
 export interface BehaviorCondition {
@@ -111,9 +111,16 @@ export interface BehaviorAction {
   weight: number;
 }
 
-export interface BehaviorTree {
+export interface BehaviorPhase {
+  hpThreshold: number;
   conditions: BehaviorCondition[];
   actions: BehaviorAction[];
+}
+
+export interface BehaviorTree {
+  conditions?: BehaviorCondition[];
+  actions?: BehaviorAction[];
+  phases?: BehaviorPhase[];
 }
 
 // ============================================================================
