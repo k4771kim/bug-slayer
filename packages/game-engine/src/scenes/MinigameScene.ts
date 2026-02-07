@@ -1,381 +1,518 @@
 import Phaser from 'phaser'
-import minigameSnippetsData from '../../data/minigame-snippets.json';
+import minigameData from '../../data/minigame-snippets.json';
 
 /**
  * Minigame Scene Data Interface
  */
 export interface MinigameSceneData {
-  returnScene: string; // Scene to return to (e.g., 'BattleScene')
-  returnData?: any; // Data to pass back to parent scene
-  difficulty?: number; // 1-3, affects timer duration
+  returnScene: string;
+  returnData?: Record<string, unknown>;
+  difficulty?: number;
+  player?: { gold: number };
+  techDebt?: number;
 }
 
 /**
- * Code snippet interface
+ * Merge conflict data from JSON
  */
-interface CodeSnippet {
+interface ConflictData {
   id: string;
-  correct: string;
-  wrong: string;
+  title: string;
+  head: string;
+  incoming: string;
+  options: string[];
+  correctIndex: number;
   hint: string;
 }
 
+// VS Code Dark+ palette
+const C = {
+  bg: 0x1e1e1e,
+  bgElevated: 0x2d2d30,
+  bgSecondary: 0x252526,
+  border: 0x3e3e42,
+  text: '#d4d4d4',
+  textMuted: '#858585',
+  blue: '#569cd6',
+  blueHex: 0x569cd6,
+  green: '#4ec9b0',
+  greenHex: 0x4ec9b0,
+  yellow: '#dcdcaa',
+  yellowHex: 0xdcdcaa,
+  red: '#f48771',
+  redHex: 0xf48771,
+  pink: '#c586c0',
+  orange: '#ce9178',
+  orangeHex: 0xce9178,
+  white: '#ffffff',
+  selection: 0x264f78,
+} as const;
+
+const TOTAL_ROUNDS = 5;
+const TIMER_SECONDS = 15;
+const GOLD_PER_CORRECT = 15;
+const TECH_DEBT_PENALTY = 10;
+
 /**
- * MinigameScene - "Merge Conflict" code selection minigame
+ * MinigameScene - "Merge Conflict" puzzle minigame
  *
- * Player must choose the correct code snippet from two options within a time limit.
- * Success/failure is stored in scene data for the parent scene to read.
+ * 5 rounds of git merge conflict resolution.
+ * Pick the correct code from 3-4 options per round.
+ * 15-second timer. Gold on success, tech debt +10 on failure.
+ * Transitions to DungeonSelectScene on completion.
  */
 export class MinigameScene extends Phaser.Scene {
-  private snippets: CodeSnippet[] = [];
-  private currentSnippet: CodeSnippet | null = null;
-  private leftIsCorrect: boolean = false;
+  private conflicts: ConflictData[] = [];
+  private roundConflicts: ConflictData[] = [];
+  private currentRound = 0;
+  private score = 0;
+  private roundActive = false;
+  private gameOver = false;
 
-  // Timer
-  private timerDuration: number = 5000; // milliseconds
-  private timerStartTime: number = 0;
-  private timerBar: Phaser.GameObjects.Graphics | null = null;
-  private timerText: Phaser.GameObjects.Text | null = null;
+  private timerEvent?: Phaser.Time.TimerEvent;
+  private timerBar?: Phaser.GameObjects.Graphics;
+  private timerText?: Phaser.GameObjects.Text;
+  private timerBarX = 0;
+  private timerBarWidth = 0;
+  private timerBarY = 0;
 
-  // UI elements
-  private titleText: Phaser.GameObjects.Text | null = null;
-  private subtitleText: Phaser.GameObjects.Text | null = null;
-  private hintText: Phaser.GameObjects.Text | null = null;
-  private leftPanel: Phaser.GameObjects.Container | null = null;
-  private rightPanel: Phaser.GameObjects.Container | null = null;
-  private leftCodeText: Phaser.GameObjects.Text | null = null;
-  private rightCodeText: Phaser.GameObjects.Text | null = null;
+  private sceneData?: MinigameSceneData;
+  private roundUI: Phaser.GameObjects.GameObject[] = [];
 
-  // State
-  private gameActive: boolean = false;
-  private selectedPanel: 'left' | 'right' | null = null;
+  private roundLabel?: Phaser.GameObjects.Text;
+  private scoreLabel?: Phaser.GameObjects.Text;
+  private titleText?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'MinigameScene' });
   }
 
-  init(data: MinigameSceneData) {
-    // Load snippets from data file
-    this.snippets = minigameSnippetsData.conflicts.map(c => ({
-      id: c.id,
-      correct: c.options[c.correctIndex] ?? c.head,
-      wrong: c.options[1 - c.correctIndex] ?? c.incoming,
-      hint: c.hint,
-    }));
+  init(data: MinigameSceneData): void {
+    this.sceneData = data;
+    this.conflicts = (minigameData as { conflicts: ConflictData[] }).conflicts;
+    this.currentRound = 0;
+    this.score = 0;
+    this.roundActive = false;
+    this.gameOver = false;
+    this.roundUI = [];
 
-    // Set timer duration based on difficulty
-    const difficulty = data.difficulty ?? 1;
-    switch (difficulty) {
-      case 1:
-        this.timerDuration = 5000;
-        break;
-      case 2:
-        this.timerDuration = 4000;
-        break;
-      case 3:
-        this.timerDuration = 3000;
-        break;
-      default:
-        this.timerDuration = 5000;
-    }
-
-    // Select random snippet
-    this.currentSnippet = Phaser.Utils.Array.GetRandom(this.snippets);
-
-    // Randomly determine which side is correct
-    this.leftIsCorrect = Math.random() < 0.5;
-
-    // Reset state
-    this.gameActive = true;
-    this.selectedPanel = null;
+    const shuffled = Phaser.Utils.Array.Shuffle([...this.conflicts]);
+    this.roundConflicts = shuffled.slice(0, TOTAL_ROUNDS);
   }
 
-  create() {
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
+  create(): void {
+    const w = this.cameras.main.width;
+    const h = this.cameras.main.height;
 
-    // Dark overlay background
-    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.8);
+    this.add.rectangle(w / 2, h / 2, w, h, C.bg);
 
-    // Title
-    this.titleText = this.add.text(width / 2, 60, 'MERGE CONFLICT!', {
-      fontSize: '48px',
-      color: '#f48771', // VS Code red
+    this.add.rectangle(w / 2, 25, w, 50, C.bgSecondary);
+    this.titleText = this.add.text(w / 2, 25, 'MERGE CONFLICT', {
+      fontSize: '28px',
+      color: C.red,
       fontStyle: 'bold',
+      fontFamily: 'monospace',
     }).setOrigin(0.5);
 
-    // Subtitle
-    this.subtitleText = this.add.text(width / 2, 110, 'Pick the correct code!', {
-      fontSize: '24px',
-      color: '#dcdcaa', // VS Code yellow
-    }).setOrigin(0.5);
+    this.roundLabel = this.add.text(16, 60, '', {
+      fontSize: '16px',
+      color: C.blue,
+      fontFamily: 'monospace',
+    });
 
-    // Timer bar background
-    const timerBarWidth = 600;
-    const timerBarHeight = 20;
-    const timerBarX = (width - timerBarWidth) / 2;
-    const timerBarY = 140;
+    this.scoreLabel = this.add.text(w - 16, 60, '', {
+      fontSize: '16px',
+      color: C.green,
+      fontFamily: 'monospace',
+    }).setOrigin(1, 0);
 
-    this.add.rectangle(timerBarX + timerBarWidth / 2, timerBarY + timerBarHeight / 2,
-                       timerBarWidth, timerBarHeight, 0x333333);
-
-    // Timer bar (will update in update())
+    this.timerBarWidth = w - 40;
+    this.timerBarX = 20;
+    this.timerBarY = 85;
+    this.add.rectangle(
+      this.timerBarX + this.timerBarWidth / 2,
+      this.timerBarY + 6,
+      this.timerBarWidth, 12, 0x333333
+    );
     this.timerBar = this.add.graphics();
-
-    // Timer text
-    this.timerText = this.add.text(width / 2, timerBarY + timerBarHeight / 2, '', {
-      fontSize: '16px',
-      color: '#ffffff',
+    this.timerText = this.add.text(w / 2, this.timerBarY + 6, '', {
+      fontSize: '12px',
+      color: C.white,
+      fontFamily: 'monospace',
     }).setOrigin(0.5);
 
-    // Code panels
-    this.createCodePanels();
-
-    // Hint text
-    if (this.currentSnippet) {
-      this.hintText = this.add.text(width / 2, height - 80, `Hint: ${this.currentSnippet.hint}`, {
-        fontSize: '18px',
-        color: '#858585', // VS Code gray
-        wordWrap: { width: 700 },
-        align: 'center',
-      }).setOrigin(0.5);
-    }
-
-    // Keyboard controls
-    this.input.keyboard?.on('keydown-LEFT', () => this.selectPanel('left'));
-    this.input.keyboard?.on('keydown-RIGHT', () => this.selectPanel('right'));
-
-    // Start timer
-    this.timerStartTime = this.time.now;
+    this.startRound();
   }
 
-  private createCodePanels() {
-    if (!this.currentSnippet) return;
+  update(): void {
+    if (!this.roundActive || this.gameOver) return;
 
-    const width = this.cameras.main.width;
-    const panelWidth = 350;
-    const panelHeight = 280;
-    const panelY = 340;
-    const leftPanelX = 140;
-    const rightPanelX = 660;
+    if (this.timerEvent && this.timerBar) {
+      const progress = this.timerEvent.getProgress();
+      const remaining = TIMER_SECONDS * (1 - progress);
 
-    // Determine which code goes where
-    const leftCode = this.leftIsCorrect ? this.currentSnippet.correct : this.currentSnippet.wrong;
-    const rightCode = this.leftIsCorrect ? this.currentSnippet.wrong : this.currentSnippet.correct;
-
-    // Left panel
-    this.leftPanel = this.add.container(leftPanelX, panelY);
-    const leftBg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x1e1e1e);
-    leftBg.setStrokeStyle(3, 0x4a90e2); // VS Code blue
-    leftBg.setInteractive({ useHandCursor: true });
-    leftBg.on('pointerdown', () => this.selectPanel('left'));
-    leftBg.on('pointerover', () => leftBg.setStrokeStyle(4, 0x4ec9b0)); // Highlight green
-    leftBg.on('pointerout', () => leftBg.setStrokeStyle(3, 0x4a90e2));
-
-    this.leftCodeText = this.add.text(0, 0, leftCode, {
-      fontSize: '16px',
-      color: '#dcdcaa',
-      fontFamily: 'monospace',
-      lineSpacing: 4,
-    }).setOrigin(0.5);
-
-    this.leftPanel.add([leftBg, this.leftCodeText]);
-
-    // Right panel
-    this.rightPanel = this.add.container(rightPanelX, panelY);
-    const rightBg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x1e1e1e);
-    rightBg.setStrokeStyle(3, 0x4a90e2); // VS Code blue
-    rightBg.setInteractive({ useHandCursor: true });
-    rightBg.on('pointerdown', () => this.selectPanel('right'));
-    rightBg.on('pointerover', () => rightBg.setStrokeStyle(4, 0x4ec9b0)); // Highlight green
-    rightBg.on('pointerout', () => rightBg.setStrokeStyle(3, 0x4a90e2));
-
-    this.rightCodeText = this.add.text(0, 0, rightCode, {
-      fontSize: '16px',
-      color: '#dcdcaa',
-      fontFamily: 'monospace',
-      lineSpacing: 4,
-    }).setOrigin(0.5);
-
-    this.rightPanel.add([rightBg, this.rightCodeText]);
-
-    // Panel labels
-    this.add.text(leftPanelX, panelY - panelHeight / 2 - 30, 'LEFT', {
-      fontSize: '20px',
-      color: '#c586c0', // VS Code purple
-    }).setOrigin(0.5);
-
-    this.add.text(rightPanelX, panelY - panelHeight / 2 - 30, 'RIGHT', {
-      fontSize: '20px',
-      color: '#c586c0', // VS Code purple
-    }).setOrigin(0.5);
-  }
-
-  update(time: number, delta: number) {
-    if (!this.gameActive) return;
-
-    // Update timer
-    const elapsed = time - this.timerStartTime;
-    const remaining = Math.max(0, this.timerDuration - elapsed);
-    const progress = remaining / this.timerDuration;
-
-    // Update timer bar
-    if (this.timerBar) {
       this.timerBar.clear();
+      let color: number = C.greenHex;
+      if (remaining < 5) color = C.redHex;
+      else if (remaining < 10) color = C.yellowHex;
 
-      const timerBarWidth = 600;
-      const timerBarHeight = 20;
-      const timerBarX = (this.cameras.main.width - timerBarWidth) / 2;
-      const timerBarY = 140;
-
-      // Color based on remaining time
-      let color = 0x4ec9b0; // green
-      if (progress < 0.3) {
-        color = 0xf48771; // red
-      } else if (progress < 0.6) {
-        color = 0xdcdcaa; // yellow
-      }
-
+      const fillWidth = this.timerBarWidth * (1 - progress);
       this.timerBar.fillStyle(color);
-      this.timerBar.fillRect(timerBarX, timerBarY, timerBarWidth * progress, timerBarHeight);
-    }
+      this.timerBar.fillRect(this.timerBarX, this.timerBarY, fillWidth, 12);
 
-    // Update timer text
-    if (this.timerText) {
-      this.timerText.setText(`${(remaining / 1000).toFixed(1)}s`);
-    }
-
-    // Check timeout
-    if (remaining <= 0) {
-      this.handleTimeout();
+      if (this.timerText) {
+        this.timerText.setText(`${remaining.toFixed(1)}s`);
+      }
     }
   }
 
-  private selectPanel(panel: 'left' | 'right') {
-    if (!this.gameActive) return;
+  private startRound(): void {
+    this.clearRoundUI();
 
-    this.selectedPanel = panel;
-    this.gameActive = false;
+    if (this.currentRound >= TOTAL_ROUNDS) {
+      this.showResults();
+      return;
+    }
 
-    // Determine if correct
-    const isCorrect = (panel === 'left' && this.leftIsCorrect) ||
-                     (panel === 'right' && !this.leftIsCorrect);
+    const conflict = this.roundConflicts[this.currentRound]!;
+    this.roundActive = true;
 
-    if (isCorrect) {
-      this.handleSuccess();
+    this.roundLabel?.setText(`Round ${this.currentRound + 1} / ${TOTAL_ROUNDS}`);
+    this.scoreLabel?.setText(`Score: ${this.score} / ${this.currentRound}`);
+
+    const w = this.cameras.main.width;
+
+    const conflictTitle = this.add.text(w / 2, 110, `// ${conflict.title}`, {
+      fontSize: '18px',
+      color: C.pink,
+      fontFamily: 'monospace',
+    }).setOrigin(0.5);
+    this.roundUI.push(conflictTitle);
+
+    this.createConflictDisplay(conflict);
+    this.createOptionButtons(conflict);
+
+    const hint = this.add.text(w / 2, this.cameras.main.height - 20, `Hint: ${conflict.hint}`, {
+      fontSize: '13px',
+      color: C.textMuted,
+      fontFamily: 'monospace',
+      wordWrap: { width: w - 40 },
+      align: 'center',
+    }).setOrigin(0.5);
+    this.roundUI.push(hint);
+
+    this.timerEvent = this.time.addEvent({
+      delay: TIMER_SECONDS * 1000,
+      callback: () => this.handleTimeout(),
+    });
+  }
+
+  private createConflictDisplay(conflict: ConflictData): void {
+    const w = this.cameras.main.width;
+    const panelWidth = w - 60;
+    const panelX = 30;
+    const panelY = 135;
+
+    const panelBg = this.add.rectangle(
+      w / 2, panelY + 70, panelWidth, 140, C.bgElevated
+    ).setStrokeStyle(1, C.border);
+    this.roundUI.push(panelBg);
+
+    const headMarker = this.add.text(panelX + 10, panelY + 10, '<<<<<<< HEAD', {
+      fontSize: '13px', color: C.green, fontFamily: 'monospace', fontStyle: 'bold',
+    });
+    this.roundUI.push(headMarker);
+
+    const headCode = this.add.text(panelX + 20, panelY + 30, conflict.head, {
+      fontSize: '13px', color: '#89d185', fontFamily: 'monospace',
+      wordWrap: { width: panelWidth - 40 },
+    });
+    this.roundUI.push(headCode);
+
+    const separator = this.add.text(panelX + 10, panelY + 70, '=======', {
+      fontSize: '13px', color: C.textMuted, fontFamily: 'monospace', fontStyle: 'bold',
+    });
+    this.roundUI.push(separator);
+
+    const incomingCode = this.add.text(panelX + 20, panelY + 90, conflict.incoming, {
+      fontSize: '13px', color: C.red, fontFamily: 'monospace',
+      wordWrap: { width: panelWidth - 40 },
+    });
+    this.roundUI.push(incomingCode);
+
+    const incomingMarker = this.add.text(panelX + 10, panelY + 120, '>>>>>>> incoming', {
+      fontSize: '13px', color: C.red, fontFamily: 'monospace', fontStyle: 'bold',
+    });
+    this.roundUI.push(incomingMarker);
+
+    const chooseLabel = this.add.text(w / 2, panelY + 155, 'Choose the correct resolution:', {
+      fontSize: '15px', color: C.yellow, fontFamily: 'monospace',
+    }).setOrigin(0.5);
+    this.roundUI.push(chooseLabel);
+  }
+
+  private createOptionButtons(conflict: ConflictData): void {
+    const w = this.cameras.main.width;
+    const options = conflict.options;
+    const numOptions = options.length;
+    const btnWidth = w - 60;
+    const btnHeight = 52;
+    const gap = 8;
+    const startY = 310;
+
+    // Shuffle display order, track correct answer
+    const indices: number[] = [];
+    for (let i = 0; i < numOptions; i++) indices.push(i);
+    Phaser.Utils.Array.Shuffle(indices);
+
+    for (let displayIdx = 0; displayIdx < indices.length; displayIdx++) {
+      const optionIdx = indices[displayIdx]!;
+      const y = startY + displayIdx * (btnHeight + gap);
+      const isCorrect = optionIdx === conflict.correctIndex;
+
+      const bg = this.add.rectangle(w / 2, y + btnHeight / 2, btnWidth, btnHeight, C.bgSecondary)
+        .setStrokeStyle(2, C.border)
+        .setInteractive({ useHandCursor: true });
+      this.roundUI.push(bg);
+
+      const letter = String.fromCharCode(65 + displayIdx);
+      const letterText = this.add.text(40, y + btnHeight / 2, `${letter})`, {
+        fontSize: '16px', color: C.blue, fontFamily: 'monospace', fontStyle: 'bold',
+      }).setOrigin(0, 0.5);
+      this.roundUI.push(letterText);
+
+      const displayText = options[optionIdx]!.replace(/\n/g, '  ');
+      const codeText = this.add.text(70, y + btnHeight / 2, displayText, {
+        fontSize: '13px', color: C.text, fontFamily: 'monospace',
+        wordWrap: { width: btnWidth - 80 },
+      }).setOrigin(0, 0.5);
+      this.roundUI.push(codeText);
+
+      bg.on('pointerover', () => {
+        if (!this.roundActive) return;
+        bg.setStrokeStyle(2, C.blueHex);
+        bg.setFillStyle(C.selection);
+      });
+      bg.on('pointerout', () => {
+        if (!this.roundActive) return;
+        bg.setStrokeStyle(2, C.border);
+        bg.setFillStyle(C.bgSecondary);
+      });
+      bg.on('pointerdown', () => {
+        if (!this.roundActive) return;
+        this.handleAnswer(isCorrect, bg);
+      });
+
+      const key = this.input.keyboard?.addKey(letter);
+      if (key) {
+        const handler = (): void => {
+          if (!this.roundActive) return;
+          this.handleAnswer(isCorrect, bg);
+        };
+        key.on('down', handler);
+        this.roundUI.push({
+          destroy: () => key.off('down', handler),
+        } as unknown as Phaser.GameObjects.GameObject);
+      }
+    }
+  }
+
+  private handleAnswer(correct: boolean, selectedBg: Phaser.GameObjects.Rectangle): void {
+    this.roundActive = false;
+    this.timerEvent?.remove(false);
+
+    const w = this.cameras.main.width;
+    const h = this.cameras.main.height;
+
+    if (correct) {
+      this.score++;
+      selectedBg.setStrokeStyle(3, C.greenHex);
+      selectedBg.setFillStyle(C.greenHex, 0.2);
+
+      const resultText = this.add.text(w / 2, h / 2, 'RESOLVED!', {
+        fontSize: '48px', color: C.green, fontStyle: 'bold', fontFamily: 'monospace',
+      }).setOrigin(0.5).setAlpha(0).setDepth(10);
+      this.roundUI.push(resultText);
+
+      this.tweens.add({
+        targets: resultText, alpha: 1, scale: { from: 0.5, to: 1 },
+        duration: 300, ease: 'Back.easeOut',
+      });
+
+      const flash = this.add.rectangle(w / 2, h / 2, w, h, C.greenHex, 0.15).setDepth(9);
+      this.roundUI.push(flash);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 500 });
     } else {
-      this.handleFailure();
+      selectedBg.setStrokeStyle(3, C.redHex);
+      selectedBg.setFillStyle(C.redHex, 0.2);
+
+      const resultText = this.add.text(w / 2, h / 2, 'CONFLICT!', {
+        fontSize: '48px', color: C.red, fontStyle: 'bold', fontFamily: 'monospace',
+      }).setOrigin(0.5).setAlpha(0).setDepth(10);
+      this.roundUI.push(resultText);
+
+      this.tweens.add({
+        targets: resultText, alpha: 1, scale: { from: 0.5, to: 1 },
+        duration: 300, ease: 'Back.easeOut',
+      });
+
+      const flash = this.add.rectangle(w / 2, h / 2, w, h, C.redHex, 0.15).setDepth(9);
+      this.roundUI.push(flash);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 500 });
+      this.cameras.main.shake(200, 0.005);
     }
+
+    this.scoreLabel?.setText(`Score: ${this.score} / ${this.currentRound + 1}`);
+    this.currentRound++;
+    this.time.delayedCall(1200, () => this.startRound());
   }
 
-  private handleSuccess() {
-    // Flash green
-    const flash = this.add.rectangle(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      this.cameras.main.width,
-      this.cameras.main.height,
-      0x4ec9b0,
-      0.3
-    );
+  private handleTimeout(): void {
+    if (!this.roundActive) return;
+    this.roundActive = false;
 
-    // Show success message
-    const successText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      'RESOLVED!',
-      {
-        fontSize: '64px',
-        color: '#4ec9b0',
-        fontStyle: 'bold',
+    const w = this.cameras.main.width;
+    const h = this.cameras.main.height;
+
+    const timeoutText = this.add.text(w / 2, h / 2, 'TIME OUT!', {
+      fontSize: '48px', color: C.orange, fontStyle: 'bold', fontFamily: 'monospace',
+    }).setOrigin(0.5).setAlpha(0).setDepth(10);
+    this.roundUI.push(timeoutText);
+
+    this.tweens.add({
+      targets: timeoutText, alpha: 1, scale: { from: 0.5, to: 1 },
+      duration: 300, ease: 'Back.easeOut',
+    });
+
+    const flash = this.add.rectangle(w / 2, h / 2, w, h, C.orangeHex, 0.15).setDepth(9);
+    this.roundUI.push(flash);
+    this.tweens.add({ targets: flash, alpha: 0, duration: 500 });
+    this.cameras.main.shake(200, 0.005);
+
+    this.scoreLabel?.setText(`Score: ${this.score} / ${this.currentRound + 1}`);
+    this.currentRound++;
+    this.time.delayedCall(1200, () => this.startRound());
+  }
+
+  private showResults(): void {
+    this.clearRoundUI();
+    this.gameOver = true;
+    this.timerBar?.clear();
+    this.timerText?.setText('');
+    this.roundLabel?.setText('');
+
+    const w = this.cameras.main.width;
+    const h = this.cameras.main.height;
+    const success = this.score >= 3;
+
+    this.titleText?.setText(success ? 'MERGE COMPLETE!' : 'BUILD FAILED!');
+    this.titleText?.setColor(success ? C.green : C.red);
+
+    this.add.text(w / 2, 120, `${this.score} / ${TOTAL_ROUNDS} Conflicts Resolved`, {
+      fontSize: '24px', color: C.text, fontFamily: 'monospace',
+    }).setOrigin(0.5);
+
+    let stars: string;
+    if (this.score >= 5) stars = '★★★';
+    else if (this.score >= 4) stars = '★★☆';
+    else if (this.score >= 3) stars = '★☆☆';
+    else stars = '☆☆☆';
+
+    this.add.text(w / 2, 155, stars, {
+      fontSize: '36px',
+      color: this.score >= 3 ? C.yellow : C.textMuted,
+      fontFamily: 'monospace',
+    }).setOrigin(0.5);
+
+    const panelY = 200;
+    const panelHeight = 180;
+    this.add.rectangle(w / 2, panelY + panelHeight / 2, w - 80, panelHeight, C.bgElevated)
+      .setStrokeStyle(2, success ? C.greenHex : C.redHex);
+
+    let yPos = panelY + 20;
+    const lineHeight = 28;
+
+    for (let i = 0; i < TOTAL_ROUNDS; i++) {
+      const passed = i < this.score;
+      const icon = passed ? '✓' : '✗';
+      const color = passed ? C.green : C.red;
+      const conflict = this.roundConflicts[i]!;
+      this.add.text(60, yPos, `${icon}  Round ${i + 1}: ${conflict.title}`, {
+        fontSize: '14px', color, fontFamily: 'monospace',
+      });
+      yPos += lineHeight;
+    }
+
+    const rewardY = panelY + panelHeight + 30;
+    if (success) {
+      const goldReward = this.score * GOLD_PER_CORRECT;
+      this.add.text(w / 2, rewardY, `+ ${goldReward} Gold`, {
+        fontSize: '22px', color: C.yellow, fontStyle: 'bold', fontFamily: 'monospace',
+      }).setOrigin(0.5);
+
+      if (this.score === TOTAL_ROUNDS) {
+        this.add.text(w / 2, rewardY + 30, 'PERFECT! Bonus: Debug Potion', {
+          fontSize: '16px', color: C.green, fontFamily: 'monospace',
+        }).setOrigin(0.5);
       }
-    ).setOrigin(0.5);
 
-    // Store result in scene data
-    this.data.set('onSuccess', true);
+      this.data.set('success', true);
+      this.data.set('goldReward', goldReward);
+      this.data.set('perfectClear', this.score === TOTAL_ROUNDS);
+    } else {
+      this.add.text(w / 2, rewardY, `Tech Debt + ${TECH_DEBT_PENALTY}`, {
+        fontSize: '22px', color: C.red, fontStyle: 'bold', fontFamily: 'monospace',
+      }).setOrigin(0.5);
 
-    // Return to parent scene after delay
-    this.time.delayedCall(1500, () => {
-      this.returnToParent(true);
+      this.add.text(w / 2, rewardY + 30, 'Unresolved conflicts increase tech debt!', {
+        fontSize: '14px', color: C.textMuted, fontFamily: 'monospace',
+      }).setOrigin(0.5);
+
+      this.data.set('success', false);
+      this.data.set('techDebtPenalty', TECH_DEBT_PENALTY);
+    }
+
+    this.data.set('score', this.score);
+
+    const btnY = h - 60;
+    const btnBg = this.add.rectangle(w / 2, btnY, 220, 50, C.blueHex, 0.8)
+      .setStrokeStyle(2, C.blueHex)
+      .setInteractive({ useHandCursor: true });
+
+    this.add.text(w / 2, btnY, 'Continue', {
+      fontSize: '20px', color: C.white, fontFamily: 'monospace',
+    }).setOrigin(0.5);
+
+    btnBg.on('pointerover', () => btnBg.setFillStyle(C.blueHex, 1));
+    btnBg.on('pointerout', () => btnBg.setFillStyle(C.blueHex, 0.8));
+    btnBg.on('pointerdown', () => this.exitMinigame());
+
+    this.input.keyboard?.once('keydown-ENTER', () => this.exitMinigame());
+    this.input.keyboard?.once('keydown-SPACE', () => this.exitMinigame());
+  }
+
+  private exitMinigame(): void {
+    const returnScene = this.sceneData?.returnScene || 'DungeonSelectScene';
+    const returnData = this.sceneData?.returnData || {};
+
+    this.scene.start(returnScene, {
+      ...returnData,
+      minigameResult: {
+        success: this.data.get('success'),
+        score: this.score,
+        goldReward: this.data.get('goldReward') || 0,
+        techDebtPenalty: this.data.get('techDebtPenalty') || 0,
+        perfectClear: this.data.get('perfectClear') || false,
+      },
     });
   }
 
-  private handleFailure() {
-    // Flash red
-    const flash = this.add.rectangle(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      this.cameras.main.width,
-      this.cameras.main.height,
-      0xf48771,
-      0.3
-    );
-
-    // Show failure message
-    const failText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      'MERGE FAILED!',
-      {
-        fontSize: '64px',
-        color: '#f48771',
-        fontStyle: 'bold',
+  private clearRoundUI(): void {
+    this.roundUI.forEach(obj => {
+      if (obj && typeof obj.destroy === 'function') {
+        obj.destroy();
       }
-    ).setOrigin(0.5);
-
-    // Store result in scene data
-    this.data.set('onSuccess', false);
-
-    // Return to parent scene after delay
-    this.time.delayedCall(1500, () => {
-      this.returnToParent(false);
     });
-  }
-
-  private handleTimeout() {
-    this.gameActive = false;
-
-    // Flash red
-    const flash = this.add.rectangle(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      this.cameras.main.width,
-      this.cameras.main.height,
-      0xf48771,
-      0.3
-    );
-
-    // Show timeout message
-    const timeoutText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      'TIME OUT!',
-      {
-        fontSize: '64px',
-        color: '#f48771',
-        fontStyle: 'bold',
-      }
-    ).setOrigin(0.5);
-
-    // Store result in scene data
-    this.data.set('onSuccess', false);
-
-    // Return to parent scene after delay
-    this.time.delayedCall(1500, () => {
-      this.returnToParent(false);
-    });
-  }
-
-  private returnToParent(success: boolean) {
-    const initData = this.scene.settings.data as MinigameSceneData;
-    const returnScene = initData?.returnScene || 'BattleScene';
-    const returnData = initData?.returnData || {};
-
-    // Stop this scene and resume parent
-    this.scene.stop();
-    this.scene.resume(returnScene);
-
-    // Parent scene can read result from minigame scene data
-    // via this.scene.get('MinigameScene').data.get('onSuccess')
+    this.roundUI = [];
   }
 }

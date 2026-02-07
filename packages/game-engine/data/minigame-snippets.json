@@ -1,124 +1,277 @@
 {
-  "snippets": [
+  "conflicts": [
     {
-      "id": "snippet-01",
-      "correct": "if (user !== null) {\n  return user.name;\n}",
-      "wrong": "if (user != null) {\n  return user.Name;\n}",
+      "id": "conflict-01",
+      "title": "Null Safety",
+      "head": "if (user !== null) {\n  return user.name;\n}",
+      "incoming": "if (user) {\n  return user.Name;\n}",
+      "options": [
+        "if (user !== null) {\n  return user.name;\n}",
+        "if (user) {\n  return user.Name;\n}",
+        "if (user != null) {\n  return user.Name;\n}"
+      ],
+      "correctIndex": 0,
       "hint": "Use strict equality and correct property casing"
     },
     {
-      "id": "snippet-02",
-      "correct": "for (let i = 0; i < arr.length; i++) {\n  console.log(arr[i]);\n}",
-      "wrong": "for (let i = 0; i <= arr.length; i++) {\n  console.log(arr[i]);\n}",
-      "hint": "Watch out for off-by-one errors in loops"
+      "id": "conflict-02",
+      "title": "Loop Bounds",
+      "head": "for (let i = 0; i < arr.length; i++)",
+      "incoming": "for (let i = 0; i <= arr.length; i++)",
+      "options": [
+        "for (let i = 0; i < arr.length; i++)",
+        "for (let i = 0; i <= arr.length; i++)",
+        "for (let i = 1; i < arr.length; i++)",
+        "for (let i = 0; i < arr.length - 1; i++)"
+      ],
+      "correctIndex": 0,
+      "hint": "Off-by-one: use < not <= with .length"
     },
     {
-      "id": "snippet-03",
-      "correct": "const query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId]);",
-      "wrong": "const query = `SELECT * FROM users WHERE id = ${userId}`;\ndb.query(query);",
-      "hint": "Always use parameterized queries to prevent SQL injection"
+      "id": "conflict-03",
+      "title": "SQL Query",
+      "head": "db.query('SELECT * FROM users WHERE id = ?', [id]);",
+      "incoming": "db.query(`SELECT * FROM users WHERE id = ${id}`);",
+      "options": [
+        "db.query('SELECT * FROM users WHERE id = ?', [id]);",
+        "db.query(`SELECT * FROM users WHERE id = ${id}`);",
+        "db.query('SELECT * FROM users WHERE id = ' + id);"
+      ],
+      "correctIndex": 0,
+      "hint": "Use parameterized queries to prevent SQL injection"
     },
     {
-      "id": "snippet-04",
-      "correct": "const output = escapeHtml(userInput);\ndocument.innerHTML = output;",
-      "wrong": "const output = userInput;\ndocument.innerHTML = output;",
-      "hint": "Escape user input before rendering to prevent XSS"
+      "id": "conflict-04",
+      "title": "XSS Prevention",
+      "head": "el.textContent = userInput;",
+      "incoming": "el.innerHTML = userInput;",
+      "options": [
+        "el.textContent = userInput;",
+        "el.innerHTML = userInput;",
+        "el.innerHTML = escapeHtml(userInput);",
+        "el.outerHTML = userInput;"
+      ],
+      "correctIndex": 0,
+      "hint": "Use textContent to safely render user input"
     },
     {
-      "id": "snippet-05",
-      "correct": "async function fetchData() {\n  try {\n    return await api.get('/data');\n  } catch (err) {\n    console.error(err);\n  }\n}",
-      "wrong": "async function fetchData() {\n  return await api.get('/data');\n}",
+      "id": "conflict-05",
+      "title": "Error Handling",
+      "head": "try {\n  return await api.get('/data');\n} catch (err) {\n  log(err);\n}",
+      "incoming": "return await api.get('/data');",
+      "options": [
+        "try {\n  return await api.get('/data');\n} catch (err) {\n  log(err);\n}",
+        "return await api.get('/data');",
+        "return api.get('/data').catch(() => {});"
+      ],
+      "correctIndex": 0,
       "hint": "Always handle errors in async functions"
     },
     {
-      "id": "snippet-06",
-      "correct": "const handleClick = () => {\n  console.log('clicked');\n};\nbutton.addEventListener('click', handleClick);\nbutton.removeEventListener('click', handleClick);",
-      "wrong": "const handleClick = () => {\n  console.log('clicked');\n};\nbutton.addEventListener('click', handleClick);",
+      "id": "conflict-06",
+      "title": "Memory Leak",
+      "head": "btn.addEventListener('click', handler);\n// cleanup:\nbtn.removeEventListener('click', handler);",
+      "incoming": "btn.addEventListener('click', handler);",
+      "options": [
+        "btn.addEventListener('click', handler);\nbtn.removeEventListener('click', handler);",
+        "btn.addEventListener('click', handler);",
+        "btn.onclick = handler;",
+        "btn.addEventListener('click', () => handler());"
+      ],
+      "correctIndex": 0,
       "hint": "Remove event listeners to prevent memory leaks"
     },
     {
-      "id": "snippet-07",
-      "correct": "let counter = 0;\nsetTimeout(() => {\n  counter++;\n}, 1000);",
-      "wrong": "var counter = 0;\nsetTimeout(() => {\n  counter++;\n}, 1000);",
-      "hint": "Use let or const instead of var for proper scoping"
+      "id": "conflict-07",
+      "title": "Variable Scope",
+      "head": "let counter = 0;",
+      "incoming": "var counter = 0;",
+      "options": [
+        "let counter = 0;",
+        "var counter = 0;",
+        "counter = 0;"
+      ],
+      "correctIndex": 0,
+      "hint": "Use let/const instead of var for block scoping"
     },
     {
-      "id": "snippet-08",
-      "correct": "const result = await Promise.all([\n  fetch('/api/users'),\n  fetch('/api/posts')\n]);",
-      "wrong": "const result = [\n  await fetch('/api/users'),\n  await fetch('/api/posts')\n];",
+      "id": "conflict-08",
+      "title": "Async Parallel",
+      "head": "await Promise.all([fetch(a), fetch(b)]);",
+      "incoming": "await fetch(a);\nawait fetch(b);",
+      "options": [
+        "await Promise.all([fetch(a), fetch(b)]);",
+        "await fetch(a);\nawait fetch(b);",
+        "Promise.all([fetch(a), fetch(b)]);",
+        "fetch(a); fetch(b);"
+      ],
+      "correctIndex": 0,
       "hint": "Use Promise.all for parallel async operations"
     },
     {
-      "id": "snippet-09",
-      "correct": "if (typeof value === 'undefined') {\n  value = defaultValue;\n}",
-      "wrong": "if (value == undefined) {\n  value = defaultValue;\n}",
-      "hint": "Use typeof check for undefined values"
+      "id": "conflict-09",
+      "title": "Type Check",
+      "head": "if (typeof val === 'undefined') {",
+      "incoming": "if (val == undefined) {",
+      "options": [
+        "if (typeof val === 'undefined') {",
+        "if (val == undefined) {",
+        "if (val === undefined) {",
+        "if (!val) {"
+      ],
+      "correctIndex": 0,
+      "hint": "typeof check is safest for undefined values"
     },
     {
-      "id": "snippet-10",
-      "correct": "const nums = [1, 2, 3];\nconst doubled = nums.map(n => n * 2);",
-      "wrong": "const nums = [1, 2, 3];\nconst doubled = [];\nfor (let i = 0; i < nums.length; i++) {\n  doubled[i] = nums[i] * 2;\n}",
-      "hint": "Use functional array methods for cleaner code"
+      "id": "conflict-10",
+      "title": "Array Transform",
+      "head": "const doubled = nums.map(n => n * 2);",
+      "incoming": "const doubled = [];\nfor (let i = 0; i < nums.length; i++)\n  doubled[i] = nums[i] * 2;",
+      "options": [
+        "const doubled = nums.map(n => n * 2);",
+        "const doubled = [];\nfor (let i ...) doubled[i] = nums[i] * 2;",
+        "const doubled = nums.forEach(n => n * 2);"
+      ],
+      "correctIndex": 0,
+      "hint": "Use .map() for clean array transformations"
     },
     {
-      "id": "snippet-11",
-      "correct": "const mutex = new Mutex();\nawait mutex.acquire();\ntry {\n  sharedResource++;\n} finally {\n  mutex.release();\n}",
-      "wrong": "sharedResource++;",
-      "hint": "Use locks to prevent race conditions with shared state"
+      "id": "conflict-11",
+      "title": "Race Condition",
+      "head": "await mutex.acquire();\ntry { shared++; }\nfinally { mutex.release(); }",
+      "incoming": "shared++;",
+      "options": [
+        "await mutex.acquire();\ntry { shared++; }\nfinally { mutex.release(); }",
+        "shared++;",
+        "await lock();\nshared++;",
+        "synchronized { shared++; }"
+      ],
+      "correctIndex": 0,
+      "hint": "Use mutex locks for shared state access"
     },
     {
-      "id": "snippet-12",
-      "correct": "const obj = { a: 1, b: 2 };\nconst copy = { ...obj };",
-      "wrong": "const obj = { a: 1, b: 2 };\nconst copy = obj;",
-      "hint": "Clone objects instead of copying references"
+      "id": "conflict-12",
+      "title": "Object Clone",
+      "head": "const copy = { ...obj };",
+      "incoming": "const copy = obj;",
+      "options": [
+        "const copy = { ...obj };",
+        "const copy = obj;",
+        "const copy = Object.assign(obj);",
+        "const copy = obj.clone();"
+      ],
+      "correctIndex": 0,
+      "hint": "Spread operator creates a shallow clone"
     },
     {
-      "id": "snippet-13",
-      "correct": "switch (status) {\n  case 'active':\n    return true;\n  case 'inactive':\n    return false;\n  default:\n    throw new Error('Unknown status');\n}",
-      "wrong": "switch (status) {\n  case 'active':\n    return true;\n  case 'inactive':\n    return false;\n}",
-      "hint": "Always include a default case in switch statements"
+      "id": "conflict-13",
+      "title": "Switch Default",
+      "head": "switch (s) {\n  case 'a': return 1;\n  default: throw Error('unknown');\n}",
+      "incoming": "switch (s) {\n  case 'a': return 1;\n}",
+      "options": [
+        "switch (s) {\n  case 'a': return 1;\n  default: throw Error('unknown');\n}",
+        "switch (s) {\n  case 'a': return 1;\n}",
+        "switch (s) {\n  case 'a': return 1;\n  default: break;\n}"
+      ],
+      "correctIndex": 0,
+      "hint": "Always add a default case to catch unknowns"
     },
     {
-      "id": "snippet-14",
-      "correct": "const value = parseInt(input, 10);",
-      "wrong": "const value = parseInt(input);",
-      "hint": "Always specify radix parameter in parseInt"
+      "id": "conflict-14",
+      "title": "parseInt Radix",
+      "head": "const val = parseInt(input, 10);",
+      "incoming": "const val = parseInt(input);",
+      "options": [
+        "const val = parseInt(input, 10);",
+        "const val = parseInt(input);",
+        "const val = Number(input);",
+        "const val = +input;"
+      ],
+      "correctIndex": 0,
+      "hint": "Always specify radix in parseInt"
     },
     {
-      "id": "snippet-15",
-      "correct": "class Component {\n  constructor() {\n    this.interval = null;\n  }\n  componentWillUnmount() {\n    clearInterval(this.interval);\n  }\n}",
-      "wrong": "class Component {\n  constructor() {\n    this.interval = setInterval(() => {\n      this.update();\n    }, 1000);\n  }\n}",
-      "hint": "Clean up timers in component lifecycle methods"
+      "id": "conflict-15",
+      "title": "Timer Cleanup",
+      "head": "componentWillUnmount() {\n  clearInterval(this.timer);\n}",
+      "incoming": "// no cleanup",
+      "options": [
+        "componentWillUnmount() {\n  clearInterval(this.timer);\n}",
+        "// no cleanup needed",
+        "componentWillUnmount() {\n  this.timer = null;\n}"
+      ],
+      "correctIndex": 0,
+      "hint": "Clean up timers in lifecycle methods"
     },
     {
-      "id": "snippet-16",
-      "correct": "const isEmpty = arr.length === 0;",
-      "wrong": "const isEmpty = !arr.length;",
-      "hint": "Use explicit comparisons for better readability"
+      "id": "conflict-16",
+      "title": "JSON Parse",
+      "head": "try {\n  data = JSON.parse(input);\n} catch { handleError(); }",
+      "incoming": "data = JSON.parse(input);",
+      "options": [
+        "try {\n  data = JSON.parse(input);\n} catch { handleError(); }",
+        "data = JSON.parse(input);",
+        "data = JSON.parse(input) || {};",
+        "data = eval(input);"
+      ],
+      "correctIndex": 0,
+      "hint": "Always wrap JSON.parse in try-catch"
     },
     {
-      "id": "snippet-17",
-      "correct": "try {\n  const data = JSON.parse(input);\n  processData(data);\n} catch (error) {\n  console.error('Invalid JSON:', error);\n}",
-      "wrong": "const data = JSON.parse(input);\nprocessData(data);",
-      "hint": "Always wrap JSON.parse in try-catch blocks"
+      "id": "conflict-17",
+      "title": "Array Search",
+      "head": "const r = items.find(i => i.id === target);",
+      "incoming": "let r = null;\nfor (let i = 0; i < items.length; i++)\n  if (items[i].id === target) r = items[i];",
+      "options": [
+        "const r = items.find(i => i.id === target);",
+        "let r; for (...) if (items[i].id === target) r = items[i];",
+        "const r = items.filter(i => i.id === target);",
+        "const r = items.indexOf(target);"
+      ],
+      "correctIndex": 0,
+      "hint": "Use .find() for single-element search"
     },
     {
-      "id": "snippet-18",
-      "correct": "const result = items.find(item => item.id === targetId);",
-      "wrong": "let result = null;\nfor (let i = 0; i < items.length; i++) {\n  if (items[i].id === targetId) {\n    result = items[i];\n  }\n}",
-      "hint": "Use array methods like find() instead of manual loops"
+      "id": "conflict-18",
+      "title": "Config Immutability",
+      "head": "const cfg = Object.freeze({ URL: '...' });",
+      "incoming": "const cfg = { URL: '...' };",
+      "options": [
+        "const cfg = Object.freeze({ URL: '...' });",
+        "const cfg = { URL: '...' };",
+        "let cfg = { URL: '...' };",
+        "var cfg = Object.freeze({ URL: '...' });"
+      ],
+      "correctIndex": 0,
+      "hint": "Freeze config objects to prevent mutation"
     },
     {
-      "id": "snippet-19",
-      "correct": "function validateEmail(email) {\n  const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  return regex.test(email);\n}",
-      "wrong": "function validateEmail(email) {\n  return email.includes('@');\n}",
-      "hint": "Use proper validation patterns for email addresses"
+      "id": "conflict-19",
+      "title": "Equality Check",
+      "head": "if (a === b && typeof a === 'number')",
+      "incoming": "if (a == b)",
+      "options": [
+        "if (a === b && typeof a === 'number')",
+        "if (a == b)",
+        "if (a === b)",
+        "if (a >= b && a <= b)"
+      ],
+      "correctIndex": 0,
+      "hint": "Strict equality with type guard is safest"
     },
     {
-      "id": "snippet-20",
-      "correct": "const config = Object.freeze({\n  API_URL: 'https://api.example.com',\n  TIMEOUT: 5000\n});",
-      "wrong": "const config = {\n  API_URL: 'https://api.example.com',\n  TIMEOUT: 5000\n};",
-      "hint": "Freeze constant configuration objects to prevent mutation"
+      "id": "conflict-20",
+      "title": "Promise Chain",
+      "head": "fetch(url)\n  .then(r => r.json())\n  .catch(err => log(err));",
+      "incoming": "fetch(url)\n  .then(r => r.json());",
+      "options": [
+        "fetch(url)\n  .then(r => r.json())\n  .catch(err => log(err));",
+        "fetch(url)\n  .then(r => r.json());",
+        "fetch(url).then(r => r.text());",
+        "fetch(url).catch(err => log(err));"
+      ],
+      "correctIndex": 0,
+      "hint": "Always add .catch() to promise chains"
     }
   ]
 }
