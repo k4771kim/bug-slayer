@@ -11,6 +11,8 @@
  * Progression Flow:
  * - Chapter 1: 5 bugs → 1 boss (OffByOneError)
  * - Chapter 2: 4 bugs → 1 boss (Heisenbug)
+ * - Chapter 3: 5 bugs → 1 boss (Concurrency Chaos)
+ * - Chapter 4: 5 bugs → 1 boss (Spaghetti Code Dragon)
  * - Chapters unlock sequentially
  * - Each stage must be completed to unlock next
  */
@@ -74,10 +76,12 @@ export class ProgressionSystem {
   private readonly SAVE_VERSION = '1.0.0';
 
   // Chapter configuration
-  private readonly CHAPTER_CONFIG = {
+  private readonly CHAPTER_CONFIG: Record<number, { totalStages: number; bugs: number; boss: number }> = {
     1: { totalStages: 6, bugs: 5, boss: 1 }, // 5 bugs + OffByOneError boss
     2: { totalStages: 5, bugs: 4, boss: 1 }, // 4 bugs + Heisenbug boss
-  } as const;
+    3: { totalStages: 6, bugs: 5, boss: 1 }, // 5 bugs + Concurrency Chaos boss
+    4: { totalStages: 6, bugs: 5, boss: 1 }, // 5 bugs + Spaghetti Code Dragon boss
+  };
 
   constructor() {
     this.progress = this.initializeProgress();
@@ -93,6 +97,8 @@ export class ProgressionSystem {
       chapters: new Map([
         [1, { chapter: 1, unlocked: true, completed: false, stagesCompleted: 0, totalStages: 6, bossDefeated: false }],
         [2, { chapter: 2, unlocked: false, completed: false, stagesCompleted: 0, totalStages: 5, bossDefeated: false }],
+        [3, { chapter: 3, unlocked: false, completed: false, stagesCompleted: 0, totalStages: 6, bossDefeated: false }],
+        [4, { chapter: 4, unlocked: false, completed: false, stagesCompleted: 0, totalStages: 6, bossDefeated: false }],
       ]),
       stages: [],
       totalDefeated: 0,
@@ -171,7 +177,7 @@ export class ProgressionSystem {
 
       // Check if this was the boss stage (last stage)
       const config = this.CHAPTER_CONFIG[chapter];
-      if (stage === config.totalStages) {
+      if (config && stage === config.totalStages) {
         chapterData.bossDefeated = true;
         chapterData.completed = true;
       }
@@ -186,8 +192,9 @@ export class ProgressionSystem {
     let newChapterUnlocked = false;
 
     // Unlock next chapter if current chapter is completed
-    if (chapterCompleted && chapter === 1) {
-      const nextChapter = this.progress.chapters.get(2);
+    if (chapterCompleted && chapter < 4) {
+      const nextChapterNum = (chapter + 1) as Chapter;
+      const nextChapter = this.progress.chapters.get(nextChapterNum);
       if (nextChapter && !nextChapter.unlocked) {
         nextChapter.unlocked = true;
         newChapterUnlocked = true;
@@ -208,12 +215,15 @@ export class ProgressionSystem {
     const config = this.CHAPTER_CONFIG[chapter];
 
     // If current chapter is complete, move to next chapter
-    if (this.progress.currentStage >= config.totalStages) {
-      if (chapter === 1 && this.isChapterUnlocked(2)) {
-        this.progress.currentChapter = 2;
-        this.progress.currentStage = 1;
+    if (config && this.progress.currentStage >= config.totalStages) {
+      if (chapter < 4) {
+        const nextChapter = (chapter + 1) as Chapter;
+        if (this.isChapterUnlocked(nextChapter)) {
+          this.progress.currentChapter = nextChapter;
+          this.progress.currentStage = 1;
+        }
       }
-      // If Chapter 2 is complete, stay at Chapter 2 Stage 5 (end game)
+      // If Chapter 4 is complete, stay at final stage (end game)
     } else {
       // Move to next stage in current chapter
       this.progress.currentStage += 1;

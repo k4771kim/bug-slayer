@@ -68,7 +68,7 @@ interface ActiveStatusEffect {
  * 3. Critical hit & evasion mechanics
  * 4. Focus +20% DMG buff on next attack
  * 5. Full player skill system (32 skills across 4 classes)
- * 6. EndingScene transition after Chapter 2 boss
+ * 6. EndingScene transition after Chapter 4 boss
  * 7. Buff/debuff tracking with turn duration
  * 8. ItemSystem for loot drops
  */
@@ -413,7 +413,10 @@ export class BattleScene extends Phaser.Scene {
     // Try common bug names from palette
     const bugTypes = ['nullpointer', 'stackoverflow', 'racecondition', 'memoryleak',
                       'deadlock', 'offbyone', 'sqlinjection', 'xss', 'bufferoverflow',
-                      'infiniteloop', 'heisenbug'];
+                      'infiniteloop', 'heisenbug',
+                      'threadstarvation', 'livelock', 'priorityinversion', 'phantomread',
+                      'lostupdate', 'concurrencychaos', 'corsbypass', 'csrfattack',
+                      'antipattern', 'dependencyhell', 'techdebtoverflow', 'spaghettidragon'];
 
     for (const bugType of bugTypes) {
       if (monsterId.includes(bugType) || this.monster.name.toLowerCase().includes(bugType)) {
@@ -431,8 +434,9 @@ export class BattleScene extends Phaser.Scene {
    * Chapter 2: stages 1-4 are bugs, stage 5 is boss.
    */
   private selectMonsterForStage(chapter: number, stage: number): Monster | null {
-    // Determine boss stage per chapter
-    const bossStage = chapter === 1 ? 6 : 5;
+    // Look up total stages from data: Ch.1=6, Ch.2=5, Ch.3=6, Ch.4=6
+    const chapterStages: Record<number, number> = { 1: 6, 2: 5, 3: 6, 4: 6 };
+    const bossStage = chapterStages[chapter] ?? 6;
 
     if (stage === bossStage) {
       // Boss fight
@@ -464,7 +468,7 @@ export class BattleScene extends Phaser.Scene {
       id: bugData.id,
       name: bugData.name,
       type: bugData.type,
-      chapter: bugData.chapter as 1 | 2,
+      chapter: bugData.chapter as 1 | 2 | 3 | 4,
       stats: bugData.stats,
       currentHP: bugData.stats.HP,
       phase: bugData.phase as 1 | 2 | 3 | undefined,
@@ -1595,10 +1599,11 @@ export class BattleScene extends Phaser.Scene {
     const chapter = this.sceneData.chapter;
     const stage = this.sceneData.stage;
 
-    // Determine if this was the final boss (Chapter 2 boss)
-    const isFinalBoss = chapter === 2 && stage === 5;
+    // Determine if this was the final boss (Chapter 4 boss)
+    const chapterTotalStages: Record<number, number> = { 1: 6, 2: 5, 3: 6, 4: 6 };
+    const isFinalBoss = chapter === 4 && stage === (chapterTotalStages[chapter] ?? 6);
 
-    if (isFinalBoss || (result.chapterCompleted && chapter === 2)) {
+    if (isFinalBoss || (result.chapterCompleted && chapter === 4)) {
       // GAME COMPLETE - transition to EndingScene
       this.transitionToEnding(totalPlayTime);
       return;
@@ -1676,8 +1681,8 @@ export class BattleScene extends Phaser.Scene {
     if (!this.techDebt || !this.progressionSystem || !this.player) return;
 
     // Determine if all stages were completed without skipping
-    // Total stages: Ch1 = 6, Ch2 = 5, total = 11
-    const allWarningsKilled = this.stagesCompleted.length >= 11;
+    // Total stages: Ch1=6 + Ch2=5 + Ch3=6 + Ch4=6 = 23
+    const allWarningsKilled = this.stagesCompleted.length >= 23;
 
     const endingType = EndingScene.determineEnding(
       this.techDebt.current,
@@ -1690,7 +1695,7 @@ export class BattleScene extends Phaser.Scene {
       techDebt: this.techDebt.current,
       totalDefeated: this.progressionSystem.getTotalDefeated(),
       playTime: totalPlayTime,
-      chapter: 2,
+      chapter: 4,
       finalLevel: this.player.level,
     };
 

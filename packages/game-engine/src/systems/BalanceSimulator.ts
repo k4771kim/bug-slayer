@@ -154,7 +154,8 @@ export class BalanceSimulator {
       if (!bugData) continue;
 
       // Create simulation entities (scale player level by chapter)
-      const playerLevel = chapter === 1 ? 1 : 5;
+      const playerLevelMap: Record<number, number> = { 1: 1, 2: 5, 3: 7, 4: 10 };
+      const playerLevel = playerLevelMap[chapter] ?? 1;
       const player = this.createSimPlayer(classId, playerLevel);
       const monster = this.createSimMonster(bugData);
 
@@ -555,7 +556,7 @@ export class BalanceSimulator {
 
     // Chapter summary
     const chapterSummary: Record<number, any> = {};
-    const chapters = [1, 2]; // Fixed chapters
+    const chapters = [1, 2, 3, 4];
 
     chapters.forEach(chapter => {
       const chapterResults = results.filter(r => {
@@ -697,7 +698,8 @@ export class BalanceSimulator {
 
     // Boss-specific issues
     const bossBattles = results.filter(r =>
-      r.monsterName === 'OffByOneError' || r.monsterName === 'Heisenbug'
+      r.monsterName === 'OffByOneError' || r.monsterName === 'Heisenbug' ||
+      r.monsterName === 'Concurrency Chaos' || r.monsterName === 'Spaghetti Code Dragon'
     );
 
     if (bossBattles.length > 0) {

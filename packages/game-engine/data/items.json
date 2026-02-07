@@ -191,6 +191,72 @@
         "SPD": 8
       },
       "price": 800
+    },
+    {
+      "id": "mutex-lock",
+      "name": "Mutex Lock",
+      "type": "weapon",
+      "rarity": "rare",
+      "statBonus": {
+        "ATK": 12,
+        "SPD": 3
+      },
+      "price": 500
+    },
+    {
+      "id": "transaction-shield",
+      "name": "Transaction Shield",
+      "type": "armor",
+      "rarity": "rare",
+      "statBonus": {
+        "DEF": 15,
+        "HP": 50
+      },
+      "price": 450
+    },
+    {
+      "id": "concurrency-gem",
+      "name": "Concurrency Gem",
+      "type": "accessory",
+      "rarity": "epic",
+      "statBonus": {
+        "SPD": 10,
+        "ATK": 5
+      },
+      "price": 900
+    },
+    {
+      "id": "firewall-plate",
+      "name": "Firewall Plate",
+      "type": "armor",
+      "rarity": "rare",
+      "statBonus": {
+        "DEF": 18,
+        "HP": 60
+      },
+      "price": 550
+    },
+    {
+      "id": "security-blade",
+      "name": "Security Blade",
+      "type": "weapon",
+      "rarity": "rare",
+      "statBonus": {
+        "ATK": 20
+      },
+      "price": 600
+    },
+    {
+      "id": "clean-code-tome",
+      "name": "Clean Code Tome",
+      "type": "accessory",
+      "rarity": "epic",
+      "statBonus": {
+        "ATK": 12,
+        "DEF": 12,
+        "MP": 20
+      },
+      "price": 1200
     }
   ]
 }

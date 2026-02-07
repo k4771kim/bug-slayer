@@ -419,6 +419,457 @@
         "gold": 150
       },
       "techDebtOnSkip": 80
+    },
+    {
+      "id": "threadstarvation",
+      "name": "Thread Starvation",
+      "description": "Threads waiting endlessly for resources",
+      "type": "bug",
+      "chapter": 3,
+      "stats": {
+        "HP": 160,
+        "ATK": 24,
+        "DEF": 14,
+        "SPD": 10
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 40 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 60 },
+          { "type": "skill", "skillId": "thread-block", "weight": 40 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "basic-potion", "dropRate": 40 }
+        ],
+        "exp": 180,
+        "gold": 80
+      },
+      "techDebtOnSkip": 22
+    },
+    {
+      "id": "livelock",
+      "name": "Livelock",
+      "description": "Threads active but making no progress",
+      "type": "bug",
+      "chapter": 3,
+      "stats": {
+        "HP": 170,
+        "ATK": 20,
+        "DEF": 16,
+        "SPD": 12
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_above", "value": 60 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 40 },
+          { "type": "heal", "weight": 30 },
+          { "type": "buff", "weight": 30 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "mp-potion", "dropRate": 50 }
+        ],
+        "exp": 190,
+        "gold": 85
+      },
+      "techDebtOnSkip": 24
+    },
+    {
+      "id": "priorityinversion",
+      "name": "Priority Inversion",
+      "description": "Low priority tasks blocking high priority ones",
+      "type": "bug",
+      "chapter": 3,
+      "stats": {
+        "HP": 150,
+        "ATK": 28,
+        "DEF": 10,
+        "SPD": 18
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "turn_count", "value": 3 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 70 },
+          { "type": "skill", "skillId": "priority-swap", "weight": 30 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "speed-boots", "dropRate": 30 }
+        ],
+        "exp": 200,
+        "gold": 90
+      },
+      "techDebtOnSkip": 26
+    },
+    {
+      "id": "phantomread",
+      "name": "Phantom Read",
+      "description": "Reading uncommitted data changes",
+      "type": "bug",
+      "chapter": 3,
+      "stats": {
+        "HP": 180,
+        "ATK": 22,
+        "DEF": 18,
+        "SPD": 8
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 50 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 50 },
+          { "type": "skill", "skillId": "phantom-query", "weight": 50 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "defense-pendant", "dropRate": 35 }
+        ],
+        "exp": 210,
+        "gold": 95
+      },
+      "techDebtOnSkip": 28
+    },
+    {
+      "id": "lostupdate",
+      "name": "Lost Update",
+      "description": "Concurrent writes overwriting each other",
+      "type": "bug",
+      "chapter": 3,
+      "stats": {
+        "HP": 175,
+        "ATK": 26,
+        "DEF": 12,
+        "SPD": 14
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 60 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 55 },
+          { "type": "skill", "skillId": "overwrite-strike", "weight": 45 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "power-ring", "dropRate": 40 }
+        ],
+        "exp": 220,
+        "gold": 100
+      },
+      "techDebtOnSkip": 30
+    },
+    {
+      "id": "concurrencychaos",
+      "name": "Concurrency Chaos",
+      "description": "Master of multi-threaded mayhem",
+      "type": "boss",
+      "chapter": 3,
+      "stats": {
+        "HP": 500,
+        "ATK": 35,
+        "DEF": 25,
+        "SPD": 20
+      },
+      "phase": 1,
+      "behaviorTree": {
+        "phases": [
+          {
+            "hpThreshold": 100,
+            "conditions": [
+              { "type": "hp_check", "value": 100 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 50 },
+              { "type": "skill", "skillId": "thread-storm", "weight": 35 },
+              { "type": "buff", "weight": 15 }
+            ]
+          },
+          {
+            "hpThreshold": 75,
+            "conditions": [
+              { "type": "hp_check", "value": 75 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 35 },
+              { "type": "skill", "skillId": "thread-storm", "weight": 30 },
+              { "type": "skill", "skillId": "deadlock-grip", "weight": 25 },
+              { "type": "buff", "weight": 10 }
+            ]
+          },
+          {
+            "hpThreshold": 50,
+            "conditions": [
+              { "type": "hp_check", "value": 50 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 25 },
+              { "type": "skill", "skillId": "thread-storm", "weight": 25 },
+              { "type": "skill", "skillId": "deadlock-grip", "weight": 30 },
+              { "type": "skill", "skillId": "race-exploit", "weight": 20 }
+            ]
+          },
+          {
+            "hpThreshold": 25,
+            "conditions": [
+              { "type": "hp_check", "value": 25 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 15 },
+              { "type": "skill", "skillId": "deadlock-grip", "weight": 25 },
+              { "type": "skill", "skillId": "race-exploit", "weight": 50 },
+              { "type": "buff", "weight": 10 }
+            ]
+          }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "mutex-lock", "dropRate": 100 },
+          { "itemId": "concurrency-gem", "dropRate": 30 }
+        ],
+        "exp": 400,
+        "gold": 200
+      },
+      "techDebtOnSkip": 60
+    },
+    {
+      "id": "corsbypass",
+      "name": "CORS Bypass",
+      "description": "Cross-origin security violation",
+      "type": "bug",
+      "chapter": 4,
+      "stats": {
+        "HP": 210,
+        "ATK": 30,
+        "DEF": 18,
+        "SPD": 16
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "turn_count", "value": 2 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 65 },
+          { "type": "skill", "skillId": "origin-spoof", "weight": 35 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "basic-potion", "dropRate": 45 }
+        ],
+        "exp": 260,
+        "gold": 120
+      },
+      "techDebtOnSkip": 32
+    },
+    {
+      "id": "csrfattack",
+      "name": "CSRF Attack",
+      "description": "Cross-site request forgery exploit",
+      "type": "bug",
+      "chapter": 4,
+      "stats": {
+        "HP": 220,
+        "ATK": 32,
+        "DEF": 16,
+        "SPD": 18
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 40 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 60 },
+          { "type": "skill", "skillId": "token-forge", "weight": 40 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "sanitize-token", "dropRate": 40 }
+        ],
+        "exp": 280,
+        "gold": 130
+      },
+      "techDebtOnSkip": 35
+    },
+    {
+      "id": "antipattern",
+      "name": "Architecture Anti-pattern",
+      "description": "Poor design decisions crystallized",
+      "type": "bug",
+      "chapter": 4,
+      "stats": {
+        "HP": 240,
+        "ATK": 28,
+        "DEF": 22,
+        "SPD": 12
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_above", "value": 70 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 40 },
+          { "type": "buff", "weight": 35 },
+          { "type": "skill", "skillId": "coupling-bind", "weight": 25 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "defense-pendant", "dropRate": 35 }
+        ],
+        "exp": 300,
+        "gold": 140
+      },
+      "techDebtOnSkip": 38
+    },
+    {
+      "id": "dependencyhell",
+      "name": "Dependency Hell",
+      "description": "Conflicting package version nightmare",
+      "type": "bug",
+      "chapter": 4,
+      "stats": {
+        "HP": 250,
+        "ATK": 34,
+        "DEF": 20,
+        "SPD": 14
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 50 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 50 },
+          { "type": "skill", "skillId": "version-conflict", "weight": 50 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "power-ring", "dropRate": 30 }
+        ],
+        "exp": 310,
+        "gold": 150
+      },
+      "techDebtOnSkip": 40
+    },
+    {
+      "id": "techdebtoverflow",
+      "name": "Technical Debt Overflow",
+      "description": "Accumulated shortcuts gone critical",
+      "type": "bug",
+      "chapter": 4,
+      "stats": {
+        "HP": 280,
+        "ATK": 36,
+        "DEF": 24,
+        "SPD": 10
+      },
+      "behaviorTree": {
+        "conditions": [
+          { "type": "hp_below", "value": 60 }
+        ],
+        "actions": [
+          { "type": "attack", "weight": 45 },
+          { "type": "skill", "skillId": "debt-cascade", "weight": 35 },
+          { "type": "heal", "weight": 20 }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "fullstack-amulet", "dropRate": 25 }
+        ],
+        "exp": 320,
+        "gold": 160
+      },
+      "techDebtOnSkip": 45
+    },
+    {
+      "id": "spaghettidragon",
+      "name": "Spaghetti Code Dragon",
+      "description": "Ancient legacy codebase nightmare",
+      "type": "boss",
+      "chapter": 4,
+      "stats": {
+        "HP": 650,
+        "ATK": 42,
+        "DEF": 30,
+        "SPD": 22
+      },
+      "phase": 1,
+      "behaviorTree": {
+        "phases": [
+          {
+            "hpThreshold": 100,
+            "conditions": [
+              { "type": "hp_check", "value": 100 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 45 },
+              { "type": "skill", "skillId": "spaghetti-tangle", "weight": 35 },
+              { "type": "buff", "weight": 20 }
+            ]
+          },
+          {
+            "hpThreshold": 75,
+            "conditions": [
+              { "type": "hp_check", "value": 75 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 30 },
+              { "type": "skill", "skillId": "spaghetti-tangle", "weight": 25 },
+              { "type": "skill", "skillId": "architecture-collapse", "weight": 30 },
+              { "type": "buff", "weight": 15 }
+            ]
+          },
+          {
+            "hpThreshold": 50,
+            "conditions": [
+              { "type": "hp_check", "value": 50 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 20 },
+              { "type": "skill", "skillId": "spaghetti-tangle", "weight": 20 },
+              { "type": "skill", "skillId": "architecture-collapse", "weight": 35 },
+              { "type": "skill", "skillId": "legacy-curse", "weight": 25 }
+            ]
+          },
+          {
+            "hpThreshold": 25,
+            "conditions": [
+              { "type": "hp_check", "value": 25 }
+            ],
+            "actions": [
+              { "type": "attack", "weight": 10 },
+              { "type": "skill", "skillId": "architecture-collapse", "weight": 30 },
+              { "type": "skill", "skillId": "legacy-curse", "weight": 45 },
+              { "type": "buff", "weight": 15 }
+            ]
+          }
+        ]
+      },
+      "drops": {
+        "items": [
+          { "itemId": "security-blade", "dropRate": 100 },
+          { "itemId": "clean-code-tome", "dropRate": 25 }
+        ],
+        "exp": 500,
+        "gold": 300
+      },
+      "techDebtOnSkip": 100
     }
   ]
 }

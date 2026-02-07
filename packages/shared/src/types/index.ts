@@ -70,7 +70,7 @@ export interface SkillEffect {
 // ============================================================================
 
 export type MonsterType = 'bug' | 'boss';
-export type Chapter = 1 | 2;
+export type Chapter = 1 | 2 | 3 | 4;
 export type BossPhase = 1 | 2 | 3 | 4;
 
 export interface MonsterStats {

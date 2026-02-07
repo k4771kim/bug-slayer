@@ -54,7 +54,19 @@
     "xss": "#ce9178",
     "bufferoverflow": "#f48771",
     "infiniteloop": "#dcdcaa",
-    "heisenbug": "#c678dd"
+    "heisenbug": "#c678dd",
+    "threadstarvation": "#cca700",
+    "livelock": "#89d185",
+    "priorityinversion": "#9cdcfe",
+    "phantomread": "#569cd6",
+    "lostupdate": "#4fc1ff",
+    "concurrencychaos": "#dcdcaa",
+    "corsbypass": "#f48771",
+    "csrfattack": "#ce9178",
+    "antipattern": "#c586c0",
+    "dependencyhell": "#d16969",
+    "techdebtoverflow": "#c678dd",
+    "spaghettidragon": "#f44747"
   },
   "rarityColors": {
     "common": "#d4d4d4",

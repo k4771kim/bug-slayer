@@ -116,17 +116,21 @@ export class DungeonSelectScene extends Phaser.Scene {
 
   private createChapterSelection() {
     const width = this.cameras.main.width;
-    const cardWidth = 280;
-    const cardHeight = 120;
-    const gap = 40;
-    const startX = width / 2 - cardWidth - gap / 2;
-    const y = 100;
+    const cardWidth = 260;
+    const cardHeight = 100;
+    const gapX = 30;
+    const gapY = 15;
+    const startX = width / 2 - cardWidth - gapX / 2;
+    const y1 = 85;
+    const y2 = y1 + cardHeight + gapY;
 
-    // Chapter 1: Bug Forest
-    this.createChapterCard(1, 'Bug Forest', '#4ec9b0', startX, y, cardWidth, cardHeight);
+    // Row 1
+    this.createChapterCard(1, 'Bug Forest', '#4ec9b0', startX, y1, cardWidth, cardHeight);
+    this.createChapterCard(2, 'Server Dungeon', '#4a90e2', startX + cardWidth + gapX, y1, cardWidth, cardHeight);
 
-    // Chapter 2: Server Dungeon
-    this.createChapterCard(2, 'Server Dungeon', '#4a90e2', startX + cardWidth + gap, y, cardWidth, cardHeight);
+    // Row 2
+    this.createChapterCard(3, 'Concurrency Cavern', '#c586c0', startX, y2, cardWidth, cardHeight);
+    this.createChapterCard(4, 'Security Citadel', '#f48771', startX + cardWidth + gapX, y2, cardWidth, cardHeight);
   }
 
   private createChapterCard(
@@ -218,7 +222,8 @@ export class DungeonSelectScene extends Phaser.Scene {
       const bg = container.getAt(0) as Phaser.GameObjects.Rectangle;
       const isSelected = ch === chapter;
       const chapterProgress = this.progression.getChapterProgress(ch as Chapter);
-      const color = ch === 1 ? '#4ec9b0' : '#4a90e2';
+      const chapterColors: Record<number, string> = { 1: '#4ec9b0', 2: '#4a90e2', 3: '#c586c0', 4: '#f48771' };
+      const color = chapterColors[ch] ?? '#4a90e2';
 
       if (isSelected) {
         bg.setStrokeStyle(4, parseInt(color.replace('#', '0x'), 16));
