@@ -1,0 +1,6 @@
+{
+  "installCommand": "pnpm install --filter @bug-slayer/web...",
+  "buildCommand": "pnpm --filter @bug-slayer/web... build",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
+}
