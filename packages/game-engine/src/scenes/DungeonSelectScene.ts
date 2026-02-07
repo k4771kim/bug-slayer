@@ -45,6 +45,7 @@ export class DungeonSelectScene extends Phaser.Scene {
   // UI Elements
   private chapterCards: Map<number, Phaser.GameObjects.Container> = new Map();
   private stageInfoPanel?: Phaser.GameObjects.Container;
+  private playerStatsPanel?: Phaser.GameObjects.Container;
   private techDebtBar?: Phaser.GameObjects.Graphics;
   private startButton?: Phaser.GameObjects.Container;
 
@@ -101,6 +102,9 @@ export class DungeonSelectScene extends Phaser.Scene {
     // Create tech debt display
     this.createTechDebtDisplay();
 
+    // Create player stats sidebar (right side)
+    this.createPlayerStatsPanel();
+
     // Create stage info panel (initially hidden)
     this.createStageInfoPanel();
 
@@ -147,13 +151,24 @@ export class DungeonSelectScene extends Phaser.Scene {
     const isUnlocked = this.progression.isChapterUnlocked(chapter as Chapter);
     const isSelected = this.selectedChapter === chapter;
 
-    // Card background
+    // Chapter-themed icons
+    const chapterIcons: Record<number, string> = { 1: '🐛', 2: '🛡️', 3: '🧵', 4: '🐉' };
+    const chapterDifficulty: Record<number, string> = { 1: 'Easy', 2: 'Normal', 3: 'Hard', 4: 'Expert' };
+
+    // Card background with glow for selected
     const bg = this.add.rectangle(0, 0, width, height, parseInt(color.replace('#', '0x'), 16), isSelected ? 0.3 : 0.1);
     bg.setStrokeStyle(isSelected ? 4 : 2, parseInt(color.replace('#', '0x'), 16));
     container.add(bg);
 
-    // Chapter name
-    const nameText = this.add.text(0, -35, `Chapter ${chapter}`, {
+    // Add subtle glow effect for selected card
+    if (isSelected) {
+      const glow = this.add.rectangle(0, 0, width + 8, height + 8, parseInt(color.replace('#', '0x'), 16), 0.2);
+      glow.setStrokeStyle(0, 0);
+      container.addAt(glow, 0); // Add behind background
+    }
+
+    // Chapter name with themed icon
+    const nameText = this.add.text(0, -35, `${chapterIcons[chapter]} Chapter ${chapter}`, {
       fontSize: '20px',
       color: isUnlocked ? color : '#858585',
     }).setOrigin(0.5);
@@ -172,9 +187,9 @@ export class DungeonSelectScene extends Phaser.Scene {
       }).setOrigin(0.5);
       container.add(lockIcon);
     } else {
-      // Progress info
-      const progressText = this.add.text(0, 15,
-        `Stages: ${chapterProgress?.stagesCompleted || 0} / ${chapterProgress?.totalStages || 0}`,
+      // Progress info with completion count
+      const progressText = this.add.text(0, 10,
+        `${chapterProgress?.stagesCompleted || 0}/${chapterProgress?.totalStages || 0} stages`,
         {
           fontSize: '14px',
           color: '#d4d4d4',
@@ -182,14 +197,15 @@ export class DungeonSelectScene extends Phaser.Scene {
       ).setOrigin(0.5);
       container.add(progressText);
 
-      const bossText = this.add.text(0, 35,
-        chapterProgress?.bossDefeated ? '✓ Boss Defeated' : 'Boss: Not Defeated',
+      // Difficulty rating
+      const difficultyText = this.add.text(0, 28,
+        `Difficulty: ${chapterDifficulty[chapter]}`,
         {
           fontSize: '12px',
-          color: chapterProgress?.bossDefeated ? '#4ec9b0' : '#f48771',
+          color: color,
         }
       ).setOrigin(0.5);
-      container.add(bossText);
+      container.add(difficultyText);
     }
 
     // Make interactive only if unlocked
@@ -308,7 +324,7 @@ export class DungeonSelectScene extends Phaser.Scene {
         }
       }
 
-      // Draw stage node
+      // Draw stage node with improved visuals
       let nodeColor: number;
       let nodeRadius: number;
       let nodeAlpha: number;
@@ -320,19 +336,19 @@ export class DungeonSelectScene extends Phaser.Scene {
       } else {
         nodeRadius = 25;
         if (status === 'completed') {
-          nodeColor = 0x4ec9b0; // Green
+          nodeColor = 0x89d185; // Success green (filled)
           nodeAlpha = 1;
         } else if (status === 'current') {
-          nodeColor = 0xdcdcaa; // Yellow
+          nodeColor = 0x4a90e2; // Blue for current (pulsing)
           nodeAlpha = 1;
         } else {
-          nodeColor = 0x858585; // Gray
+          nodeColor = 0x858585; // Locked gray
           nodeAlpha = 0.5;
         }
       }
 
       const circle = this.add.circle(x, y, nodeRadius, nodeColor, nodeAlpha);
-      circle.setStrokeStyle(2, 0xd4d4d4);
+      circle.setStrokeStyle(status === 'completed' ? 3 : 2, status === 'completed' ? 0x89d185 : 0xd4d4d4);
       node.circle = circle;
 
       // Stage number or icon (accessibility: shape indicators)
@@ -340,7 +356,9 @@ export class DungeonSelectScene extends Phaser.Scene {
       if (status === 'completed') {
         iconText = '✓'; // Checkmark for completed
       } else if (status === 'locked') {
-        iconText = '🔒'; // Lock for locked
+        iconText = 'X'; // X for locked (text-based lock)
+      } else if (bug.type === 'boss') {
+        iconText = '👑'; // Crown for boss
       } else {
         iconText = '▶'; // Arrow for current/available
       }
@@ -380,15 +398,16 @@ export class DungeonSelectScene extends Phaser.Scene {
         });
       }
 
-      // Pulsing animation for current stage
+      // Pulsing animation for current stage (blue pulsing circle)
       if (status === 'current') {
         this.tweens.add({
           targets: circle,
-          scale: { from: 1.0, to: 1.15 },
-          alpha: { from: 1.0, to: 0.7 },
-          duration: 1000,
+          scale: { from: 1.0, to: 1.2 },
+          alpha: { from: 1.0, to: 0.6 },
+          duration: 800,
           yoyo: true,
           repeat: -1,
+          ease: 'Sine.easeInOut',
         });
       }
 
@@ -410,7 +429,7 @@ export class DungeonSelectScene extends Phaser.Scene {
     (children[1] as Phaser.GameObjects.Text).setText(bug.name);
 
     // Bug type
-    (children[2] as Phaser.GameObjects.Text).setText(bug.type === 'boss' ? '🔥 BOSS' : `Type: ${bug.type}`);
+    (children[2] as Phaser.GameObjects.Text).setText(bug.type === 'boss' ? '👑 BOSS' : `Type: ${bug.type}`);
 
     // Stats
     (children[3] as Phaser.GameObjects.Text).setText(
@@ -421,7 +440,47 @@ export class DungeonSelectScene extends Phaser.Scene {
     (children[4] as Phaser.GameObjects.Text).setText(bug.description);
 
     // Rewards
-    (children[5] as Phaser.GameObjects.Text).setText(`Rewards: ${exp} EXP, ${gold} Gold`);
+    (children[5] as Phaser.GameObjects.Text).setText(`💰 Rewards: ${exp} EXP, ${gold} Gold`);
+
+    // Difficulty relative to player level
+    if (this.player) {
+      const playerLevel = this.player.level;
+      const bugLevel = node.chapter * 2 + node.stage - 1; // Estimate bug level from chapter/stage
+      const levelDiff = bugLevel - playerLevel;
+
+      let difficultyText = '';
+      let difficultyColor = '#d4d4d4';
+
+      if (levelDiff <= -3) {
+        difficultyText = '⬇️ Very Easy';
+        difficultyColor = '#89d185';
+      } else if (levelDiff <= -1) {
+        difficultyText = '⬇️ Easy';
+        difficultyColor = '#89d185';
+      } else if (levelDiff <= 1) {
+        difficultyText = '⚖️ Balanced';
+        difficultyColor = '#dcdcaa';
+      } else if (levelDiff <= 3) {
+        difficultyText = '⬆️ Hard';
+        difficultyColor = '#f48771';
+      } else {
+        difficultyText = '⬆️ Very Hard';
+        difficultyColor = '#f48771';
+      }
+
+      const diffText = children[6] as Phaser.GameObjects.Text;
+      diffText.setText(`Difficulty: ${difficultyText} (Lv.${bugLevel})`);
+      diffText.setColor(difficultyColor);
+    } else {
+      (children[6] as Phaser.GameObjects.Text).setText('');
+    }
+
+    // Potential loot drops (note: bug.drops.items contains itemId, not full item data)
+    const lootText = bug.drops.items && bug.drops.items.length > 0
+      ? `🎁 Possible Drops: ${bug.drops.items.length} item(s)`
+      : '🎁 No special loot';
+
+    (children[7] as Phaser.GameObjects.Text).setText(lootText);
 
     this.stageInfoPanel.setVisible(true);
   }
@@ -445,6 +504,139 @@ export class DungeonSelectScene extends Phaser.Scene {
     if (this.startButton) {
       this.startButton.setVisible(true);
     }
+  }
+
+  private createPlayerStatsPanel() {
+    if (!this.player) return;
+
+    const width = this.cameras.main.width;
+    const panelWidth = 200;
+    const panelHeight = 280;
+    const x = width - panelWidth / 2 - 20;
+    const y = 180;
+
+    const container = this.add.container(x, y);
+
+    // Background
+    const bg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x2d2d2d, 0.9);
+    bg.setStrokeStyle(2, 0x3e3e42);
+    container.add(bg);
+
+    // Title
+    const title = this.add.text(0, -125, 'Player Stats', {
+      fontSize: '16px',
+      color: '#4a90e2',
+    }).setOrigin(0.5);
+    container.add(title);
+
+    // Player name
+    const nameText = this.add.text(0, -100, this.player.name, {
+      fontSize: '18px',
+      color: '#d4d4d4',
+    }).setOrigin(0.5);
+    container.add(nameText);
+
+    // Class
+    const classText = this.add.text(0, -80, `Class: ${this.player.class}`, {
+      fontSize: '14px',
+      color: '#9cdcfe',
+    }).setOrigin(0.5);
+    container.add(classText);
+
+    // Level
+    const levelText = this.add.text(0, -60, `Level ${this.player.level}`, {
+      fontSize: '14px',
+      color: '#dcdcaa',
+    }).setOrigin(0.5);
+    container.add(levelText);
+
+    // HP Bar
+    const hpBarWidth = 160;
+    const hpBarHeight = 16;
+    const hpY = -30;
+
+    this.add.text(-hpBarWidth / 2, hpY - 15, 'HP', {
+      fontSize: '12px',
+      color: '#d4d4d4',
+    });
+
+    this.add.rectangle(0, hpY, hpBarWidth, hpBarHeight, 0x3c3c3c);
+    const hpFill = (this.player.currentHP / this.player.stats.HP) * hpBarWidth;
+    const hpBar = this.add.graphics();
+    hpBar.fillStyle(0xf48771, 1);
+    hpBar.fillRect(-hpBarWidth / 2, hpY - hpBarHeight / 2, hpFill, hpBarHeight);
+    container.add(hpBar);
+
+    this.add.text(0, hpY, `${this.player.currentHP}/${this.player.stats.HP}`, {
+      fontSize: '11px',
+      color: '#ffffff',
+    }).setOrigin(0.5);
+
+    // MP Bar
+    const mpY = 0;
+    this.add.text(-hpBarWidth / 2, mpY - 15, 'MP', {
+      fontSize: '12px',
+      color: '#d4d4d4',
+    });
+
+    this.add.rectangle(0, mpY, hpBarWidth, hpBarHeight, 0x3c3c3c);
+    const mpFill = (this.player.currentMP / this.player.stats.MP) * hpBarWidth;
+    const mpBar = this.add.graphics();
+    mpBar.fillStyle(0x4a90e2, 1);
+    mpBar.fillRect(-hpBarWidth / 2, mpY - hpBarHeight / 2, mpFill, hpBarHeight);
+    container.add(mpBar);
+
+    this.add.text(0, mpY, `${this.player.currentMP}/${this.player.stats.MP}`, {
+      fontSize: '11px',
+      color: '#ffffff',
+    }).setOrigin(0.5);
+
+    // Gold
+    const goldText = this.add.text(0, 30, `💰 Gold: ${this.player.gold || 0}`, {
+      fontSize: '14px',
+      color: '#dcdcaa',
+    }).setOrigin(0.5);
+    container.add(goldText);
+
+    // Equipped items summary
+    const equipY = 60;
+    this.add.text(0, equipY, 'Equipped:', {
+      fontSize: '12px',
+      color: '#4a90e2',
+    }).setOrigin(0.5);
+
+    const weapon = this.player.equipment?.weapon?.name || 'None';
+    const armor = this.player.equipment?.armor?.name || 'None';
+    const accessory = this.player.equipment?.accessory?.name || 'None';
+
+    this.add.text(-80, equipY + 20, '⚔️', {
+      fontSize: '14px',
+    });
+    this.add.text(-60, equipY + 20, weapon, {
+      fontSize: '11px',
+      color: '#d4d4d4',
+      wordWrap: { width: 140 },
+    });
+
+    this.add.text(-80, equipY + 40, '🛡️', {
+      fontSize: '14px',
+    });
+    this.add.text(-60, equipY + 40, armor, {
+      fontSize: '11px',
+      color: '#d4d4d4',
+      wordWrap: { width: 140 },
+    });
+
+    this.add.text(-80, equipY + 60, '💍', {
+      fontSize: '14px',
+    });
+    this.add.text(-60, equipY + 60, accessory, {
+      fontSize: '11px',
+      color: '#d4d4d4',
+      wordWrap: { width: 140 },
+    });
+
+    this.playerStatsPanel = container;
   }
 
   private createTechDebtDisplay() {
@@ -485,48 +677,48 @@ export class DungeonSelectScene extends Phaser.Scene {
 
   private createStageInfoPanel() {
     const width = this.cameras.main.width;
-    const panelWidth = 400;
-    const panelHeight = 180;
-    const x = width - panelWidth / 2 - 20;
+    const panelWidth = 420;
+    const panelHeight = 220;
+    const x = width / 2 - 120;
     const y = this.cameras.main.height - panelHeight / 2 - 20;
 
     const container = this.add.container(x, y);
 
     // Background
-    const bg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x2d2d2d, 0.9);
+    const bg = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x2d2d2d, 0.95);
     bg.setStrokeStyle(2, 0x4a90e2);
     container.add(bg);
 
     // Title
-    const title = this.add.text(0, -70, 'Bug Info', {
+    const title = this.add.text(0, -95, 'Stage Info', {
       fontSize: '16px',
       color: '#4a90e2',
     }).setOrigin(0.5);
     container.add(title);
 
     // Bug name (will be updated)
-    const bugName = this.add.text(0, -45, '', {
+    const bugName = this.add.text(0, -70, '', {
       fontSize: '18px',
       color: '#d4d4d4',
     }).setOrigin(0.5);
     container.add(bugName);
 
     // Bug type (will be updated)
-    const bugType = this.add.text(0, -25, '', {
+    const bugType = this.add.text(0, -48, '', {
       fontSize: '14px',
       color: '#c586c0',
     }).setOrigin(0.5);
     container.add(bugType);
 
     // Stats (will be updated)
-    const stats = this.add.text(0, -5, '', {
+    const stats = this.add.text(0, -25, '', {
       fontSize: '12px',
       color: '#9cdcfe',
     }).setOrigin(0.5);
     container.add(stats);
 
     // Description (will be updated)
-    const description = this.add.text(0, 25, '', {
+    const description = this.add.text(0, 5, '', {
       fontSize: '12px',
       color: '#d4d4d4',
       align: 'center',
@@ -535,11 +727,27 @@ export class DungeonSelectScene extends Phaser.Scene {
     container.add(description);
 
     // Rewards (will be updated)
-    const rewards = this.add.text(0, 60, '', {
+    const rewards = this.add.text(0, 45, '', {
       fontSize: '12px',
       color: '#dcdcaa',
     }).setOrigin(0.5);
     container.add(rewards);
+
+    // Difficulty vs player level (will be updated)
+    const difficulty = this.add.text(0, 70, '', {
+      fontSize: '12px',
+      color: '#f48771',
+    }).setOrigin(0.5);
+    container.add(difficulty);
+
+    // Potential loot drops (will be updated)
+    const loot = this.add.text(0, 90, '', {
+      fontSize: '11px',
+      color: '#9cdcfe',
+      align: 'center',
+      wordWrap: { width: panelWidth - 40 },
+    }).setOrigin(0.5);
+    container.add(loot);
 
     container.setVisible(false);
     this.stageInfoPanel = container;

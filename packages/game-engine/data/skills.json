@@ -374,6 +374,382 @@
       "baseDamage": 350,
       "targetType": "single",
       "effects": [{ "type": "damage", "value": 350 }]
+    },
+    {
+      "id": "gpu-warlock-basic-attack",
+      "name": "CUDA Strike",
+      "description": "Channel raw GPU compute into a searing bolt of parallel energy",
+      "class": "gpu-warlock",
+      "mpCost": 0,
+      "cooldown": 0,
+      "baseDamage": 100,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 100 }]
+    },
+    {
+      "id": "gpu-warlock-parallel-processing",
+      "name": "Parallel Processing",
+      "description": "Dispatch thousands of threads to overwhelm all enemies at once",
+      "class": "gpu-warlock",
+      "mpCost": 25,
+      "cooldown": 3,
+      "baseDamage": 80,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 80 }]
+    },
+    {
+      "id": "gpu-warlock-gpu-acceleration",
+      "name": "GPU Acceleration",
+      "description": "Overclock your processing cores for blazing speed and power",
+      "class": "gpu-warlock",
+      "mpCost": 20,
+      "cooldown": 4,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "buff", "stat": "SPD", "value": 50, "duration": 2 },
+        { "type": "buff", "stat": "ATK", "value": 30, "duration": 2 }
+      ]
+    },
+    {
+      "id": "gpu-warlock-vram-overflow",
+      "name": "VRAM Overflow",
+      "description": "Flood the memory bus with more data than any bug can handle",
+      "class": "gpu-warlock",
+      "mpCost": 30,
+      "cooldown": 2,
+      "baseDamage": 250,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 250 }]
+    },
+    {
+      "id": "gpu-warlock-shader-compilation",
+      "name": "Shader Compilation",
+      "description": "Compile a hostile shader that burns enemies over time",
+      "class": "gpu-warlock",
+      "mpCost": 15,
+      "cooldown": 0,
+      "baseDamage": 60,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 60 },
+        { "type": "dot", "value": 30, "duration": 3 }
+      ]
+    },
+    {
+      "id": "gpu-warlock-tensor-core",
+      "name": "Tensor Core Strike",
+      "description": "Focus tensor operations into a devastating precision strike",
+      "class": "gpu-warlock",
+      "mpCost": 20,
+      "cooldown": 2,
+      "baseDamage": 200,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 200 }]
+    },
+    {
+      "id": "gpu-warlock-memory-bandwidth",
+      "name": "Memory Bandwidth",
+      "description": "Widen the data pipeline for faster reaction speed",
+      "class": "gpu-warlock",
+      "mpCost": 10,
+      "cooldown": 3,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "buff", "stat": "SPD", "value": 40, "duration": 3 }]
+    },
+    {
+      "id": "gpu-warlock-h100-full-power",
+      "name": "H100 Full Power",
+      "description": "Unleash the full might of an H100 superchip, annihilating everything",
+      "class": "gpu-warlock",
+      "mpCost": 50,
+      "cooldown": 8,
+      "baseDamage": 350,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 350 }]
+    },
+    {
+      "id": "cat-summoner-basic-attack",
+      "name": "Yarn Toss",
+      "description": "Fling a tangled ball of yarn at the unsuspecting bug",
+      "class": "cat-summoner",
+      "mpCost": 0,
+      "cooldown": 0,
+      "baseDamage": 80,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 80 }]
+    },
+    {
+      "id": "cat-summoner-nyan-punch",
+      "name": "Nyan Punch",
+      "description": "A rainbow-trailed punch powered by pure internet energy",
+      "class": "cat-summoner",
+      "mpCost": 10,
+      "cooldown": 0,
+      "baseDamage": 120,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 120 }]
+    },
+    {
+      "id": "cat-summoner-fur-ball-barrage",
+      "name": "Fur Ball Barrage",
+      "description": "Hurl a volley of fur balls that hit every enemy on screen",
+      "class": "cat-summoner",
+      "mpCost": 20,
+      "cooldown": 2,
+      "baseDamage": 70,
+      "targetType": "all",
+      "effects": [{ "type": "damage", "value": 70 }]
+    },
+    {
+      "id": "cat-summoner-purr-buff",
+      "name": "Purr Buff",
+      "description": "A soothing purr that boosts your attack and defense",
+      "class": "cat-summoner",
+      "mpCost": 15,
+      "cooldown": 3,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [
+        { "type": "buff", "stat": "ATK", "value": 25, "duration": 3 },
+        { "type": "buff", "stat": "DEF", "value": 25, "duration": 3 }
+      ]
+    },
+    {
+      "id": "cat-summoner-meow-heal",
+      "name": "Meow Heal",
+      "description": "A gentle meow that mends wounds with feline magic",
+      "class": "cat-summoner",
+      "mpCost": 20,
+      "cooldown": 2,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "heal", "value": 150 }]
+    },
+    {
+      "id": "cat-summoner-summon-kitten",
+      "name": "Summon Kitten",
+      "description": "Call a mischievous kitten that scratches and harasses the target",
+      "class": "cat-summoner",
+      "mpCost": 25,
+      "cooldown": 4,
+      "baseDamage": 50,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 50 },
+        { "type": "dot", "value": 25, "duration": 3 }
+      ]
+    },
+    {
+      "id": "cat-summoner-cat-nap",
+      "name": "Cat Nap",
+      "description": "Take a quick nap to fully restore HP, but skip your next turn",
+      "class": "cat-summoner",
+      "mpCost": 0,
+      "cooldown": 5,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "heal", "value": 999 }]
+    },
+    {
+      "id": "cat-summoner-cat-army",
+      "name": "Cat Army",
+      "description": "Summon an overwhelming army of cats that swarm all enemies",
+      "class": "cat-summoner",
+      "mpCost": 45,
+      "cooldown": 8,
+      "baseDamage": 100,
+      "targetType": "all",
+      "effects": [
+        { "type": "damage", "value": 100 },
+        { "type": "debuff", "stat": "SPD", "value": -30, "duration": 3 }
+      ]
+    },
+    {
+      "id": "code-ninja-basic-attack",
+      "name": "Quick Slash",
+      "description": "A lightning-fast keyboard shortcut strike",
+      "class": "code-ninja",
+      "mpCost": 0,
+      "cooldown": 0,
+      "baseDamage": 110,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 110 }]
+    },
+    {
+      "id": "code-ninja-console-log",
+      "name": "Console.log",
+      "description": "Debug the enemy's weakness and exploit it for a guaranteed critical hit",
+      "class": "code-ninja",
+      "mpCost": 10,
+      "cooldown": 2,
+      "baseDamage": 200,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 200 }]
+    },
+    {
+      "id": "code-ninja-breakpoint",
+      "name": "Breakpoint",
+      "description": "Freeze the enemy in place by hitting a critical breakpoint",
+      "class": "code-ninja",
+      "mpCost": 15,
+      "cooldown": 3,
+      "baseDamage": 80,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 80 },
+        { "type": "debuff", "stat": "SPD", "value": -100, "duration": 1 }
+      ]
+    },
+    {
+      "id": "code-ninja-stealth-mode",
+      "name": "Stealth Mode",
+      "description": "Vanish into the code shadows, doubling your next attack power",
+      "class": "code-ninja",
+      "mpCost": 25,
+      "cooldown": 5,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "buff", "stat": "ATK", "value": 100, "duration": 3 }]
+    },
+    {
+      "id": "code-ninja-keyboard-shuriken",
+      "name": "Keyboard Shuriken",
+      "description": "Hurl razor-sharp keycaps with deadly precision",
+      "class": "code-ninja",
+      "mpCost": 15,
+      "cooldown": 1,
+      "baseDamage": 150,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 150 }]
+    },
+    {
+      "id": "code-ninja-stack-trace",
+      "name": "Stack Trace",
+      "description": "Analyze the enemy's call stack to reveal defensive vulnerabilities",
+      "class": "code-ninja",
+      "mpCost": 10,
+      "cooldown": 3,
+      "baseDamage": 0,
+      "targetType": "single",
+      "effects": [{ "type": "debuff", "stat": "DEF", "value": -40, "duration": 3 }]
+    },
+    {
+      "id": "code-ninja-async-await",
+      "name": "Async/Await",
+      "description": "Queue a delayed promise that resolves as devastating double damage",
+      "class": "code-ninja",
+      "mpCost": 20,
+      "cooldown": 4,
+      "baseDamage": 280,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 280 }]
+    },
+    {
+      "id": "code-ninja-git-blame",
+      "name": "Git Blame",
+      "description": "Trace the origin of every bug and deliver ultimate accountability",
+      "class": "code-ninja",
+      "mpCost": 40,
+      "cooldown": 10,
+      "baseDamage": 500,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 500 }]
+    },
+    {
+      "id": "light-mage-basic-attack",
+      "name": "Light Pulse",
+      "description": "Fire a concentrated beam of pure photonic energy",
+      "class": "light-mage",
+      "mpCost": 0,
+      "cooldown": 0,
+      "baseDamage": 90,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 90 }]
+    },
+    {
+      "id": "light-mage-photon-debug",
+      "name": "Photon Debug",
+      "description": "Illuminate bugs with a precise beam of debugging light",
+      "class": "light-mage",
+      "mpCost": 15,
+      "cooldown": 0,
+      "baseDamage": 140,
+      "targetType": "single",
+      "effects": [{ "type": "damage", "value": 140 }]
+    },
+    {
+      "id": "light-mage-save-point",
+      "name": "Save Point",
+      "description": "Create a checkpoint that shields you from harm for a while",
+      "class": "light-mage",
+      "mpCost": 20,
+      "cooldown": 6,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "buff", "stat": "DEF", "value": 50, "duration": 5 }]
+    },
+    {
+      "id": "light-mage-fiber-optic-whip",
+      "name": "Fiber Optic Whip",
+      "description": "Lash out with a whip of light that strikes fast and boosts your speed",
+      "class": "light-mage",
+      "mpCost": 15,
+      "cooldown": 2,
+      "baseDamage": 160,
+      "targetType": "single",
+      "effects": [
+        { "type": "damage", "value": 160 },
+        { "type": "buff", "stat": "SPD", "value": 20, "duration": 1 }
+      ]
+    },
+    {
+      "id": "light-mage-syntax-highlight",
+      "name": "Syntax Highlight",
+      "description": "Highlight the enemy's code to expose structural weaknesses",
+      "class": "light-mage",
+      "mpCost": 10,
+      "cooldown": 3,
+      "baseDamage": 0,
+      "targetType": "single",
+      "effects": [{ "type": "debuff", "stat": "DEF", "value": -30, "duration": 3 }]
+    },
+    {
+      "id": "light-mage-enlightenment",
+      "name": "Enlightenment",
+      "description": "Bathe in radiant light that heals wounds and purifies debuffs",
+      "class": "light-mage",
+      "mpCost": 25,
+      "cooldown": 2,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "heal", "value": 200 }]
+    },
+    {
+      "id": "light-mage-spectrum-shield",
+      "name": "Spectrum Shield",
+      "description": "Raise a prismatic barrier that refracts incoming attacks",
+      "class": "light-mage",
+      "mpCost": 20,
+      "cooldown": 3,
+      "baseDamage": 0,
+      "targetType": "self",
+      "effects": [{ "type": "buff", "stat": "DEF", "value": 60, "duration": 3 }]
+    },
+    {
+      "id": "light-mage-full-spectrum",
+      "name": "Full Spectrum Analysis",
+      "description": "Unleash every wavelength at once to devastate all enemies and shatter their defenses",
+      "class": "light-mage",
+      "mpCost": 40,
+      "cooldown": 8,
+      "baseDamage": 120,
+      "targetType": "all",
+      "effects": [
+        { "type": "damage", "value": 120 },
+        { "type": "debuff", "stat": "DEF", "value": -50, "duration": 5 }
+      ]
     }
   ]
 }

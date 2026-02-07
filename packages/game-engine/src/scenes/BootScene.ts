@@ -40,7 +40,13 @@ export class BootScene extends Phaser.Scene {
       loadingText.destroy();
     });
 
-    // TODO: Load game assets here
+    // Load hidden class sprites
+    this.load.image('char-gpu-warlock', '/assets/sprites/char-gpu-warlock.png');
+    this.load.image('char-cat-summoner', '/assets/sprites/char-cat-summoner.png');
+    this.load.image('char-code-ninja', '/assets/sprites/char-code-ninja.png');
+    this.load.image('char-light-mage', '/assets/sprites/char-light-mage.png');
+
+    // TODO: Load additional game assets here
     // this.load.image('character', 'assets/characters/debugger.png');
     // this.load.image('bug', 'assets/bugs/nullpointer.png');
   }

@@ -9,7 +9,7 @@
 // Character Types
 // ============================================================================
 
-export type CharacterClass = 'Debugger' | 'Refactorer' | 'FullStack' | 'DevOps';
+export type CharacterClass = 'Debugger' | 'Refactorer' | 'FullStack' | 'DevOps' | 'GPU Warlock' | 'Cat Summoner' | 'Code Ninja' | 'Light Mage';
 
 export interface CharacterStats {
   HP: number;
@@ -45,7 +45,7 @@ export interface Equipment {
 // ============================================================================
 
 export type SkillEffectType = 'damage' | 'heal' | 'buff' | 'debuff' | 'dot' | 'special';
-export type SkillTargetType = 'single' | 'all';
+export type SkillTargetType = 'single' | 'all' | 'self';
 
 export interface Skill {
   id: string;

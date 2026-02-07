@@ -120,5 +120,7 @@ export function getAllClassesInfo() {
     baseStats: cls.baseStats,
     passive: cls.passive,
     color: dataLoader.getCharacterColor(cls.id),
+    hidden: cls.hidden ?? false,
+    unlockCondition: cls.unlockCondition,
   }));
 }

@@ -25,12 +25,14 @@ export interface EndingData {
   playTime: number;
   chapter: number;
   finalLevel: number;
+  allWarningsKilled: boolean;
 }
 
 interface EndingContent {
   title: string;
   subtitle: string;
   story: string[];
+  reward: string;
   color: string;
 }
 
@@ -110,6 +112,21 @@ export class EndingScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5);
 
+    // Rewards section
+    const rewardsY = statsY - 30;
+    this.add.text(width / 2, rewardsY, '⭐ REWARDS', {
+      fontSize: '20px',
+      color: '#dcdcaa',
+      align: 'center',
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, rewardsY + 30, content.reward, {
+      fontSize: '16px',
+      color: content.color,
+      align: 'center',
+      wordWrap: { width: width - 100 },
+    }).setOrigin(0.5);
+
     // Continue prompt
     this.add.text(width / 2, height - 60, 'Press SPACE to return to main menu', {
       fontSize: '16px',
@@ -144,6 +161,7 @@ export class EndingScene extends Phaser.Scene {
             'The project ships on time with zero critical bugs.',
             'Your team celebrates with cake and high-fives.',
           ],
+          reward: 'Unlocked: Clean Code legendary weapon + Clean Architecture title',
           color: '#4ec9b0', // Green (success)
         };
 
@@ -161,6 +179,7 @@ export class EndingScene extends Phaser.Scene {
             '"We\'ll refactor it in the next sprint," they say.',
             '(They never do.)',
           ],
+          reward: 'Basic completion reward',
           color: '#dcdcaa', // Yellow (warning)
         };
 
@@ -172,12 +191,14 @@ export class EndingScene extends Phaser.Scene {
             'The bugs are gone, but at what cost?',
             'Your code is a tangled mess of quick fixes.',
             'The tech debt has spiraled out of control.',
-            'Maintenance will be a nightmare.',
+            '"The bugs... they never truly die," whispers a voice in the dark.',
             '',
+            'The system collapses under the weight of accumulated debt.',
             'The project ships, but crashes within a week.',
             'You spend the next month firefighting.',
             'The PM is... not pleased.',
           ],
+          reward: 'Challenge Token: +10% difficulty on next run',
           color: '#f48771', // Red (error)
         };
 
@@ -192,12 +213,14 @@ export class EndingScene extends Phaser.Scene {
             'You\'ve achieved what many thought impossible.',
             'Your code is so clean it could be taught in universities.',
             '',
+            '"You are the developer we\'ve always needed," says the lead architect.',
             'The CTO personally offers you a senior architect position.',
             'Other developers ask you to mentor them.',
             'Your GitHub profile becomes a shrine.',
             '',
             'You are the embodiment of clean code principles.',
           ],
+          reward: 'Unlocked: Perfect Developer title + Secret Dungeon',
           color: '#c586c0', // Purple (legendary)
         };
     }
@@ -243,9 +266,9 @@ export class EndingScene extends Phaser.Scene {
   /**
    * Static method to determine ending type based on Tech Debt
    */
-  static determineEnding(techDebt: number, allWarningsKilled: boolean, bossDefeated: boolean): EndingType {
-    // Secret ending: Perfect run
-    if (techDebt === 0 && allWarningsKilled && bossDefeated) {
+  static determineEnding(techDebt: number, allWarningsKilled: boolean, allStagesCleared: boolean): EndingType {
+    // Secret ending: Tech Debt < 20 + all stages cleared
+    if (techDebt < 20 && allStagesCleared) {
       return 'secret';
     }
 

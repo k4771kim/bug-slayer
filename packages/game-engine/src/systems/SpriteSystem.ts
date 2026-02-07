@@ -119,11 +119,53 @@ export class SpriteSystem {
 
     const nameId = monsterName.toLowerCase();
 
-    // Check if boss
-    if (nameId.includes('boss') || nameId.includes('heisenbug') || nameId.includes('finalcompiler')) {
-      this.drawBossSprite(ctx, color);
-    } else {
-      this.drawBugSprite(ctx, color);
+    // Route to specific monster sprites
+    switch (nameId) {
+      // Ch.3 Monsters
+      case 'threadstarvation':
+        this.drawThreadStarvationSprite(ctx, color);
+        break;
+      case 'livelock':
+        this.drawLivelockSprite(ctx, color);
+        break;
+      case 'priorityinversion':
+        this.drawPriorityInversionSprite(ctx, color);
+        break;
+      case 'phantomread':
+        this.drawPhantomReadSprite(ctx, color);
+        break;
+      case 'lostupdate':
+        this.drawLostUpdateSprite(ctx, color);
+        break;
+      case 'concurrencychaos':
+        this.drawConcurrencyChaosSprite(ctx, color);
+        break;
+      // Ch.4 Monsters
+      case 'corsbypass':
+        this.drawCorsBypassSprite(ctx, color);
+        break;
+      case 'csrfattack':
+        this.drawCsrfAttackSprite(ctx, color);
+        break;
+      case 'antipattern':
+        this.drawAntiPatternSprite(ctx, color);
+        break;
+      case 'dependencyhell':
+        this.drawDependencyHellSprite(ctx, color);
+        break;
+      case 'techdebtoverflow':
+        this.drawTechDebtOverflowSprite(ctx, color);
+        break;
+      case 'spaghettidragon':
+        this.drawSpaghettiDragonSprite(ctx, color);
+        break;
+      default:
+        // Fallback for Ch.1-2 monsters
+        if (nameId.includes('boss') || nameId.includes('heisenbug') || nameId.includes('finalcompiler') || nameId.includes('concurrencychaos') || nameId.includes('spaghettidragon')) {
+          this.drawBossSprite(ctx, color);
+        } else {
+          this.drawBugSprite(ctx, color);
+        }
     }
 
     return canvas;
@@ -474,6 +516,517 @@ export class SpriteSystem {
     this.fillPixels(ctx, [[8, 10], [23, 10]]);
     this.fillPixels(ctx, [[8, 11], [23, 11]]);
     this.fillPixels(ctx, [[8, 12], [23, 12]]);
+  }
+
+  // =========================================================================
+  // Chapter 3 Monster Sprites (Concurrency Theme)
+  // =========================================================================
+
+  /**
+   * Draw Thread Starvation sprite - Emaciated creature with reaching arms
+   */
+  private static drawThreadStarvationSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Thin, skeletal head
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[15, 8], [16, 8]]);
+    this.fillPixels(ctx, [[14, 9], [15, 9], [16, 9], [17, 9]]);
+    this.fillPixels(ctx, [[14, 10], [17, 10]]);
+
+    // Hollow eyes (starving look)
+    ctx.fillStyle = this.darkenColor(color, 0.7);
+    this.fillPixels(ctx, [[14, 9], [17, 9]]);
+
+    // Very thin body (emaciated)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[15, 11], [16, 11]]);
+    this.fillPixels(ctx, [[15, 12], [16, 12]]);
+    this.fillPixels(ctx, [[15, 13], [16, 13]]);
+    this.fillPixels(ctx, [[15, 14], [16, 14]]);
+
+    // Ribs visible (darker lines)
+    ctx.fillStyle = this.darkenColor(color, 0.4);
+    this.fillPixels(ctx, [[14, 11], [17, 11]]);
+    this.fillPixels(ctx, [[14, 13], [17, 13]]);
+
+    // Reaching arms (desperate, grasping)
+    ctx.fillStyle = color;
+    // Left arm reaching up
+    this.fillPixels(ctx, [[13, 12], [12, 11], [11, 10], [10, 9]]);
+    this.fillPixels(ctx, [[9, 8], [8, 8]]); // Hand
+    // Right arm reaching up
+    this.fillPixels(ctx, [[18, 12], [19, 11], [20, 10], [21, 9]]);
+    this.fillPixels(ctx, [[22, 8], [23, 8]]); // Hand
+
+    // Thin legs
+    this.fillPixels(ctx, [[14, 15], [14, 16]]);
+    this.fillPixels(ctx, [[17, 15], [17, 16]]);
+  }
+
+  /**
+   * Draw Livelock sprite - Two intertwined spinning arrows/loops
+   */
+  private static drawLivelockSprite(ctx: CanvasRenderingContext2D, color: string) {
+    const darker = this.darkenColor(color, 0.3);
+
+    // Left spiral (clockwise)
+    ctx.fillStyle = color;
+    // Outer ring
+    this.fillPixels(ctx, [[11, 8], [12, 8], [13, 8]]);
+    this.fillPixels(ctx, [[10, 9], [13, 9]]);
+    this.fillPixels(ctx, [[10, 10], [13, 10]]);
+    this.fillPixels(ctx, [[10, 11], [13, 11]]);
+    this.fillPixels(ctx, [[11, 12], [12, 12], [13, 12]]);
+    // Arrow head (top)
+    this.fillPixels(ctx, [[12, 7], [11, 7], [13, 7]]);
+
+    // Right spiral (counter-clockwise)
+    ctx.fillStyle = darker;
+    // Outer ring
+    this.fillPixels(ctx, [[18, 8], [19, 8], [20, 8]]);
+    this.fillPixels(ctx, [[18, 9], [21, 9]]);
+    this.fillPixels(ctx, [[18, 10], [21, 10]]);
+    this.fillPixels(ctx, [[18, 11], [21, 11]]);
+    this.fillPixels(ctx, [[18, 12], [19, 12], [20, 12]]);
+    // Arrow head (bottom)
+    this.fillPixels(ctx, [[19, 13], [18, 13], [20, 13]]);
+
+    // Connecting loop (showing they're stuck together)
+    ctx.fillStyle = this.lightenColor(color, 0.2);
+    this.fillPixels(ctx, [[14, 10], [15, 10], [16, 10], [17, 10]]);
+
+    // Motion blur lines (spinning effect)
+    ctx.fillStyle = this.lightenColor(color, 0.5);
+    this.fillPixels(ctx, [[9, 10], [8, 10]]);
+    this.fillPixels(ctx, [[22, 10], [23, 10]]);
+  }
+
+  /**
+   * Draw Priority Inversion sprite - Upside-down creature
+   */
+  private static drawPriorityInversionSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Body (at top, inverted)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[13, 7], [14, 7], [15, 7], [16, 7], [17, 7], [18, 7]]);
+    this.fillPixels(ctx, [[12, 8], [13, 8], [14, 8], [15, 8], [16, 8], [17, 8], [18, 8], [19, 8]]);
+    this.fillPixels(ctx, [[13, 9], [14, 9], [15, 9], [16, 9], [17, 9], [18, 9]]);
+
+    // Darker segment
+    ctx.fillStyle = this.darkenColor(color, 0.3);
+    this.fillPixels(ctx, [[12, 8], [19, 8]]);
+
+    // Head hanging down (inverted)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[14, 10], [15, 10], [16, 10], [17, 10]]);
+    this.fillPixels(ctx, [[14, 11], [15, 11], [16, 11], [17, 11]]);
+
+    // Eyes (confused, upside-down)
+    ctx.fillStyle = this.darkenColor(color, 0.6);
+    this.fillPixels(ctx, [[14, 11], [17, 11]]);
+
+    // Arms hanging down
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[12, 10], [12, 11], [12, 12]]);
+    this.fillPixels(ctx, [[19, 10], [19, 11], [19, 12]]);
+
+    // Legs pointing up (inverted)
+    this.fillPixels(ctx, [[14, 6], [14, 5]]);
+    this.fillPixels(ctx, [[17, 6], [17, 5]]);
+
+    // "Wrong way" arrow indicator
+    ctx.fillStyle = '#ff6666';
+    this.fillPixels(ctx, [[15, 13], [16, 13]]);
+    this.fillPixels(ctx, [[14, 14], [15, 14], [16, 14], [17, 14]]);
+    this.fillPixels(ctx, [[15, 15], [16, 15]]);
+  }
+
+  /**
+   * Draw Phantom Read sprite - Ghost/phantom shape
+   */
+  private static drawPhantomReadSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Semi-transparent ghost body (lighter color to simulate transparency)
+    const ghostColor = this.lightenColor(color, 0.4);
+    ctx.fillStyle = ghostColor;
+
+    // Ghost head
+    this.fillPixels(ctx, [[14, 8], [15, 8], [16, 8], [17, 8]]);
+    this.fillPixels(ctx, [[13, 9], [14, 9], [15, 9], [16, 9], [17, 9], [18, 9]]);
+
+    // Hollow eyes (phantom look)
+    ctx.fillStyle = this.darkenColor(color, 0.8);
+    this.fillPixels(ctx, [[14, 9], [17, 9]]);
+
+    // Ghost body (wavy, ethereal)
+    ctx.fillStyle = ghostColor;
+    this.fillPixels(ctx, [[13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10]]);
+    this.fillPixels(ctx, [[12, 11], [13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11], [19, 11]]);
+    this.fillPixels(ctx, [[12, 12], [13, 12], [14, 12], [15, 12], [16, 12], [17, 12], [18, 12], [19, 12]]);
+    this.fillPixels(ctx, [[13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13]]);
+
+    // Wavy bottom (ghostly trailing edges)
+    this.fillPixels(ctx, [[13, 14], [15, 14], [17, 14]]);
+    this.fillPixels(ctx, [[14, 15], [16, 15], [18, 15]]);
+
+    // Phantom glow aura
+    ctx.fillStyle = this.lightenColor(color, 0.6);
+    this.fillPixels(ctx, [[12, 10], [19, 10]]);
+    this.fillPixels(ctx, [[11, 11], [20, 11]]);
+    this.fillPixels(ctx, [[11, 12], [20, 12]]);
+  }
+
+  /**
+   * Draw Lost Update sprite - Glitchy creature with duplicate shadows
+   */
+  private static drawLostUpdateSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Main body (primary)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[15, 9], [16, 9]]);
+    this.fillPixels(ctx, [[14, 10], [15, 10], [16, 10], [17, 10]]);
+    this.fillPixels(ctx, [[14, 11], [15, 11], [16, 11], [17, 11]]);
+    this.fillPixels(ctx, [[13, 12], [14, 12], [15, 12], [16, 12], [17, 12], [18, 12]]);
+    this.fillPixels(ctx, [[14, 13], [15, 13], [16, 13], [17, 13]]);
+
+    // Eyes
+    ctx.fillStyle = this.darkenColor(color, 0.6);
+    this.fillPixels(ctx, [[14, 10], [17, 10]]);
+
+    // Shadow/duplicate 1 (offset left-up, glitchy)
+    ctx.fillStyle = this.lightenColor(color, 0.3);
+    this.fillPixels(ctx, [[13, 8], [14, 8]]);
+    this.fillPixels(ctx, [[12, 9], [13, 9], [14, 9], [15, 9]]);
+    this.fillPixels(ctx, [[12, 10], [13, 10], [14, 10], [15, 10]]);
+    this.fillPixels(ctx, [[11, 11], [12, 11], [13, 11], [14, 11], [15, 11], [16, 11]]);
+
+    // Shadow/duplicate 2 (offset right-down, glitchy)
+    ctx.fillStyle = this.darkenColor(color, 0.2);
+    this.fillPixels(ctx, [[17, 10], [18, 10]]);
+    this.fillPixels(ctx, [[16, 11], [17, 11], [18, 11], [19, 11]]);
+    this.fillPixels(ctx, [[15, 12], [16, 12], [17, 12], [18, 12], [19, 12], [20, 12]]);
+    this.fillPixels(ctx, [[16, 13], [17, 13], [18, 13], [19, 13]]);
+    this.fillPixels(ctx, [[17, 14], [18, 14]]);
+
+    // Glitch scanlines
+    ctx.fillStyle = this.lightenColor(color, 0.5);
+    this.fillPixels(ctx, [[11, 10], [12, 10], [19, 10], [20, 10]]);
+  }
+
+  /**
+   * Draw Concurrency Chaos (BOSS) sprite - Multi-headed hydra with tendrils
+   */
+  private static drawConcurrencyChaosSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Crown (boss indicator)
+    ctx.fillStyle = '#ffcc00';
+    this.fillPixels(ctx, [[11, 4], [12, 3], [13, 4]]);
+    this.fillPixels(ctx, [[15, 2], [16, 2]]);
+    this.fillPixels(ctx, [[18, 4], [19, 3], [20, 4]]);
+
+    // Central body (massive)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[12, 10], [13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10], [19, 10]]);
+    this.fillPixels(ctx, [[11, 11], [12, 11], [13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11], [19, 11], [20, 11]]);
+    this.fillPixels(ctx, [[10, 12], [11, 12], [12, 12], [13, 12], [14, 12], [15, 12], [16, 12], [17, 12], [18, 12], [19, 12], [20, 12], [21, 12]]);
+    this.fillPixels(ctx, [[11, 13], [12, 13], [13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13], [19, 13], [20, 13]]);
+    this.fillPixels(ctx, [[12, 14], [13, 14], [14, 14], [15, 14], [16, 14], [17, 14], [18, 14], [19, 14]]);
+
+    // Head 1 (left)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[10, 6], [11, 6], [12, 6]]);
+    this.fillPixels(ctx, [[10, 7], [11, 7], [12, 7]]);
+    this.fillPixels(ctx, [[10, 8], [11, 8], [12, 8]]);
+    // Neck
+    this.fillPixels(ctx, [[11, 9]]);
+    // Eye
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[11, 7]]);
+
+    // Head 2 (center)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[14, 5], [15, 5], [16, 5], [17, 5]]);
+    this.fillPixels(ctx, [[14, 6], [15, 6], [16, 6], [17, 6]]);
+    this.fillPixels(ctx, [[14, 7], [15, 7], [16, 7], [17, 7]]);
+    // Neck
+    this.fillPixels(ctx, [[15, 8], [16, 8]]);
+    this.fillPixels(ctx, [[15, 9], [16, 9]]);
+    // Eyes
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[14, 6], [17, 6]]);
+
+    // Head 3 (right)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[19, 6], [20, 6], [21, 6]]);
+    this.fillPixels(ctx, [[19, 7], [20, 7], [21, 7]]);
+    this.fillPixels(ctx, [[19, 8], [20, 8], [21, 8]]);
+    // Neck
+    this.fillPixels(ctx, [[20, 9]]);
+    // Eye
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[20, 7]]);
+
+    // Thread-like tendrils
+    ctx.fillStyle = this.darkenColor(color, 0.3);
+    // Left tendrils
+    this.fillPixels(ctx, [[9, 11], [8, 12], [7, 13]]);
+    this.fillPixels(ctx, [[9, 13], [8, 14], [7, 15]]);
+    // Right tendrils
+    this.fillPixels(ctx, [[22, 11], [23, 12], [24, 13]]);
+    this.fillPixels(ctx, [[22, 13], [23, 14], [24, 15]]);
+
+    // Boss aura
+    ctx.fillStyle = this.lightenColor(color, 0.3);
+    this.fillPixels(ctx, [[9, 12], [22, 12]]);
+    this.fillPixels(ctx, [[10, 13], [21, 13]]);
+  }
+
+  // =========================================================================
+  // Chapter 4 Monster Sprites (Security/Architecture Theme)
+  // =========================================================================
+
+  /**
+   * Draw CORS Bypass sprite - Shield with crack/breach
+   */
+  private static drawCorsBypassSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Shield outline
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[15, 7], [16, 7]]);
+    this.fillPixels(ctx, [[14, 8], [15, 8], [16, 8], [17, 8]]);
+    this.fillPixels(ctx, [[13, 9], [14, 9], [15, 9], [16, 9], [17, 9], [18, 9]]);
+    this.fillPixels(ctx, [[13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10]]);
+    this.fillPixels(ctx, [[13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11]]);
+    this.fillPixels(ctx, [[13, 12], [14, 12], [15, 12], [16, 12], [17, 12], [18, 12]]);
+    this.fillPixels(ctx, [[14, 13], [15, 13], [16, 13], [17, 13]]);
+    this.fillPixels(ctx, [[14, 14], [15, 14], [16, 14], [17, 14]]);
+    this.fillPixels(ctx, [[15, 15], [16, 15]]);
+
+    // Crack through the middle (showing breach)
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[15, 8], [16, 8]]);
+    this.fillPixels(ctx, [[15, 9], [16, 9]]);
+    this.fillPixels(ctx, [[14, 10], [17, 10]]);
+    this.fillPixels(ctx, [[15, 11], [16, 11]]);
+    this.fillPixels(ctx, [[15, 12], [16, 12]]);
+    this.fillPixels(ctx, [[14, 13], [17, 13]]);
+    this.fillPixels(ctx, [[15, 14], [16, 14]]);
+
+    // Shattered pieces
+    ctx.fillStyle = this.lightenColor(color, 0.3);
+    this.fillPixels(ctx, [[12, 9], [11, 8]]);
+    this.fillPixels(ctx, [[19, 9], [20, 8]]);
+    this.fillPixels(ctx, [[12, 12], [11, 13]]);
+    this.fillPixels(ctx, [[19, 12], [20, 13]]);
+  }
+
+  /**
+   * Draw CSRF Attack sprite - Hooded infiltrator with forged token
+   */
+  private static drawCsrfAttackSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Hood (sneaky infiltrator)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[14, 7], [15, 7], [16, 7], [17, 7]]);
+    this.fillPixels(ctx, [[13, 8], [14, 8], [15, 8], [16, 8], [17, 8], [18, 8]]);
+    this.fillPixels(ctx, [[12, 9], [13, 9], [18, 9], [19, 9]]);
+
+    // Face in shadow
+    ctx.fillStyle = this.darkenColor(color, 0.6);
+    this.fillPixels(ctx, [[14, 9], [15, 9], [16, 9], [17, 9]]);
+
+    // Sinister eyes
+    ctx.fillStyle = '#ff6666';
+    this.fillPixels(ctx, [[14, 9], [17, 9]]);
+
+    // Body (dark cloak)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10]]);
+    this.fillPixels(ctx, [[12, 11], [13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11], [19, 11]]);
+    this.fillPixels(ctx, [[12, 12], [13, 12], [14, 12], [15, 12], [16, 12], [17, 12], [18, 12], [19, 12]]);
+    this.fillPixels(ctx, [[13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13]]);
+    this.fillPixels(ctx, [[14, 14], [15, 14], [16, 14], [17, 14]]);
+
+    // Forged token (glowing fake badge)
+    ctx.fillStyle = '#ffcc00';
+    this.fillPixels(ctx, [[20, 10], [21, 10]]);
+    this.fillPixels(ctx, [[20, 11], [21, 11]]);
+    // Red X (indicating fake)
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[20, 10], [21, 11]]);
+    this.fillPixels(ctx, [[21, 10], [20, 11]]);
+  }
+
+  /**
+   * Draw Anti-Pattern sprite - Crystallized tangled geometric shape
+   */
+  private static drawAntiPatternSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Central crystallized mass (wrong pattern)
+    ctx.fillStyle = color;
+    // Diamond shape
+    this.fillPixels(ctx, [[15, 7], [16, 7]]);
+    this.fillPixels(ctx, [[14, 8], [15, 8], [16, 8], [17, 8]]);
+    this.fillPixels(ctx, [[13, 9], [14, 9], [15, 9], [16, 9], [17, 9], [18, 9]]);
+    this.fillPixels(ctx, [[13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10]]);
+    this.fillPixels(ctx, [[13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11]]);
+    this.fillPixels(ctx, [[14, 12], [15, 12], [16, 12], [17, 12]]);
+    this.fillPixels(ctx, [[15, 13], [16, 13]]);
+
+    // Tangled geometric lines (wrong connections)
+    ctx.fillStyle = this.darkenColor(color, 0.4);
+    // Crossing lines creating confusion
+    this.fillPixels(ctx, [[13, 9], [14, 10], [15, 11]]);
+    this.fillPixels(ctx, [[18, 9], [17, 10], [16, 11]]);
+    this.fillPixels(ctx, [[13, 11], [14, 12], [15, 13]]);
+    this.fillPixels(ctx, [[18, 11], [17, 12], [16, 13]]);
+
+    // Sharp crystal spikes (dangerous pattern)
+    ctx.fillStyle = this.lightenColor(color, 0.2);
+    this.fillPixels(ctx, [[11, 9], [10, 8]]);
+    this.fillPixels(ctx, [[20, 9], [21, 8]]);
+    this.fillPixels(ctx, [[12, 12], [11, 13]]);
+    this.fillPixels(ctx, [[19, 12], [20, 13]]);
+
+    // Grid overlay showing broken pattern
+    ctx.fillStyle = this.darkenColor(color, 0.3);
+    this.fillPixels(ctx, [[15, 8], [15, 9], [15, 10], [15, 11], [15, 12]]);
+    this.fillPixels(ctx, [[16, 8], [16, 9], [16, 10], [16, 11], [16, 12]]);
+  }
+
+  /**
+   * Draw Dependency Hell sprite - Chain-link creature with dangling chains
+   */
+  private static drawDependencyHellSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Core body (trapped)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[14, 9], [15, 9], [16, 9], [17, 9]]);
+    this.fillPixels(ctx, [[14, 10], [15, 10], [16, 10], [17, 10]]);
+    this.fillPixels(ctx, [[14, 11], [15, 11], [16, 11], [17, 11]]);
+
+    // Distressed eyes
+    ctx.fillStyle = this.darkenColor(color, 0.7);
+    this.fillPixels(ctx, [[14, 9], [17, 9]]);
+
+    // Chain links wrapping around body
+    ctx.fillStyle = '#888888';
+    // Top chains
+    this.fillPixels(ctx, [[12, 8], [13, 8], [14, 8]]);
+    this.fillPixels(ctx, [[17, 8], [18, 8], [19, 8]]);
+    // Side chains
+    this.fillPixels(ctx, [[12, 9], [12, 10]]);
+    this.fillPixels(ctx, [[19, 9], [19, 10]]);
+    // Bottom chains
+    this.fillPixels(ctx, [[13, 11], [18, 11]]);
+
+    // Dangling chain segments (left)
+    this.fillPixels(ctx, [[11, 11], [11, 12]]);
+    this.fillPixels(ctx, [[10, 13], [10, 14]]);
+    this.fillPixels(ctx, [[9, 15], [9, 16]]);
+
+    // Dangling chain segments (right)
+    this.fillPixels(ctx, [[20, 11], [20, 12]]);
+    this.fillPixels(ctx, [[21, 13], [21, 14]]);
+    this.fillPixels(ctx, [[22, 15], [22, 16]]);
+
+    // Center dangling chains
+    this.fillPixels(ctx, [[15, 12], [15, 13], [15, 14]]);
+    this.fillPixels(ctx, [[16, 12], [16, 13], [16, 14]]);
+
+    // Chain highlights
+    ctx.fillStyle = '#aaaaaa';
+    this.fillPixels(ctx, [[12, 8], [19, 8]]);
+    this.fillPixels(ctx, [[11, 11], [20, 11]]);
+  }
+
+  /**
+   * Draw Tech Debt Overflow sprite - Overflowing stack of blocks
+   */
+  private static drawTechDebtOverflowSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Base container (overflowing)
+    ctx.fillStyle = color;
+    // Bottom container
+    this.fillPixels(ctx, [[12, 13], [13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13], [19, 13]]);
+    this.fillPixels(ctx, [[12, 14], [19, 14]]);
+    this.fillPixels(ctx, [[12, 15], [13, 15], [14, 15], [15, 15], [16, 15], [17, 15], [18, 15], [19, 15]]);
+
+    // Stack of tech debt blocks (tipping over)
+    ctx.fillStyle = this.darkenColor(color, 0.2);
+    // Layer 1
+    this.fillPixels(ctx, [[13, 12], [14, 12], [15, 12]]);
+    // Layer 2 (offset)
+    this.fillPixels(ctx, [[14, 11], [15, 11], [16, 11]]);
+    // Layer 3 (more offset, tipping)
+    this.fillPixels(ctx, [[15, 10], [16, 10], [17, 10]]);
+    // Layer 4 (falling)
+    this.fillPixels(ctx, [[16, 9], [17, 9], [18, 9]]);
+    // Layer 5 (definitely falling)
+    this.fillPixels(ctx, [[17, 8], [18, 8], [19, 8]]);
+
+    // Falling/loose blocks
+    ctx.fillStyle = this.lightenColor(color, 0.2);
+    this.fillPixels(ctx, [[20, 7], [21, 7]]);
+    this.fillPixels(ctx, [[19, 10], [20, 10]]);
+    this.fillPixels(ctx, [[11, 11], [12, 11]]);
+
+    // Cracks in structure
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[14, 12]]);
+    this.fillPixels(ctx, [[15, 11]]);
+    this.fillPixels(ctx, [[16, 10]]);
+    this.fillPixels(ctx, [[17, 9]]);
+
+    // Warning lines (overflow indicator)
+    ctx.fillStyle = '#ffcc00';
+    this.fillPixels(ctx, [[11, 12], [20, 12]]);
+  }
+
+  /**
+   * Draw Spaghetti Dragon (BOSS) sprite - Dragon made of tangled noodle lines
+   */
+  private static drawSpaghettiDragonSprite(ctx: CanvasRenderingContext2D, color: string) {
+    // Boss crown
+    ctx.fillStyle = '#ffcc00';
+    this.fillPixels(ctx, [[10, 3], [11, 2], [12, 3]]);
+    this.fillPixels(ctx, [[15, 1], [16, 1]]);
+    this.fillPixels(ctx, [[19, 3], [20, 2], [21, 3]]);
+
+    // Dragon head (massive)
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[12, 5], [13, 5], [14, 5], [15, 5], [16, 5], [17, 5], [18, 5], [19, 5]]);
+    this.fillPixels(ctx, [[11, 6], [12, 6], [13, 6], [14, 6], [15, 6], [16, 6], [17, 6], [18, 6], [19, 6], [20, 6]]);
+    this.fillPixels(ctx, [[11, 7], [12, 7], [13, 7], [14, 7], [15, 7], [16, 7], [17, 7], [18, 7], [19, 7], [20, 7]]);
+    this.fillPixels(ctx, [[12, 8], [13, 8], [14, 8], [15, 8], [16, 8], [17, 8], [18, 8], [19, 8]]);
+
+    // Menacing red eyes
+    ctx.fillStyle = '#ff0000';
+    this.fillPixels(ctx, [[13, 6], [14, 6]]);
+    this.fillPixels(ctx, [[17, 6], [18, 6]]);
+
+    // Spaghetti body (tangled lines)
+    ctx.fillStyle = color;
+    // Main body mass
+    this.fillPixels(ctx, [[10, 9], [11, 9], [12, 9], [13, 9], [14, 9], [15, 9], [16, 9], [17, 9], [18, 9], [19, 9], [20, 9], [21, 9]]);
+    this.fillPixels(ctx, [[9, 10], [10, 10], [11, 10], [12, 10], [13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10], [19, 10], [20, 10], [21, 10], [22, 10]]);
+    this.fillPixels(ctx, [[10, 11], [11, 11], [12, 11], [13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11], [19, 11], [20, 11], [21, 11]]);
+
+    // Tangled spaghetti strands (creating chaotic pattern)
+    ctx.fillStyle = this.darkenColor(color, 0.3);
+    // Wavy tangled lines
+    this.fillPixels(ctx, [[8, 10], [7, 11], [6, 12], [7, 13]]);
+    this.fillPixels(ctx, [[23, 10], [24, 11], [25, 12], [24, 13]]);
+    this.fillPixels(ctx, [[11, 12], [12, 13], [13, 14], [14, 13], [15, 12]]);
+    this.fillPixels(ctx, [[16, 12], [17, 13], [18, 14], [19, 13], [20, 12]]);
+
+    // More tangled strands overlapping
+    ctx.fillStyle = this.lightenColor(color, 0.2);
+    this.fillPixels(ctx, [[10, 12], [11, 13], [10, 14]]);
+    this.fillPixels(ctx, [[21, 12], [20, 13], [21, 14]]);
+    this.fillPixels(ctx, [[14, 11], [15, 12], [16, 11]]);
+
+    // Spaghetti dripping/dangling
+    ctx.fillStyle = color;
+    this.fillPixels(ctx, [[12, 15], [12, 16]]);
+    this.fillPixels(ctx, [[15, 15], [15, 16]]);
+    this.fillPixels(ctx, [[19, 15], [19, 16]]);
+
+    // Boss aura (chaotic energy)
+    ctx.fillStyle = this.lightenColor(color, 0.4);
+    this.fillPixels(ctx, [[8, 9], [23, 9]]);
+    this.fillPixels(ctx, [[7, 10], [24, 10]]);
+    this.fillPixels(ctx, [[9, 11], [22, 11]]);
   }
 
   // =========================================================================

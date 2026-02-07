@@ -105,6 +105,11 @@ export class BattleScene extends Phaser.Scene {
   private buffText: Phaser.GameObjects.Text | null = null;
   private statusEffectText: Phaser.GameObjects.Text | null = null;
   private stageText: Phaser.GameObjects.Text | null = null;
+  private playerHPBar: Phaser.GameObjects.Graphics | null = null;
+  private playerMPBar: Phaser.GameObjects.Graphics | null = null;
+  private monsterHPBar: Phaser.GameObjects.Graphics | null = null;
+  private goldText: Phaser.GameObjects.Text | null = null;
+  private techDebtGlow: Phaser.GameObjects.Graphics | null = null;
 
   // Boss phase visuals
   private bossPhaseOverlay: Phaser.GameObjects.Rectangle | null = null;
@@ -244,9 +249,20 @@ export class BattleScene extends Phaser.Scene {
       color: '#4ade80',
     });
 
+    // HP/MP bars (will be drawn in updateUI with graphics)
+    this.playerHPBar = this.add.graphics();
+    this.playerMPBar = this.add.graphics();
+
     // HP/MP icons for accessibility
     this.add.text(80, 225, '❤', { fontSize: '14px', color: '#4ec9b0' });
     this.add.text(80, 245, '◆', { fontSize: '14px', color: '#569cd6' });
+
+    // Gold display with coin icon
+    this.goldText = this.add.text(100, 270, '', {
+      fontSize: '16px',
+      color: '#dcdcaa',
+      fontStyle: 'bold',
+    });
 
     // Player sprite (use generated texture if available, fallback to rectangle)
     const playerClass = this.sceneData?.playerClass.toLowerCase() ?? 'debugger';
@@ -268,6 +284,9 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '18px',
       color: '#ef4444',
     });
+
+    // Monster HP bar
+    this.monsterHPBar = this.add.graphics();
 
     // Monster sprite (use generated texture if available, fallback to rectangle)
     const monsterTexture = this.getMonsterTexture();
@@ -328,6 +347,9 @@ export class BattleScene extends Phaser.Scene {
 
     // Tech Debt bar (filled based on current debt)
     this.techDebtBar = this.add.graphics();
+
+    // Tech Debt glow effect (for high debt warning)
+    this.techDebtGlow = this.add.graphics().setDepth(1);
 
     // Tech Debt text (value and status)
     this.techDebtText = this.add.text(width / 2, barY + barHeight + 15, '', {
@@ -576,6 +598,18 @@ export class BattleScene extends Phaser.Scene {
       }
 
       this.skillPanelContainer!.add(skillBtn);
+
+      // Add cooldown overlay for disabled skills
+      if (onCooldown) {
+        const cdOverlay = this.add.text(200, y, `${cooldown}`, {
+          fontSize: '20px',
+          color: '#f48771',
+          backgroundColor: '#000000',
+          padding: { x: 6, y: 2 },
+          fontStyle: 'bold',
+        }).setOrigin(0.5).setAlpha(0.7);
+        this.skillPanelContainer!.add(cdOverlay);
+      }
     });
 
     // Show locked skills hint
@@ -1697,6 +1731,7 @@ export class BattleScene extends Phaser.Scene {
       playTime: totalPlayTime,
       chapter: 4,
       finalLevel: this.player.level,
+      allWarningsKilled,
     };
 
     this.turnText?.setText('The final bug has been vanquished...');
@@ -1836,9 +1871,14 @@ export class BattleScene extends Phaser.Scene {
       `${this.player.name}${expDisplay}` +
       `\nHP: ${this.player.currentHP}/${this.player.stats.HP}` +
       `\nMP: ${this.player.currentMP}/${this.player.stats.MP}` +
-      `\nGold: ${this.player.gold}` +
       focusIndicator
     );
+
+    // ---- Gold display with coin icon ----
+    this.goldText?.setText(`● ${this.player.gold}g`);
+
+    // ---- Player HP/MP bars with gradient and rounded corners ----
+    this.drawPlayerBars();
 
     // ---- Monster info ----
     const isBoss = this.monster.type === 'boss';
@@ -1860,6 +1900,9 @@ export class BattleScene extends Phaser.Scene {
       `${this.monster.name}\nHP: ${this.monster.currentHP}/${this.monster.stats.HP}${phaseText}`
     );
     this.monsterHPText?.setColor(hpColor);
+
+    // ---- Monster HP bar ----
+    this.drawMonsterHPBar();
 
     // ---- Buff display ----
     if (this.buffText) {
@@ -1886,7 +1929,10 @@ export class BattleScene extends Phaser.Scene {
       this.statusEffectText.setText(effectLines.join('  '));
     }
 
-    // ---- Tech Debt bar ----
+    // ---- Draw status effect icons near HP bars ----
+    this.drawStatusEffectIcons();
+
+    // ---- Tech Debt bar with gradient and glow ----
     const status = this.techDebt.getStatus();
     const barWidth = 300;
     const barHeight = 20;
@@ -1894,9 +1940,27 @@ export class BattleScene extends Phaser.Scene {
     const barY = this.cameras.main.height - 250;
     const fillWidth = (status.current / 100) * barWidth;
 
+    // Determine color based on debt level (gradient from green to yellow to red)
+    let fillColor = 0x4ec9b0; // green (low)
+    if (status.current > 40 && status.current <= 70) {
+      fillColor = 0xdcdcaa; // yellow (medium)
+    } else if (status.current > 70) {
+      fillColor = 0xf48771; // red (high)
+    }
+
     this.techDebtBar?.clear();
-    this.techDebtBar?.fillStyle(parseInt(status.color.replace('#', '0x'), 16), 1);
-    this.techDebtBar?.fillRect(barX, barY, fillWidth, barHeight);
+    this.techDebtBar?.fillStyle(fillColor, 1);
+    this.techDebtBar?.fillRoundedRect(barX, barY, fillWidth, barHeight, 4);
+
+    // Pulsing glow effect when tech debt > 60
+    if (status.current > 60 && this.techDebtGlow) {
+      this.techDebtGlow.clear();
+      const glowAlpha = 0.3 + Math.sin(Date.now() * 0.005) * 0.2;
+      this.techDebtGlow.lineStyle(3, fillColor, glowAlpha);
+      this.techDebtGlow.strokeRoundedRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, 6);
+    } else if (this.techDebtGlow) {
+      this.techDebtGlow.clear();
+    }
 
     this.techDebtText?.setText(`${status.current}/100 - ${status.description}`);
     this.techDebtText?.setColor(status.color);
@@ -1904,6 +1968,131 @@ export class BattleScene extends Phaser.Scene {
     if (!this.turnText?.text) {
       this.turnText?.setText('Your turn! Choose an action.');
     }
+  }
+
+  /**
+   * Draw player HP/MP bars with gradient and rounded corners.
+   */
+  private drawPlayerBars() {
+    if (!this.player || !this.playerHPBar || !this.playerMPBar) return;
+
+    const barWidth = 150;
+    const barHeight = 16;
+    const barX = 100;
+    const hpBarY = 225;
+    const mpBarY = 245;
+
+    // HP Bar
+    const hpPercent = this.player.currentHP / this.player.stats.HP;
+    const hpFillWidth = barWidth * hpPercent;
+
+    this.playerHPBar.clear();
+    // Background
+    this.playerHPBar.fillStyle(0x2d2d30, 1);
+    this.playerHPBar.fillRoundedRect(barX, hpBarY, barWidth, barHeight, 4);
+    // Gradient fill (lighter at top, darker at bottom)
+    this.playerHPBar.fillGradientStyle(0x6ed9c0, 0x6ed9c0, 0x4ec9b0, 0x4ec9b0, 1);
+    this.playerHPBar.fillRoundedRect(barX, hpBarY, hpFillWidth, barHeight, 4);
+    // Border
+    this.playerHPBar.lineStyle(1, 0x3e3e42, 1);
+    this.playerHPBar.strokeRoundedRect(barX, hpBarY, barWidth, barHeight, 4);
+
+    // HP Text overlay
+    const hpText = this.add.text(barX + barWidth / 2, hpBarY + barHeight / 2,
+      `${this.player.currentHP}/${this.player.stats.HP}`, {
+      fontSize: '11px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(10);
+
+    // MP Bar
+    const mpPercent = this.player.currentMP / this.player.stats.MP;
+    const mpFillWidth = barWidth * mpPercent;
+
+    this.playerMPBar.clear();
+    // Background
+    this.playerMPBar.fillStyle(0x2d2d30, 1);
+    this.playerMPBar.fillRoundedRect(barX, mpBarY, barWidth, barHeight, 4);
+    // Blue gradient fill
+    this.playerMPBar.fillGradientStyle(0x6eacd6, 0x6eacd6, 0x569cd6, 0x569cd6, 1);
+    this.playerMPBar.fillRoundedRect(barX, mpBarY, mpFillWidth, barHeight, 4);
+    // Border
+    this.playerMPBar.lineStyle(1, 0x3e3e42, 1);
+    this.playerMPBar.strokeRoundedRect(barX, mpBarY, barWidth, barHeight, 4);
+
+    // MP Text overlay
+    const mpText = this.add.text(barX + barWidth / 2, mpBarY + barHeight / 2,
+      `${this.player.currentMP}/${this.player.stats.MP}`, {
+      fontSize: '11px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(10);
+  }
+
+  /**
+   * Draw monster HP bar with gradient.
+   */
+  private drawMonsterHPBar() {
+    if (!this.monster || !this.monsterHPBar) return;
+
+    const barWidth = 150;
+    const barHeight = 16;
+    const barX = this.cameras.main.width - 200;
+    const barY = 230;
+
+    const hpPercent = this.monster.currentHP / this.monster.stats.HP;
+    const hpFillWidth = barWidth * hpPercent;
+
+    // Determine color based on monster type and phase
+    let fillColorTop = 0xef6666;
+    let fillColorBottom = 0xef4444;
+
+    if (this.monster.type === 'boss' && this.enemyAI) {
+      const phase = this.enemyAI.phase;
+      if (phase === 2) {
+        fillColorTop = 0xeedd8a;
+        fillColorBottom = 0xdcdcaa;
+      } else if (phase === 3) {
+        fillColorTop = 0xde9988;
+        fillColorBottom = 0xce9178;
+      } else if (phase === 4) {
+        fillColorTop = 0xf46767;
+        fillColorBottom = 0xf44747;
+      }
+    }
+
+    this.monsterHPBar.clear();
+    // Background
+    this.monsterHPBar.fillStyle(0x2d2d30, 1);
+    this.monsterHPBar.fillRoundedRect(barX, barY, barWidth, barHeight, 4);
+    // Gradient fill
+    this.monsterHPBar.fillGradientStyle(fillColorTop, fillColorTop, fillColorBottom, fillColorBottom, 1);
+    this.monsterHPBar.fillRoundedRect(barX, barY, hpFillWidth, barHeight, 4);
+    // Border
+    this.monsterHPBar.lineStyle(1, 0x3e3e42, 1);
+    this.monsterHPBar.strokeRoundedRect(barX, barY, barWidth, barHeight, 4);
+
+    // HP Text overlay
+    const hpText = this.add.text(barX + barWidth / 2, barY + barHeight / 2,
+      `${this.monster.currentHP}/${this.monster.stats.HP}`, {
+      fontSize: '11px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(10);
+  }
+
+  /**
+   * Draw status effect icons near character HP bars.
+   */
+  private drawStatusEffectIcons() {
+    // This is a placeholder - status icons are already shown via statusEffectText
+    // Could be enhanced to show small icons directly on/near the HP bars
   }
 
   /**

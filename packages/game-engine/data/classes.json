@@ -132,6 +132,98 @@
         "name": "Agility",
         "description": "+2% evasion per SPD difference, +5% crit rate"
       }
+    },
+    {
+      "id": "gpu-warlock",
+      "name": "GPU Warlock",
+      "description": "Burst damage dealer with powerful AoE attacks. High risk, high reward with self-stun mechanics.",
+      "hidden": true,
+      "unlockCondition": { "type": "damage_in_turns", "description": "Deal 2x damage in 3 turns" },
+      "baseStats": { "HP": 100, "ATK": 18, "DEF": 6, "SPD": 11, "MP": 55 },
+      "statGrowth": { "HP": 5, "ATK": 3, "DEF": 1, "SPD": 2, "MP": 4 },
+      "skillIds": [
+        "gpu-warlock-basic-attack",
+        "gpu-warlock-parallel-processing",
+        "gpu-warlock-gpu-acceleration",
+        "gpu-warlock-vram-overflow",
+        "gpu-warlock-shader-compilation",
+        "gpu-warlock-tensor-core",
+        "gpu-warlock-memory-bandwidth",
+        "gpu-warlock-h100-full-power"
+      ],
+      "passive": {
+        "name": "CUDA Cores",
+        "description": "Every 3rd attack is AoE (hits all enemies)"
+      }
+    },
+    {
+      "id": "cat-summoner",
+      "name": "Cat Summoner",
+      "description": "Support class with healing, buffs, and summoned cats. Auto-revive passive gives second chance.",
+      "hidden": true,
+      "unlockCondition": { "type": "play_time", "description": "Play for 1 hour continuously" },
+      "baseStats": { "HP": 110, "ATK": 10, "DEF": 12, "SPD": 8, "MP": 65 },
+      "statGrowth": { "HP": 6, "ATK": 1, "DEF": 2, "SPD": 1, "MP": 5 },
+      "skillIds": [
+        "cat-summoner-basic-attack",
+        "cat-summoner-nyan-punch",
+        "cat-summoner-fur-ball-barrage",
+        "cat-summoner-purr-buff",
+        "cat-summoner-meow-heal",
+        "cat-summoner-summon-kitten",
+        "cat-summoner-cat-nap",
+        "cat-summoner-cat-army"
+      ],
+      "passive": {
+        "name": "Nine Lives",
+        "description": "Auto-revive once per battle with 30% HP"
+      }
+    },
+    {
+      "id": "code-ninja",
+      "name": "Code Ninja",
+      "description": "Fastest class with guaranteed crits and stealth. Assassin playstyle with burst single-target damage.",
+      "hidden": true,
+      "unlockCondition": { "type": "speed_clear", "description": "Clear Chapter 1 in under 5 minutes" },
+      "baseStats": { "HP": 90, "ATK": 16, "DEF": 6, "SPD": 14, "MP": 50 },
+      "statGrowth": { "HP": 4, "ATK": 3, "DEF": 1, "SPD": 3, "MP": 3 },
+      "skillIds": [
+        "code-ninja-basic-attack",
+        "code-ninja-console-log",
+        "code-ninja-breakpoint",
+        "code-ninja-stealth-mode",
+        "code-ninja-keyboard-shuriken",
+        "code-ninja-stack-trace",
+        "code-ninja-async-await",
+        "code-ninja-git-blame"
+      ],
+      "passive": {
+        "name": "Stealth Protocol",
+        "description": "+10% crit rate, first attack in battle always crits"
+      }
+    },
+    {
+      "id": "light-mage",
+      "name": "Light Mage",
+      "description": "Balanced healer/buffer with light magic. Reveals enemy weaknesses and cleanses debuffs.",
+      "hidden": true,
+      "unlockCondition": { "type": "zero_debt_clear", "description": "Complete any chapter with Tech Debt 0" },
+      "baseStats": { "HP": 105, "ATK": 14, "DEF": 10, "SPD": 10, "MP": 60 },
+      "statGrowth": { "HP": 5, "ATK": 2, "DEF": 2, "SPD": 2, "MP": 4 },
+      "skillIds": [
+        "light-mage-basic-attack",
+        "light-mage-photon-debug",
+        "light-mage-save-point",
+        "light-mage-fiber-optic-whip",
+        "light-mage-syntax-highlight",
+        "light-mage-enlightenment",
+        "light-mage-spectrum-shield",
+        "light-mage-full-spectrum"
+      ],
+      "passive": {
+        "name": "Syntax Highlighting",
+        "description": "Enemy danger level shown as colors, heals cleanse 1 debuff"
+      }
     }
   ]
 }

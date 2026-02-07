@@ -41,7 +41,11 @@
     "debugger": "#569cd6",
     "refactorer": "#4ec9b0",
     "fullstack": "#c586c0",
-    "devops": "#dcdcaa"
+    "devops": "#dcdcaa",
+    "gpu-warlock": "#c678dd",
+    "cat-summoner": "#ce9178",
+    "code-ninja": "#858585",
+    "light-mage": "#dcdcaa"
   },
   "bugColors": {
     "nullpointer": "#f48771",

@@ -33,6 +33,11 @@ export interface ClassData {
     name: string;
     description: string;
   };
+  hidden?: boolean;
+  unlockCondition?: {
+    type: string;
+    description: string;
+  };
 }
 
 export interface SkillData {
