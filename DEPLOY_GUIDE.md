@@ -52,7 +52,7 @@ railway up
 ```
 
 Environment variables:
-- `DATABASE_URL`: PostgreSQL connection string
+- `DATABASE_URL`: SQLite file path (e.g., `file:./dev.db`)
 - `JWT_SECRET`: Strong random secret
 - `CORS_ORIGIN`: Frontend URL (e.g., https://k4771kim.github.io)
 - `PORT`: 3001

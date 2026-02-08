@@ -95,7 +95,7 @@ pnpm lint
 
 ### Backend
 - **Framework**: Express
-- **Database**: PostgreSQL
+- **Database**: SQLite
 - **ORM**: Prisma
 - **Auth**: JWT
 - **Validation**: Zod

@@ -75,12 +75,12 @@ apps/web/src/
 ✅ **TypeScript**: All files pass type checking (`pnpm type-check`)
 ✅ **Backend**: Health endpoint responds with 200 OK
 ✅ **Frontend**: Pages render correctly on http://localhost:3000
-⚠️ **Database**: PostgreSQL not set up yet (deferred to Week 1-4)
+✅ **Database**: SQLite configured (file-based, no external DB needed)
 
 ## Next Steps (Week 1-4)
 
-1. Set up PostgreSQL database
-2. Run Prisma migrations
+1. Run Prisma db push (SQLite auto-creates)
+2. Verify database operations
 3. Integrate Phaser.js game engine
 4. Create BootScene and basic canvas rendering
 5. Connect frontend auth flow to working backend

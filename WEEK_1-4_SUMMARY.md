@@ -69,9 +69,9 @@ player.currentMP = Math.min(player.stats.MP, player.currentMP + mpRestore);
    - **Solution**: Use `next/dynamic` with `ssr: false` option
    - **Impact**: Low - doesn't affect functionality, only initial render
 
-2. **PostgreSQL**: Database still not set up
-   - **Impact**: Auth endpoints return errors
-   - **Workaround**: Using mock data for MVP
+2. **Database**: SQLite configured (file-based, no external DB needed)
+   - **Impact**: Data resets on Railway redeploy (ephemeral)
+   - **Workaround**: Acceptable for MVP
 
 ## Next Steps (Week 1-5)
 
