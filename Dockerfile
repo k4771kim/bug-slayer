@@ -38,5 +38,5 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN cd apps/server && npx prisma generate
 WORKDIR /app/apps/server
 
-# Use pnpm start which runs: prisma db push && node dist/index.js
-CMD ["pnpm", "start"]
+# Run prisma db push to create tables, then start the server
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
