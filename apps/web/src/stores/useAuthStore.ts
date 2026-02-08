@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { apiPost, apiGet } from '@/lib/apiClient';
+import { apiPost, apiGet, setStoredToken, clearStoredToken } from '@/lib/apiClient';
 
 interface User {
   id: string;
@@ -33,11 +33,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const data = await apiPost<{ user: User }>(
+      const data = await apiPost<{ user: User; token: string }>(
         '/api/auth/login',
         { email, password }
       );
 
+      if (data.token) {
+        setStoredToken(data.token);
+      }
       set({ user: data.user, isLoading: false, error: null });
       return true;
     } catch (error) {
@@ -53,11 +56,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const data = await apiPost<{ user: User }>(
+      const data = await apiPost<{ user: User; token: string }>(
         '/api/auth/register',
         { email, password, displayName }
       );
 
+      if (data.token) {
+        setStoredToken(data.token);
+      }
       set({ user: data.user, isLoading: false, error: null });
       return true;
     } catch (error) {
@@ -77,6 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Ignore errors on logout
       console.error('Logout error:', error);
     }
+    clearStoredToken();
     set({ user: null, error: null });
   },
 

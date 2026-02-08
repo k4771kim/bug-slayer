@@ -20,8 +20,10 @@ export default function GamePage() {
   const { user, checkAuth, isLoading } = useAuthStore();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (!user) {
+      checkAuth();
+    }
+  }, [checkAuth, user]);
 
   useEffect(() => {
     if (!isLoading && !user) {

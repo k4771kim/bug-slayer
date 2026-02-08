@@ -30,8 +30,10 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  // Extract token from httpOnly cookie
-  const token = req.cookies.token;
+  // Extract token from Authorization header (preferred) or httpOnly cookie (fallback)
+  const authHeader = req.headers.authorization;
+  const token = (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null)
+    || req.cookies.token;
 
   if (!token) {
     res.status(401).json({

@@ -35,8 +35,8 @@ router.post('/register', async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Return user data without token
-    res.status(201).json({ user: result.user });
+    // Return user data with token (for cross-origin clients that can't use cookies)
+    res.status(201).json({ user: result.user, token: result.token });
   } catch (error) {
     next(error);
   }
@@ -67,8 +67,8 @@ router.post('/login', async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Return user data without token
-    res.json({ user: result.user });
+    // Return user data with token (for cross-origin clients that can't use cookies)
+    res.json({ user: result.user, token: result.token });
   } catch (error) {
     next(error);
   }

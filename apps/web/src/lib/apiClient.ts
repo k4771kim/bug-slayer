@@ -5,6 +5,23 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://bug-slayer-api-production.up.railway.app';
 
+const TOKEN_KEY = 'bug-slayer-token';
+
+export function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearStoredToken(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 interface ApiError {
   error: {
     code: string;
@@ -14,7 +31,7 @@ interface ApiError {
 }
 
 /**
- * Generic API call wrapper with automatic cookie credentials and error handling
+ * Generic API call wrapper with token auth and error handling
  * @param endpoint - API endpoint path (e.g., '/api/auth/login')
  * @param options - Fetch options (method, body, etc.)
  * @returns Parsed JSON response
@@ -26,10 +43,17 @@ export async function apiCall<T>(
 ): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
 
+  const token = getStoredToken();
+  const authHeaders: Record<string, string> = {};
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(url, {
-    credentials: 'include', // Always send cookies
+    credentials: 'include', // Keep cookies as fallback
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options?.headers,
     },
     ...options,
