@@ -1,11 +1,11 @@
 [build]
-builder = "dockerfile"
-dockerfilePath = "./apps/server/Dockerfile"
+builder = "nixpacks"
+buildCommand = "npm i -g pnpm@8.15.1 && pnpm install && pnpm --filter @bug-slayer/shared build && pnpm --filter @bug-slayer/server build && cd apps/server && npx prisma generate"
 
 [deploy]
-startCommand = "npx prisma db push --accept-data-loss && node dist/index.js"
+startCommand = "cd apps/server && npx prisma db push --accept-data-loss && node dist/index.js"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
