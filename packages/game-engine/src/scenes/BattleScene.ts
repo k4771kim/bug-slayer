@@ -12,7 +12,7 @@ import {
 import { createCharacter } from '../systems/CharacterFactory';
 import { dataLoader } from '../loaders/DataLoader';
 import type { SkillData, BugData } from '../loaders/DataLoader';
-import { TechDebt } from '../systems/TechDebt';
+import { TechDebt, type TechDebtLevel } from '../systems/TechDebt';
 import { EnemyAI, type EnemyAction } from '../systems/EnemyAI';
 import { MonsterAI } from '../systems/MonsterAI';
 import { LevelUpSystem } from '../systems/LevelUpSystem';
@@ -70,6 +70,7 @@ export class BattleScene extends Phaser.Scene {
   private player: Character | null = null;
   private monster: Monster | null = null;
   private techDebt: TechDebt | null = null;
+  private lastTechDebtLevel: TechDebtLevel = 'clean';
   private monsterAI: MonsterAI | null = null;
   private levelUpSystem: LevelUpSystem | null = null;
   private progressionSystem: ProgressionSystem | null = null;
@@ -674,6 +675,8 @@ export class BattleScene extends Phaser.Scene {
       this.setActionsEnabled(true);
       return;
     }
+
+    this.soundManager?.playSFX('sfx-skill');
 
     // Build result text
     let resultText = `Used ${skillData.name}!`;
@@ -1461,6 +1464,17 @@ export class BattleScene extends Phaser.Scene {
       this.levelUpSystem,
       this.monsterAI
     );
+
+    // Play warning sound when tech debt transitions to danger/crisis
+    if (this.techDebt) {
+      const currentLevel = this.techDebt.level;
+      if (currentLevel !== this.lastTechDebtLevel) {
+        if (currentLevel === 'danger' || currentLevel === 'crisis') {
+          this.soundManager?.playSFX('sfx-techdebt-warn');
+        }
+        this.lastTechDebtLevel = currentLevel;
+      }
+    }
   }
 
   /**
