@@ -41,6 +41,21 @@ export class BootScene extends Phaser.Scene {
       loadingText.destroy();
     });
 
+    // Load pixel art character sprites
+    const spriteClasses = ['debugger', 'refactorer', 'fullstack'];
+    for (const cls of spriteClasses) {
+      this.load.image(`sprite-char-${cls}`, `/sprites/characters/${cls}-south.png`);
+    }
+
+    // Load pixel art monster sprites
+    const spriteMonsters = [
+      'nullpointer', 'typemismatch', 'offbyone', 'stackoverflow',
+      'racecondition', 'memoryleak', 'deadlock', 'heisenbug'
+    ];
+    for (const mon of spriteMonsters) {
+      this.load.image(`sprite-mon-${mon}`, `/sprites/monsters/${mon}-south.png`);
+    }
+
     // Load hidden class sprites
     this.load.image('char-gpu-warlock', '/assets/sprites/char-gpu-warlock.png');
     this.load.image('char-cat-summoner', '/assets/sprites/char-cat-summoner.png');
@@ -87,6 +102,21 @@ export class BootScene extends Phaser.Scene {
     const characterColors = paletteData.characterColors;
 
     for (const className of classes) {
+      // Prefer real pixel art sprite if available
+      const spriteKey = `sprite-char-${className}`;
+      if (this.textures.exists(spriteKey)) {
+        const source = this.textures.get(spriteKey).getSourceImage() as HTMLImageElement;
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; // 2x upscale
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(source, 0, 0, 64, 64);
+        this.textures.addCanvas(`character-${className}`, canvas);
+        console.log(`Loaded real sprite: character-${className}`);
+        continue;
+      }
+
       const colorKey = className as keyof typeof characterColors;
       const primaryColor = characterColors[colorKey];
 
@@ -122,6 +152,21 @@ export class BootScene extends Phaser.Scene {
     const bugColors = paletteData.bugColors;
 
     for (const [bugName, color] of Object.entries(bugColors)) {
+      // Prefer real pixel art sprite if available
+      const spriteMonKey = `sprite-mon-${bugName}`;
+      if (this.textures.exists(spriteMonKey)) {
+        const source = this.textures.get(spriteMonKey).getSourceImage() as HTMLImageElement;
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(source, 0, 0, 64, 64);
+        this.textures.addCanvas(`bug-${bugName}`, canvas);
+        console.log(`Loaded real sprite: bug-${bugName}`);
+        continue;
+      }
+
       // Generate bug sprite
       const sprite = SpriteSystem.generateMonsterSprite(bugName, color);
 

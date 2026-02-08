@@ -51,6 +51,19 @@ export class BattleResultHandler {
    * Process victory rewards and return summary.
    */
   processVictory(monster: Monster): VictoryRewards {
+    // BEFORE values logging
+    const beforeGold = this.player.gold;
+    const beforeExp = this.player.exp;
+    const beforeLevel = this.player.level;
+
+    console.log('[BattleResult] Before Victory:', {
+      gold: beforeGold,
+      exp: beforeExp,
+      level: beforeLevel,
+      currentHP: this.player.currentHP,
+      currentMP: this.player.currentMP,
+    });
+
     // Stop BGM and play victory sound
     this.soundManager?.stopBGM();
     this.soundManager?.playSFX('sfx-victory');
@@ -78,6 +91,24 @@ export class BattleResultHandler {
 
     // Check for level-up
     const levelUpResult = this.levelUpSystem.addExp(exp);
+
+    // AFTER values logging and validation
+    console.log('[BattleResult] After Victory:', {
+      goldGained: gold,
+      expGained: exp,
+      newGold: this.player.gold,
+      newExp: this.player.exp,
+      newLevel: this.player.level,
+      levelUp: levelUpResult !== null,
+    });
+
+    // Validation: Check gold increase
+    if (this.player.gold !== beforeGold + gold) {
+      console.error('[BattleResult] Gold mismatch!', {
+        expected: beforeGold + gold,
+        actual: this.player.gold,
+      });
+    }
 
     if (levelUpResult) {
       this.soundManager?.playSFX('sfx-levelup');
@@ -115,11 +146,11 @@ export class BattleResultHandler {
     // Mark stage as completed
     stagesCompleted.push(chapter * 100 + stage);
 
-    // Determine if this was the final boss (Chapter 4 boss)
-    const chapterTotalStages: Record<number, number> = { 1: 6, 2: 5, 3: 6, 4: 6 };
-    const isFinalBoss = chapter === 4 && stage === (chapterTotalStages[chapter] ?? 6);
+    // Determine if this was the final boss (Chapter 2 boss for MVP)
+    const chapterTotalStages: Record<number, number> = { 1: 6, 2: 5 };
+    const isFinalBoss = chapter === 2 && stage === (chapterTotalStages[chapter] ?? 5);
 
-    if (isFinalBoss || (result.chapterCompleted && chapter === 4)) {
+    if (isFinalBoss || (result.chapterCompleted && chapter === 2)) {
       // GAME COMPLETE
       return {
         type: 'game-complete',
@@ -223,5 +254,18 @@ export class BattleResultHandler {
    */
   getBattleTime(battleStartTime: number): number {
     return Math.floor((Date.now() - battleStartTime) / 1000);
+  }
+
+  /**
+   * Get current player state for debugging
+   */
+  getPlayerState(): { gold: number; exp: number; level: number; hp: number; mp: number } {
+    return {
+      gold: this.player.gold,
+      exp: this.player.exp,
+      level: this.player.level,
+      hp: this.player.currentHP,
+      mp: this.player.currentMP,
+    };
   }
 }

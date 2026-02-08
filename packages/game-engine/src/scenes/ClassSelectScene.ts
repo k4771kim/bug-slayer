@@ -176,23 +176,18 @@ export class ClassSelectScene extends Phaser.Scene {
       card.setFillStyle(colorInt, baseAlpha);
     });
 
-    // Click to select (all classes are playable for now)
+    // Click to select
     card.on('pointerdown', () => {
       console.log(`Selected class: ${cls.id}`);
 
       // Create character from selected class
       const character = createCharacter(cls.id, cls.name, 1);
 
-      // If first game, go to tutorial; otherwise, go directly to dungeon select
-      if (this.isFirstGame) {
-        this.scene.start('TutorialScene', {
-          party: [character],
-        });
-      } else {
-        this.scene.start('DungeonSelectScene', {
-          party: [character],
-        });
-      }
+      // Always go to DungeonSelectScene after class selection
+      this.scene.start('DungeonSelectScene', {
+        playerClass: cls.id,
+        player: character,
+      });
     });
   }
 }

@@ -142,7 +142,7 @@ export class EndingScene extends Phaser.Scene {
 
     // Input handling
     this.input.keyboard?.once('keydown-SPACE', () => {
-      this.scene.start('ClassSelectScene');
+      this.scene.start('MainMenuScene');
     });
 
     // Play ending-specific sound effect (TODO: add sound)

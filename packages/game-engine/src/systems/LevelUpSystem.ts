@@ -105,12 +105,32 @@ export class LevelUpSystem {
    * Returns level-up result if leveled up, null otherwise
    */
   addExp(amount: number): LevelUpResult | null {
+    const beforeExp = this.character.exp;
+    const beforeLevel = this.character.level;
+    const beforeStats = { ...this.character.stats };
+
+    console.log('[LevelUp] Adding EXP:', {
+      amount,
+      beforeExp,
+      beforeLevel,
+      expForNextLevel: this.getExpForNextLevel(),
+    });
+
     if (this.character.level >= this.MAX_LEVEL) {
+      console.log('[LevelUp] Max level reached, no EXP gain');
       return null; // Max level reached
     }
 
     // Add EXP
     this.character.exp += amount;
+
+    // Validation: Check EXP increase
+    if (this.character.exp !== beforeExp + amount) {
+      console.error('[LevelUp] EXP mismatch!', {
+        expected: beforeExp + amount,
+        actual: this.character.exp,
+      });
+    }
 
     // Check for level-ups (can level up multiple times)
     let levelsGained = 0;
@@ -137,8 +157,20 @@ export class LevelUpSystem {
 
     // If no level-up occurred, return null
     if (levelsGained === 0) {
+      console.log('[LevelUp] No level up', {
+        currentExp: this.character.exp,
+        expNeeded: this.getExpForNextLevel(),
+      });
       return null;
     }
+
+    console.log('[LevelUp] Level Up!', {
+      levelsGained,
+      newLevel: this.character.level,
+      statsGained,
+      beforeStats,
+      afterStats: { ...this.character.stats },
+    });
 
     // Restore HP/MP to full on level-up
     this.character.currentHP = this.character.stats.HP;
@@ -264,6 +296,27 @@ export class LevelUpSystem {
       expToNextLevel: this.getExpToNextLevel(),
       progress: this.getExpProgress(),
       isMaxLevel: this.isMaxLevel(),
+    };
+  }
+
+  /**
+   * Get detailed level info for debugging
+   */
+  getDebugInfo(): {
+    level: number;
+    exp: number;
+    expForNextLevel: number;
+    expToNextLevel: number;
+    progress: number;
+    stats: CharacterStats;
+  } {
+    return {
+      level: this.character.level,
+      exp: this.character.exp,
+      expForNextLevel: this.getExpForNextLevel(),
+      expToNextLevel: this.getExpToNextLevel(),
+      progress: this.getExpProgress(),
+      stats: { ...this.character.stats },
     };
   }
 }

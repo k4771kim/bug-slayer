@@ -158,6 +158,15 @@ export class ProgressionSystem {
     const chapter = this.progress.currentChapter;
     const stage = this.progress.currentStage;
 
+    console.log('[Progression] Completing Stage:', {
+      chapter,
+      stage,
+      techDebt,
+      time,
+      beforeTotalDefeated: this.progress.totalDefeated,
+      beforeTotalTechDebt: this.progress.totalTechDebt,
+    });
+
     // Record stage completion
     const stageProgress: StageProgress = {
       chapter,
@@ -211,6 +220,17 @@ export class ProgressionSystem {
 
     // Advance to next stage
     this.advanceStage();
+
+    console.log('[Progression] Stage Completed:', {
+      chapter,
+      stage,
+      chapterCompleted,
+      newChapterUnlocked,
+      nextChapter: this.progress.currentChapter,
+      nextStage: this.progress.currentStage,
+      totalDefeated: this.progress.totalDefeated,
+      totalTechDebt: this.progress.totalTechDebt,
+    });
 
     return { chapterCompleted, newChapterUnlocked };
   }
@@ -513,6 +533,30 @@ export class ProgressionSystem {
       techDebt: this.progress.totalTechDebt,
       defeated: this.progress.totalDefeated,
       playTime: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
+    };
+  }
+
+  /**
+   * Get detailed progression info for debugging
+   */
+  getDebugInfo(): {
+    currentChapter: number;
+    currentStage: number;
+    totalDefeated: number;
+    totalTechDebt: number;
+    playTime: number;
+    chapters: Array<{ chapter: number; data: ChapterProgress }>;
+  } {
+    return {
+      currentChapter: this.progress.currentChapter,
+      currentStage: this.progress.currentStage,
+      totalDefeated: this.progress.totalDefeated,
+      totalTechDebt: this.progress.totalTechDebt,
+      playTime: this.progress.playTime,
+      chapters: Array.from(this.progress.chapters.entries()).map(([chapter, data]) => ({
+        chapter,
+        data,
+      })),
     };
   }
 }

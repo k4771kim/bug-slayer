@@ -21,6 +21,7 @@ import { ItemSystem } from '../systems/ItemSystem';
 import { EndingScene, type EndingData } from './EndingScene';
 import { EventSystem } from '../systems/EventSystem';
 import type { EventSceneData } from './EventScene';
+import type { MinigameSceneData } from './MinigameScene';
 import { SoundManager } from '../systems/SoundManager';
 import { BuffManager } from '../systems/BuffManager';
 import { SkillManager } from '../systems/SkillManager';
@@ -1385,7 +1386,33 @@ export class BattleScene extends Phaser.Scene {
     }
 
     if (result.type === 'chapter-complete') {
-      // Chapter complete, show message then move to next chapter
+      // Chapter 1 complete - trigger minigame before Chapter 2
+      if (chapter === 1) {
+        this.uiRenderer.setTurnText('Chapter 1 Complete! Entering Merge Conflict Minigame...');
+        this.updateUI();
+
+        this.time.delayedCall(2500, () => {
+          // Transition to MinigameScene
+          const minigameData: MinigameSceneData = {
+            returnScene: 'DungeonSelectScene',
+            returnData: {
+              playerClass: this.sceneData?.playerClass,
+              player: this.player,
+              techDebt: this.techDebt?.current,
+              progression: this.progressionSystem,
+              stagesCompleted: this.stagesCompleted,
+              playTime: totalPlayTime,
+            },
+            difficulty: 1,
+            player: { gold: this.player?.gold || 0 },
+            techDebt: this.techDebt?.current,
+          };
+          this.scene.start('MinigameScene', minigameData);
+        });
+        return;
+      }
+
+      // Other chapters (if any) - show message then advance
       this.uiRenderer.setTurnText(
         this.resultHandler.getChapterCompleteMessage(chapter)
       );
