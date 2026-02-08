@@ -56,13 +56,17 @@ export interface AppliedEffect {
 /**
  * EventSystem manages random events between battles
  */
+interface EventsJSON {
+  events: GameEvent[];
+}
+
 export class EventSystem {
   private events: GameEvent[];
   private goldMultiplier: number = 1;
   private appliedEffects: AppliedEffect[] = [];
 
   constructor() {
-    this.events = (eventsData as any).events as GameEvent[];
+    this.events = (eventsData as EventsJSON).events;
   }
 
   /**
@@ -231,13 +235,13 @@ export class EventSystem {
    * Check if the rolled event is a minigame event
    */
   isMinigameEvent(event: GameEvent): boolean {
-    return (event as any).isMinigame === true;
+    return event.isMinigame === true;
   }
 
   /**
    * Get the minigame scene name for a minigame event
    */
   getMinigameScene(event: GameEvent): string | null {
-    return (event as any).minigameScene || null;
+    return event.minigameScene || null;
   }
 }

@@ -3,7 +3,7 @@
  * Converts JSON class data to game Character objects
  */
 
-import type { Character, Skill } from '@bug-slayer/shared';
+import type { Character, Skill, CharacterClass } from '@bug-slayer/shared';
 import { dataLoader, type ClassData, type SkillData } from '../loaders/DataLoader';
 
 /**
@@ -28,7 +28,7 @@ export function createCharacter(
   return {
     id: `char-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     name,
-    class: classId as any,
+    class: classData.name as CharacterClass,
     level,
     exp: 0,
     gold: 0,
@@ -86,9 +86,9 @@ function convertSkillDataToSkill(skillData: SkillData): Skill {
       type: effect.type,
       value: effect.value,
       duration: effect.duration,
-      stat: effect.stat as any,
+      stat: effect.stat as 'HP' | 'ATK' | 'DEF' | 'SPD' | 'MP' | undefined,
     })),
-    targetType: skillData.targetType as any,
+    targetType: skillData.targetType,
   };
 }
 

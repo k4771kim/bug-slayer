@@ -39,6 +39,15 @@ export type { ClassPalette, SpriteConfig } from './systems/SpriteSystem';
 export { BalanceSimulator } from './systems/BalanceSimulator';
 export type { SimulationConfig, BattleSimResult, SimulationReport } from './systems/BalanceSimulator';
 export { SoundManager } from './systems/SoundManager';
+export { BuffManager } from './systems/BuffManager';
+export type { ActiveBuff, ActiveStatusEffect } from './systems/BuffManager';
+export { SkillManager } from './systems/SkillManager';
+export type { SkillUseResult, FocusResult } from './systems/SkillManager';
+export { BattleUIRenderer } from './systems/BattleUIRenderer';
+export { MonsterAI } from './systems/MonsterAI';
+export type { BossPhaseTransition, BossDialogue } from './systems/MonsterAI';
+export { BattleResultHandler } from './systems/BattleResultHandler';
+export type { VictoryRewards, StageAdvanceResult } from './systems/BattleResultHandler';
 
 /**
  * Create Phaser game configuration
@@ -66,7 +75,7 @@ export function createGameConfig(parentElement: string): Phaser.Types.Core.GameC
     input: {
       activePointers: 3, // Support multi-touch
       touch: {
-        target: null as any, // Use canvas element
+        target: null, // Use canvas element (null is valid for Phaser)
       },
     },
   };

@@ -27,7 +27,16 @@ router.post('/register', async (req, res, next) => {
       data.displayName
     );
 
-    res.status(201).json(result);
+    // Set httpOnly cookie with JWT token
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Return user data without token
+    res.status(201).json({ user: result.user });
   } catch (error) {
     next(error);
   }
@@ -50,7 +59,16 @@ router.post('/login', async (req, res, next) => {
     // Login user
     const result = await authService.login(data.email, data.password);
 
-    res.json(result);
+    // Set httpOnly cookie with JWT token
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Return user data without token
+    res.json({ user: result.user });
   } catch (error) {
     next(error);
   }
@@ -76,6 +94,20 @@ router.get('/me', authMiddleware, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+/**
+ * POST /api/auth/logout
+ * Logout user by clearing httpOnly cookie
+ */
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
+  res.json({ success: true });
 });
 
 export default router;

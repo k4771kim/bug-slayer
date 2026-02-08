@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
@@ -14,6 +15,7 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -67,6 +69,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔗 API Endpoints:`);
   console.log(`   - POST /api/auth/register`);
   console.log(`   - POST /api/auth/login`);
+  console.log(`   - POST /api/auth/logout`);
   console.log(`   - GET  /api/auth/me`);
   console.log(`   - POST /api/game/save`);
   console.log(`   - GET  /api/game/load`);

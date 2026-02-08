@@ -83,6 +83,8 @@ export class SoundManager {
   setBGMVolume(value: number): void {
     this.settings.bgmVolume = Math.max(0, Math.min(1, value));
     if (this.currentBGM && 'setVolume' in this.currentBGM) {
+      // Phaser BaseSound has setVolume but TypeScript types don't always expose it
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (this.currentBGM as any).setVolume(this.settings.bgmVolume);
     }
     this.saveSettings();
@@ -140,6 +142,8 @@ export class SoundManager {
    * Generate all game sounds programmatically and register with Phaser
    */
   static generateAllSounds(scene: Phaser.Scene): void {
+    // Access Web Audio context - Phaser's sound manager doesn't expose this in types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const audioContext = (scene.sound as any).context as AudioContext;
     if (!audioContext) {
       console.warn('SoundManager: Web Audio not available, skipping sound generation');
@@ -183,9 +187,11 @@ export class SoundManager {
   ): void {
     try {
       const buffer = generator();
-      // Decode and add to Phaser sound manager
+      // Phaser audio cache accepts AudioBuffer but types are incomplete
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       scene.cache.audio.add(key, { data: buffer, sourceType: 'audioBuffer' } as any);
-      // Alternative: use sound.decodeAudio
+      // Phaser sound.decodeAudio is not in official types but exists at runtime
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (scene.sound as any).decodeAudio(key, buffer);
     } catch (e) {
       console.warn(`SoundManager: Failed to generate ${key}:`, e);

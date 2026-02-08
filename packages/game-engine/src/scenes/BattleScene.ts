@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import type { Character, Monster, Skill, SkillEffect } from '@bug-slayer/shared';
+import type { Character, Monster, Skill, SkillEffect, Item } from '@bug-slayer/shared';
 import {
   calculateDamage as sharedCalculateDamage,
   calculateCritChance,
@@ -14,6 +14,7 @@ import { dataLoader } from '../loaders/DataLoader';
 import type { SkillData, BugData } from '../loaders/DataLoader';
 import { TechDebt } from '../systems/TechDebt';
 import { EnemyAI, type EnemyAction } from '../systems/EnemyAI';
+import { MonsterAI } from '../systems/MonsterAI';
 import { LevelUpSystem } from '../systems/LevelUpSystem';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { ItemSystem } from '../systems/ItemSystem';
@@ -21,6 +22,11 @@ import { EndingScene, type EndingData } from './EndingScene';
 import { EventSystem } from '../systems/EventSystem';
 import type { EventSceneData } from './EventScene';
 import { SoundManager } from '../systems/SoundManager';
+import { BuffManager } from '../systems/BuffManager';
+import { SkillManager } from '../systems/SkillManager';
+import { BattleUIRenderer } from '../systems/BattleUIRenderer';
+import { BattleResultHandler } from '../systems/BattleResultHandler';
+import type { VictoryRewards, StageAdvanceResult } from '../systems/BattleResultHandler';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -40,20 +46,6 @@ interface BattleSceneData {
   stagesCompleted?: number[];
   /** Total elapsed play time in seconds */
   playTime?: number;
-}
-
-interface ActiveBuff {
-  stat: string;
-  value: number;
-  turnsRemaining: number;
-  /** 'player' or 'monster' */
-  target: 'player' | 'monster';
-}
-
-interface ActiveStatusEffect {
-  type: 'stun' | 'confusion';
-  turnsRemaining: number;
-  target: 'player' | 'monster';
 }
 
 // ---------------------------------------------------------------------------
@@ -78,46 +70,27 @@ export class BattleScene extends Phaser.Scene {
   private player: Character | null = null;
   private monster: Monster | null = null;
   private techDebt: TechDebt | null = null;
-  private enemyAI: EnemyAI | null = null;
+  private monsterAI: MonsterAI | null = null;
   private levelUpSystem: LevelUpSystem | null = null;
   private progressionSystem: ProgressionSystem | null = null;
   private itemSystem: ItemSystem | null = null;
   private eventSystem: EventSystem | null = null;
   private soundManager?: SoundManager;
 
+  // Extracted system modules
+  private buffManager: BuffManager | null = null;
+  private skillManager: SkillManager | null = null;
+  private uiRenderer: BattleUIRenderer | null = null;
+  private resultHandler: BattleResultHandler | null = null;
+
   // Scene data
   private sceneData: BattleSceneData | null = null;
 
   // Combat state
-  private focusBuff: boolean = false;
-  private activeBuffs: ActiveBuff[] = [];
   private isPlayerTurn: boolean = true;
   private battleStartTime: number = 0;
   private stagesCompleted: number[] = [];
-  private skillCooldowns: Map<string, number> = new Map();
   private attackCount: number = 0; // for Refactorer passive
-  private statusEffects: ActiveStatusEffect[] = [];
-
-  // UI elements
-  private turnText: Phaser.GameObjects.Text | null = null;
-  private playerHPText: Phaser.GameObjects.Text | null = null;
-  private monsterHPText: Phaser.GameObjects.Text | null = null;
-  private techDebtText: Phaser.GameObjects.Text | null = null;
-  private techDebtBar: Phaser.GameObjects.Graphics | null = null;
-  private buffText: Phaser.GameObjects.Text | null = null;
-  private statusEffectText: Phaser.GameObjects.Text | null = null;
-  private stageText: Phaser.GameObjects.Text | null = null;
-  private playerHPBar: Phaser.GameObjects.Graphics | null = null;
-  private playerMPBar: Phaser.GameObjects.Graphics | null = null;
-  private monsterHPBar: Phaser.GameObjects.Graphics | null = null;
-  private goldText: Phaser.GameObjects.Text | null = null;
-  private techDebtGlow: Phaser.GameObjects.Graphics | null = null;
-
-  // Boss phase visuals
-  private bossPhaseOverlay: Phaser.GameObjects.Rectangle | null = null;
-  private bossDialogueText: Phaser.GameObjects.Text | null = null;
-  private bossSprite: Phaser.GameObjects.Rectangle | null = null;
-  private lastBossPhase: number = 1;
 
   // Skill panel
   private skillPanelContainer: Phaser.GameObjects.Container | null = null;
@@ -128,34 +101,6 @@ export class BattleScene extends Phaser.Scene {
 
   // Action buttons (stored so we can enable/disable them)
   private actionButtons: Phaser.GameObjects.Text[] = [];
-
-  // Boss phase visual configuration
-  private readonly BOSS_PHASE_CONFIG = {
-    1: {
-      tint: 0xffffff, // normal
-      overlayAlpha: 0,
-      dialogues: ['Let\'s see what you\'ve got...', 'Is that all?'],
-      shakeIntensity: 0,
-    },
-    2: {
-      tint: 0xdcdcaa, // yellow warning
-      overlayAlpha: 0.1,
-      dialogues: ['You\'re not bad...', 'I\'m just getting started!', 'My code is evolving!'],
-      shakeIntensity: 2,
-    },
-    3: {
-      tint: 0xce9178, // orange rage
-      overlayAlpha: 0.15,
-      dialogues: ['COMPILING RAGE!', 'Stack overflow incoming!', 'You can\'t refactor ME!'],
-      shakeIntensity: 4,
-    },
-    4: {
-      tint: 0xf44747, // red desperate
-      overlayAlpha: 0.25,
-      dialogues: ['SEGFAULT... SEGFAULT...', 'I... won\'t... crash...', 'FATAL ERROR!'],
-      shakeIntensity: 8,
-    },
-  };
 
   // Minigame state
   private minigameActive: boolean = false;
@@ -174,9 +119,6 @@ export class BattleScene extends Phaser.Scene {
     this.sceneData = data;
 
     // Reset combat state
-    this.focusBuff = false;
-    this.activeBuffs = [];
-    this.statusEffects = [];
     this.isPlayerTurn = true;
     this.battleStartTime = Date.now();
     this.skillPanelVisible = false;
@@ -190,6 +132,10 @@ export class BattleScene extends Phaser.Scene {
 
     // ---- Tech Debt ----
     this.techDebt = new TechDebt(data.techDebtCarry ?? 0);
+
+    // ---- Buff/Skill Managers ----
+    this.buffManager = new BuffManager();
+    this.skillManager = new SkillManager(this.buffManager);
 
     // ---- Player ----
     if (data.player) {
@@ -215,7 +161,7 @@ export class BattleScene extends Phaser.Scene {
     // ---- Monster Selection (stage-based) ----
     this.monster = this.selectMonsterForStage(data.chapter, data.stage);
     if (this.monster) {
-      this.enemyAI = new EnemyAI(this.monster);
+      this.monsterAI = new MonsterAI(this.monster);
     }
   }
 
@@ -225,14 +171,6 @@ export class BattleScene extends Phaser.Scene {
 
     // Background
     this.add.rectangle(width / 2, height / 2, width, height, 0x1e1e1e);
-
-    // Stage indicator (top center)
-    const chapter = this.sceneData?.chapter ?? 1;
-    const stage = this.sceneData?.stage ?? 1;
-    this.stageText = this.add.text(width / 2, 20, `Chapter ${chapter} - Stage ${stage}`, {
-      fontSize: '16px',
-      color: '#858585',
-    }).setOrigin(0.5);
 
     // Title
     this.add.text(width / 2, 50, 'Bug Slayer - Battle', {
@@ -246,25 +184,9 @@ export class BattleScene extends Phaser.Scene {
       color: '#ffffff',
     });
 
-    this.playerHPText = this.add.text(100, 200, '', {
-      fontSize: '18px',
-      color: '#4ade80',
-    });
-
-    // HP/MP bars (will be drawn in updateUI with graphics)
-    this.playerHPBar = this.add.graphics();
-    this.playerMPBar = this.add.graphics();
-
     // HP/MP icons for accessibility
     this.add.text(80, 225, '❤', { fontSize: '14px', color: '#4ec9b0' });
     this.add.text(80, 245, '◆', { fontSize: '14px', color: '#569cd6' });
-
-    // Gold display with coin icon
-    this.goldText = this.add.text(100, 270, '', {
-      fontSize: '16px',
-      color: '#dcdcaa',
-      fontStyle: 'bold',
-    });
 
     // Player sprite (use generated texture if available, fallback to rectangle)
     const playerClass = this.sceneData?.playerClass.toLowerCase() ?? 'debugger';
@@ -282,55 +204,18 @@ export class BattleScene extends Phaser.Scene {
       color: '#ffffff',
     });
 
-    this.monsterHPText = this.add.text(width - 200, 200, '', {
-      fontSize: '18px',
-      color: '#ef4444',
-    });
-
-    // Monster HP bar
-    this.monsterHPBar = this.add.graphics();
-
-    // Monster sprite (use generated texture if available, fallback to rectangle)
+    // Monster sprite placeholder (actual sprite creation handled by uiRenderer if boss)
     const monsterTexture = this.getMonsterTexture();
     if (monsterTexture && this.textures.exists(monsterTexture)) {
-      this.bossSprite = this.add.image(width - 150, 300, monsterTexture).setOrigin(0.5, 0.5) as any;
+      this.add.image(width - 150, 300, monsterTexture).setOrigin(0.5, 0.5);
     } else {
       // Fallback to colored rectangle
-      this.bossSprite = this.add.rectangle(width - 150, 300, 64, 64, 0xef4444);
+      const monsterSprite = this.add.rectangle(width - 150, 300, 64, 64, 0xef4444);
+      // Yellow tint for Warning-type monsters
+      if (this.monster?.type === 'bug') {
+        monsterSprite.fillColor = 0xdcdcaa;
+      }
     }
-
-    // Yellow tint for Warning-type monsters
-    if ((this.monster as any)?.type === 'warning' && this.bossSprite) {
-      (this.bossSprite as any).fillColor = 0xdcdcaa;
-    }
-
-    // Boss phase overlay (initially invisible)
-    this.bossPhaseOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0)
-      .setDepth(10);
-
-    // Boss dialogue text (initially empty)
-    this.bossDialogueText = this.add.text(width / 2, 420, '', {
-      fontSize: '20px',
-      color: '#ffffff',
-      backgroundColor: '#1a1a2e',
-      padding: { x: 15, y: 10 },
-      align: 'center',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(20).setVisible(false);
-
-    // Buff display (below monster area)
-    this.buffText = this.add.text(width / 2, 380, '', {
-      fontSize: '14px',
-      color: '#c586c0',
-      align: 'center',
-    }).setOrigin(0.5);
-
-    // Status effect display
-    this.statusEffectText = this.add.text(width / 2, 400, '', {
-      fontSize: '14px',
-      color: '#f48771',
-      align: 'center',
-    }).setOrigin(0.5);
 
     // Tech Debt UI (center bottom area)
     this.add.text(width / 2, height - 280, 'Tech Debt', {
@@ -347,25 +232,29 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(barX + barWidth / 2, barY + barHeight / 2, barWidth, barHeight, 0x2a2a2a)
       .setOrigin(0.5);
 
-    // Tech Debt bar (filled based on current debt)
-    this.techDebtBar = this.add.graphics();
+    // ---- Initialize UI Renderer ----
+    const chapter = this.sceneData?.chapter ?? 1;
+    const stage = this.sceneData?.stage ?? 1;
+    this.uiRenderer = new BattleUIRenderer(this);
+    this.uiRenderer.createUI(chapter, stage);
 
-    // Tech Debt glow effect (for high debt warning)
-    this.techDebtGlow = this.add.graphics().setDepth(1);
+    // Create boss visuals if this is a boss fight
+    if (this.monster?.type === 'boss' && this.monsterAI) {
+      this.uiRenderer.createBossVisuals(this.monster, this.getMonsterTexture());
+    }
 
-    // Tech Debt text (value and status)
-    this.techDebtText = this.add.text(width / 2, barY + barHeight + 15, '', {
-      fontSize: '14px',
-      color: '#ffffff',
-    }).setOrigin(0.5);
-
-    // Turn indicator
-    this.turnText = this.add.text(width / 2, height - 200, '', {
-      fontSize: '20px',
-      color: '#ffffff',
-      align: 'center',
-      wordWrap: { width: width - 40 },
-    }).setOrigin(0.5);
+    // ---- Initialize Result Handler ----
+    if (this.player && this.levelUpSystem && this.progressionSystem && this.techDebt) {
+      this.resultHandler = new BattleResultHandler(
+        this.player,
+        this.levelUpSystem,
+        this.progressionSystem,
+        this.itemSystem,
+        this.eventSystem,
+        this.techDebt,
+        this.soundManager
+      );
+    }
 
     // ---- Action Buttons: Attack, Skills, Item, Focus, Flee ----
     const buttonY1 = height - 140;
@@ -532,7 +421,7 @@ export class BattleScene extends Phaser.Scene {
   // =========================================================================
 
   private createSkillPanel() {
-    if (!this.player) return;
+    if (!this.player || !this.skillManager) return;
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
@@ -581,7 +470,7 @@ export class BattleScene extends Phaser.Scene {
       if (y > 140) return; // skip if overflow
 
       const hasMP = this.player!.currentMP >= skillData.mpCost;
-      const cooldown = this.skillCooldowns.get(skillData.id) ?? 0;
+      const cooldown = this.skillManager!.getCooldown(skillData.id);
       const onCooldown = cooldown > 0;
       const canUse = hasMP && !onCooldown;
       const textColor = canUse ? '#ffffff' : '#666666';
@@ -678,7 +567,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleAttack() {
-    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn) return;
+    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn || !this.buffManager || !this.skillManager || !this.uiRenderer) return;
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
 
@@ -686,12 +575,12 @@ export class BattleScene extends Phaser.Scene {
     if (this.skillPanelVisible) this.toggleSkillPanel();
 
     // Confusion: 50% chance to attack self
-    if (this.hasStatusEffect('confusion', 'player') && Math.random() < 0.5) {
+    if (this.buffManager.hasStatusEffect('confusion', 'player') && Math.random() < 0.5) {
       const selfDmg = Math.floor(this.player.stats.ATK * 0.5);
       this.player.currentHP = Math.max(0, this.player.currentHP - selfDmg);
       this.techDebt.turnPassed();
       this.autoRestoreMP();
-      this.turnText?.setText(`CONFUSED! You hit yourself for ${selfDmg} damage!`);
+      this.uiRenderer.setTurnText(`CONFUSED! You hit yourself for ${selfDmg} damage!`);
       this.updateUI();
       if (this.player.currentHP <= 0) {
         this.time.delayedCall(1000, () => this.handleDefeat());
@@ -702,29 +591,29 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Calculate base damage
-    let baseDamage = this.getEffectiveStat(this.player.stats.ATK, 'ATK', 'player');
+    let baseDamage = this.buffManager.getEffectiveStat(this.player.stats.ATK, 'ATK', 'player');
 
     // Apply focus buff (+20%)
-    if (this.focusBuff) {
+    const hadFocusBuff = this.skillManager.hasFocusBuff();
+    if (hadFocusBuff) {
       baseDamage = Math.floor(baseDamage * (1 + FOCUS_DAMAGE_BONUS_PERCENT / 100));
-      this.focusBuff = false;
     }
 
     // Check evasion (monster evades?)
     const monsterSPD = this.monster.stats.SPD ?? 0;
-    const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
+    const playerSPD = this.buffManager.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
     if (this.rollEvasion(monsterSPD, playerSPD)) {
       this.soundManager?.playSFX('sfx-evade');
       this.techDebt.turnPassed();
       this.autoRestoreMP();
-      this.turnText?.setText(`${this.monster.name} evaded! MISS!`);
+      this.uiRenderer.setTurnText(`${this.monster.name} evaded! MISS!`);
       this.updateUI();
       this.time.delayedCall(1000, () => this.monsterTurn());
       return;
     }
 
     // Apply defense formula
-    const monsterDEF = this.getEffectiveStat(this.monster.stats.DEF, 'DEF', 'monster');
+    const monsterDEF = this.buffManager.getEffectiveStat(this.monster.stats.DEF, 'DEF', 'monster');
     let damage = this.calculateDamage(baseDamage, monsterDEF);
 
     // Critical hit check
@@ -739,8 +628,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Focus bonus text
-    const focusText = this.focusBuff === false && baseDamage !== this.player.stats.ATK
-      ? ' +20% Focus Bonus!' : '';
+    const focusText = hadFocusBuff ? ' +20% Focus Bonus!' : '';
 
     // Apply class passive to outgoing damage
     const passive = this.applyPassiveToOutgoingDamage(damage);
@@ -755,7 +643,7 @@ export class BattleScene extends Phaser.Scene {
     // Auto MP restore (5% per turn)
     const mpRestored = this.autoRestoreMP();
 
-    this.turnText?.setText(
+    this.uiRenderer.setTurnText(
       `You dealt ${damage} damage!${critText}${focusText}${passive.text}\n(+${mpRestored} MP, +1 Tech Debt)`
     );
     this.updateUI();
@@ -771,153 +659,30 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleSkillUse(skillData: SkillData) {
-    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn) return;
-
-    // Check MP
-    if (this.player.currentMP < skillData.mpCost) {
-      this.turnText?.setText('Not enough MP!');
-      return;
-    }
-
-    // Check cooldown
-    const currentCD = this.skillCooldowns.get(skillData.id) ?? 0;
-    if (currentCD > 0) {
-      this.turnText?.setText(`${skillData.name} is on cooldown! (${currentCD} turns)`);
-      return;
-    }
+    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn || !this.skillManager || !this.uiRenderer) return;
 
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
 
-    // Deduct MP
-    this.player.currentMP -= skillData.mpCost;
+    // Use skill via SkillManager
+    const soundCallback = (sfxId: string) => this.soundManager?.playSFX(sfxId);
+    const result = this.skillManager.useSkill(skillData, this.player, this.monster, this.techDebt, soundCallback);
 
-    // Set cooldown from skill data
-    if (skillData.cooldown > 0) {
-      this.skillCooldowns.set(skillData.id, skillData.cooldown);
+    if (!result.success) {
+      this.uiRenderer.setTurnText(result.errorMessage ?? 'Skill failed!');
+      this.isPlayerTurn = true;
+      this.setActionsEnabled(true);
+      return;
     }
-
-    // Process skill effects
-    let totalDamage = 0;
-    let totalHeal = 0;
-    const effectTexts: string[] = [];
-
-    for (const effect of skillData.effects) {
-      switch (effect.type) {
-        case 'damage': {
-          // Scale skill damage off player ATK: baseDmg = ATK * (skillValue / 100)
-          const playerATK = this.getEffectiveStat(this.player.stats.ATK, 'ATK', 'player');
-          let baseDmg = Math.floor(playerATK * (effect.value / 100));
-
-          // Apply focus buff
-          if (this.focusBuff) {
-            baseDmg = Math.floor(baseDmg * (1 + FOCUS_DAMAGE_BONUS_PERCENT / 100));
-            effectTexts.push('+20% Focus Bonus!');
-            this.focusBuff = false;
-          }
-
-          // Check evasion
-          const monsterSPD = this.monster.stats.SPD ?? 0;
-          const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
-          if (this.rollEvasion(monsterSPD, playerSPD)) {
-            this.soundManager?.playSFX('sfx-evade');
-            effectTexts.push('MISS!');
-            break;
-          }
-
-          // Apply defense formula
-          const monsterDEF = this.getEffectiveStat(this.monster.stats.DEF, 'DEF', 'monster');
-          let dmg = this.calculateDamage(baseDmg, monsterDEF);
-
-          // Critical hit
-          if (this.rollCritical(playerSPD, monsterSPD)) {
-            dmg = Math.floor(dmg * CRIT_MULTIPLIER);
-            effectTexts.push('CRITICAL!');
-          }
-
-          this.monster.currentHP = Math.max(0, this.monster.currentHP - dmg);
-          totalDamage += dmg;
-          break;
-        }
-
-        case 'heal': {
-          // value is % of max HP
-          const healAmount = Math.floor(this.player.stats.HP * (effect.value / 100));
-          this.player.currentHP = Math.min(this.player.stats.HP, this.player.currentHP + healAmount);
-          totalHeal += healAmount;
-          effectTexts.push(`Healed ${healAmount} HP`);
-          this.soundManager?.playSFX('sfx-heal');
-          break;
-        }
-
-        case 'buff': {
-          if (effect.stat && effect.duration) {
-            this.activeBuffs.push({
-              stat: effect.stat,
-              value: effect.value,
-              turnsRemaining: effect.duration,
-              target: skillData.targetType === 'self' ? 'player' : 'player',
-            });
-            effectTexts.push(`+${effect.value} ${effect.stat} for ${effect.duration} turns`);
-            this.soundManager?.playSFX('sfx-buff');
-          }
-          break;
-        }
-
-        case 'debuff': {
-          if (effect.stat && effect.duration) {
-            this.activeBuffs.push({
-              stat: effect.stat,
-              value: effect.value, // negative value for debuffs
-              turnsRemaining: effect.duration,
-              target: 'monster',
-            });
-            effectTexts.push(`${effect.value} ${effect.stat} on enemy for ${effect.duration} turns`);
-            this.soundManager?.playSFX('sfx-debuff');
-          }
-          break;
-        }
-
-        case 'special': {
-          // Handle special effects like "Pay Tech Debt"
-          if (effect.description?.includes('Tech Debt') && this.techDebt) {
-            const reduction = Math.abs(effect.value);
-            this.techDebt.decrease(reduction);
-            effectTexts.push(`Tech Debt reduced by ${reduction}!`);
-          }
-          break;
-        }
-
-        case 'dot': {
-          // Damage over time - apply as debuff with negative HP
-          if (effect.duration) {
-            this.activeBuffs.push({
-              stat: 'DOT',
-              value: effect.value,
-              turnsRemaining: effect.duration,
-              target: 'monster',
-            });
-            effectTexts.push(`DoT: ${effect.value} dmg/turn for ${effect.duration} turns`);
-          }
-          break;
-        }
-      }
-    }
-
-    // Tech debt per turn
-    this.techDebt.turnPassed();
-
-    // Auto MP restore (5% per turn)
-    const mpRestored = this.autoRestoreMP();
 
     // Build result text
     let resultText = `Used ${skillData.name}!`;
-    if (totalDamage > 0) resultText += ` ${totalDamage} damage!`;
-    if (totalHeal > 0) resultText += ` Restored ${totalHeal} HP!`;
-    if (effectTexts.length > 0) resultText += `\n${effectTexts.join(' | ')}`;
-    resultText += `\n(+${mpRestored} MP, +1 Tech Debt)`;
+    if (result.totalDamage > 0) resultText += ` ${result.totalDamage} damage!`;
+    if (result.totalHeal > 0) resultText += ` Restored ${result.totalHeal} HP!`;
+    if (result.effectTexts.length > 0) resultText += `\n${result.effectTexts.join(' | ')}`;
+    resultText += `\n(+${result.mpRestored} MP, +1 Tech Debt)`;
 
-    this.turnText?.setText(resultText);
+    this.uiRenderer.setTurnText(resultText);
     this.updateUI();
 
     // Check win
@@ -931,28 +696,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleFocus() {
-    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn) return;
+    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn || !this.skillManager || !this.uiRenderer) return;
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
 
     // Close skill panel if open
     if (this.skillPanelVisible) this.toggleSkillPanel();
 
-    // Restore Focus MP
-    const mpRestore = Math.floor(this.player.stats.MP * (MP_FOCUS_RECOVERY_PERCENT / 100));
-    this.player.currentMP = Math.min(
-      this.player.stats.MP,
-      this.player.currentMP + mpRestore
-    );
+    // Use focus via SkillManager
+    const result = this.skillManager.useFocus(this.player, this.techDebt);
 
-    // Set focus buff for next attack (+20% DMG)
-    this.focusBuff = true;
-
-    // Tech debt per turn
-    this.techDebt.turnPassed();
-
-    this.turnText?.setText(
-      `You focused! Restored ${mpRestore} MP.\nNext attack deals +20% damage! (+1 Tech Debt)`
+    this.uiRenderer.setTurnText(
+      `You focused! Restored ${result.mpRestored} MP.\nNext attack deals +20% damage! (+1 Tech Debt)`
     );
     this.updateUI();
 
@@ -961,7 +716,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleFlee() {
-    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn) return;
+    if (!this.player || !this.monster || !this.techDebt || !this.isPlayerTurn || !this.uiRenderer) return;
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
 
@@ -971,7 +726,7 @@ export class BattleScene extends Phaser.Scene {
     // Add tech debt for fleeing
     const debtAdded = this.techDebt.flee();
 
-    this.turnText?.setText(`You fled from battle! (+${debtAdded} Tech Debt)`);
+    this.uiRenderer.setTurnText(`You fled from battle! (+${debtAdded} Tech Debt)`);
     this.updateUI();
 
     // Advance to next stage (mark as skipped by NOT adding to stagesCompleted)
@@ -989,12 +744,12 @@ export class BattleScene extends Phaser.Scene {
    * Called when boss enters a new phase
    */
   private triggerMinigame() {
-    if (!this.monster || !this.enemyAI) return;
+    if (!this.monster || !this.monsterAI) return;
 
     this.minigameActive = true;
 
     // Determine difficulty based on boss phase
-    const difficulty = this.enemyAI.phase;
+    const difficulty = this.monsterAI.phase;
 
     // Launch minigame as overlay
     this.scene.launch('MinigameScene', {
@@ -1015,7 +770,7 @@ export class BattleScene extends Phaser.Scene {
    * Handle minigame result and apply effects
    */
   private handleMinigameResult() {
-    if (!this.monster || !this.player) return;
+    if (!this.monster || !this.player || !this.uiRenderer || !this.monsterAI) return;
 
     this.minigameActive = false;
 
@@ -1028,7 +783,7 @@ export class BattleScene extends Phaser.Scene {
       const damage = Math.floor(this.monster.stats.HP * 0.3);
       this.monster.currentHP = Math.max(0, this.monster.currentHP - damage);
 
-      this.turnText?.setText(`Shield Break! ${damage} damage to ${this.monster.name}!`);
+      this.uiRenderer.setTurnText(`Shield Break! ${damage} damage to ${this.monster.name}!`);
 
       // Check if boss died
       if (this.monster.currentHP <= 0) {
@@ -1041,7 +796,7 @@ export class BattleScene extends Phaser.Scene {
       const healAmount = Math.floor(this.monster.stats.HP * 0.1);
       this.monster.currentHP = Math.min(this.monster.stats.HP, this.monster.currentHP + healAmount);
 
-      this.turnText?.setText(`${this.monster.name} heals ${healAmount} HP!`);
+      this.uiRenderer.setTurnText(`${this.monster.name} heals ${healAmount} HP!`);
     }
 
     this.updateUI();
@@ -1049,8 +804,8 @@ export class BattleScene extends Phaser.Scene {
     // Continue with boss turn after delay
     this.time.delayedCall(1500, () => {
       // Get the action again since time has passed
-      if (this.enemyAI) {
-        const action = this.enemyAI.decideAction();
+      if (this.monsterAI) {
+        const action = this.monsterAI.selectAction();
         this.executeEnemyAction(action);
       }
     });
@@ -1061,37 +816,37 @@ export class BattleScene extends Phaser.Scene {
   // =========================================================================
 
   private monsterTurn() {
-    if (!this.player || !this.monster || !this.techDebt || !this.enemyAI) return;
+    if (!this.player || !this.monster || !this.techDebt || !this.monsterAI || !this.buffManager || !this.skillManager || !this.uiRenderer) return;
 
     // Tick status effects on monster
-    this.tickStatusEffects('monster');
+    this.buffManager.tickStatusEffects('monster');
 
     // Check if monster is stunned
-    if (this.hasStatusEffect('stun', 'monster')) {
-      this.turnText?.setText(`${this.monster.name} is STUNNED! Turn skipped!`);
+    if (this.buffManager.hasStatusEffect('stun', 'monster')) {
+      this.uiRenderer.setTurnText(`${this.monster.name} is STUNNED! Turn skipped!`);
       this.updateUI();
       this.time.delayedCall(1500, () => {
-        this.tickStatusEffects('player');
-        if (this.hasStatusEffect('stun', 'player')) {
-          this.turnText?.setText('You are STUNNED! Turn skipped!');
+        this.buffManager!.tickStatusEffects('player');
+        if (this.buffManager!.hasStatusEffect('stun', 'player')) {
+          this.uiRenderer!.setTurnText('You are STUNNED! Turn skipped!');
           this.updateUI();
           this.time.delayedCall(1500, () => this.monsterTurn());
           return;
         }
         this.isPlayerTurn = true;
         this.setActionsEnabled(true);
-        this.tickCooldowns();
-        const confusedText = this.hasStatusEffect('confusion', 'player') ? ' [CONFUSED]' : '';
-        this.turnText?.setText(`Your turn! Choose an action.${confusedText}`);
+        this.skillManager!.tickCooldowns();
+        const confusedText = this.buffManager!.hasStatusEffect('confusion', 'player') ? ' [CONFUSED]' : '';
+        this.uiRenderer!.setTurnText(`Your turn! Choose an action.${confusedText}`);
       });
       return;
     }
 
     // Tick buffs/debuffs at start of monster turn
-    this.tickBuffs();
+    this.buffManager.tickBuffs();
 
     // Apply DoT effects to monster
-    this.applyDoTEffects();
+    this.buffManager.applyDoTEffects(this.monster);
 
     // Check if monster died from DoT
     if (this.monster.currentHP <= 0) {
@@ -1099,20 +854,13 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
-    // Enemy AI decides action
-    const action = this.enemyAI.decideAction();
-
     // Check for boss phase change
-    const isBoss = this.monster.type === 'boss';
-    const currentPhase = this.enemyAI.phase;
-    const phaseChanged = isBoss && currentPhase > this.lastBossPhase;
+    const phaseTransition = this.monsterAI.checkBossPhase();
 
-    if (phaseChanged) {
-      // Update tracked phase
-      this.lastBossPhase = currentPhase;
-
-      // Apply phase visual effects
-      this.applyBossPhaseVisuals(currentPhase);
+    if (phaseTransition && phaseTransition.triggered) {
+      // Show boss phase transition visuals
+      const dialogue = this.monsterAI.getBossDialogue();
+      this.uiRenderer.showBossPhaseTransition(phaseTransition.newPhase, dialogue);
 
       // Trigger minigame for boss phase change
       this.time.delayedCall(2500, () => {
@@ -1120,18 +868,20 @@ export class BattleScene extends Phaser.Scene {
         // Note: minigame will call executeEnemyAction via handleMinigameResult
       });
     } else {
+      // Enemy AI decides action
+      const action = this.monsterAI.selectAction();
       this.executeEnemyAction(action);
     }
   }
 
   private executeEnemyAction(action: EnemyAction) {
-    if (!this.player || !this.monster || !this.techDebt) return;
+    if (!this.player || !this.monster || !this.techDebt || !this.buffManager || !this.skillManager || !this.uiRenderer) return;
 
     // Monster confusion: 50% chance to hit self on attack/skill
-    if (this.hasStatusEffect('confusion', 'monster') && (action.type === 'attack' || action.type === 'skill') && Math.random() < 0.5) {
+    if (this.buffManager.hasStatusEffect('confusion', 'monster') && (action.type === 'attack' || action.type === 'skill') && Math.random() < 0.5) {
       const selfDmg = Math.floor(this.monster.stats.ATK * 0.5);
       this.monster.currentHP = Math.max(0, this.monster.currentHP - selfDmg);
-      this.turnText?.setText(`${this.monster.name} is CONFUSED! Hit itself for ${selfDmg} damage!`);
+      this.uiRenderer.setTurnText(`${this.monster.name} is CONFUSED! Hit itself for ${selfDmg} damage!`);
       this.updateUI();
       if (this.monster.currentHP <= 0) {
         this.time.delayedCall(1000, () => this.handleVictory());
@@ -1140,8 +890,8 @@ export class BattleScene extends Phaser.Scene {
       this.time.delayedCall(1500, () => {
         this.isPlayerTurn = true;
         this.setActionsEnabled(true);
-        this.tickCooldowns();
-        this.turnText?.setText('Your turn! Choose an action.');
+        this.skillManager!.tickCooldowns();
+        this.uiRenderer!.setTurnText('Your turn! Choose an action.');
       });
       return;
     }
@@ -1153,11 +903,11 @@ export class BattleScene extends Phaser.Scene {
       case 'attack': {
         const baseDamage = this.monster.stats.ATK;
         const modifiedAtk = Math.floor(baseDamage * techDebtModifier);
-        const monsterATK = this.getEffectiveStat(modifiedAtk, 'ATK', 'monster');
-        const playerDEF = this.getEffectiveStat(this.player.stats.DEF, 'DEF', 'player');
+        const monsterATK = this.buffManager.getEffectiveStat(modifiedAtk, 'ATK', 'monster');
+        const playerDEF = this.buffManager.getEffectiveStat(this.player.stats.DEF, 'DEF', 'player');
 
         // Check evasion (player evades?)
-        const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
+        const playerSPD = this.buffManager.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
         const monsterSPD = this.monster.stats.SPD ?? 0;
         if (this.rollEvasion(playerSPD, monsterSPD)) {
           actionText = `${this.monster.name} attacked but you evaded! MISS!`;
@@ -1193,10 +943,10 @@ export class BattleScene extends Phaser.Scene {
       case 'skill': {
         const baseDamage = Math.floor(this.monster.stats.ATK * 1.5);
         const modifiedAtk = Math.floor(baseDamage * techDebtModifier);
-        const playerDEF = this.getEffectiveStat(this.player.stats.DEF, 'DEF', 'player');
+        const playerDEF = this.buffManager.getEffectiveStat(this.player.stats.DEF, 'DEF', 'player');
 
         // Check evasion
-        const playerSPD = this.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
+        const playerSPD = this.buffManager.getEffectiveStat(this.player.stats.SPD, 'SPD', 'player');
         const monsterSPD = this.monster.stats.SPD ?? 0;
         if (this.rollEvasion(playerSPD, monsterSPD)) {
           this.soundManager?.playSFX('sfx-evade');
@@ -1225,13 +975,13 @@ export class BattleScene extends Phaser.Scene {
 
         // Boss skills that apply status effects
         if (action.skillId === 'boundary-breach') {
-          this.applyStatusEffect('stun', 1, 'player');
+          this.buffManager.applyStatusEffect('stun', 1, 'player');
           actionText += ' You are STUNNED!';
         } else if (action.skillId === 'uncertainty') {
-          this.applyStatusEffect('confusion', 2, 'player');
+          this.buffManager.applyStatusEffect('confusion', 2, 'player');
           actionText += ' You are CONFUSED!';
         } else if (action.skillId === 'observer-effect') {
-          this.applyStatusEffect('confusion', 1, 'player');
+          this.buffManager.applyStatusEffect('confusion', 1, 'player');
           actionText += ' You are CONFUSED!';
         }
 
@@ -1240,12 +990,7 @@ export class BattleScene extends Phaser.Scene {
 
       case 'buff': {
         const stat = action.targetStat || 'ATK';
-        this.activeBuffs.push({
-          stat,
-          value: 20, // +20 to buffed stat
-          turnsRemaining: 3,
-          target: 'monster',
-        });
+        this.buffManager.applyBuff(stat, 20, 3, 'monster');
         actionText = `${this.monster.name} buffed ${stat}! (+20 for 3 turns)`;
         break;
       }
@@ -1261,7 +1006,7 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    this.turnText?.setText(actionText);
+    this.uiRenderer.setTurnText(actionText);
     this.updateUI();
 
     // Check lose condition
@@ -1273,12 +1018,12 @@ export class BattleScene extends Phaser.Scene {
     // Back to player turn
     this.time.delayedCall(1500, () => {
       // Tick status effects on player
-      this.tickStatusEffects('player');
+      this.buffManager!.tickStatusEffects('player');
       this.updateUI();
 
       // Check if player is stunned
-      if (this.hasStatusEffect('stun', 'player')) {
-        this.turnText?.setText('You are STUNNED! Turn skipped!');
+      if (this.buffManager!.hasStatusEffect('stun', 'player')) {
+        this.uiRenderer!.setTurnText('You are STUNNED! Turn skipped!');
         this.updateUI();
         this.time.delayedCall(1500, () => this.monsterTurn());
         return;
@@ -1287,9 +1032,9 @@ export class BattleScene extends Phaser.Scene {
       this.isPlayerTurn = true;
       this.setActionsEnabled(true);
       // Tick cooldowns at start of player turn
-      this.tickCooldowns();
-      const confusedText = this.hasStatusEffect('confusion', 'player') ? ' [CONFUSED]' : '';
-      this.turnText?.setText(`Your turn! Choose an action.${confusedText}`);
+      this.skillManager!.tickCooldowns();
+      const confusedText = this.buffManager!.hasStatusEffect('confusion', 'player') ? ' [CONFUSED]' : '';
+      this.uiRenderer!.setTurnText(`Your turn! Choose an action.${confusedText}`);
     });
   }
 
@@ -1327,92 +1072,6 @@ export class BattleScene extends Phaser.Scene {
     return sharedCalculateDamage(baseDmg, defense);
   }
 
-  // =========================================================================
-  // Buff / Debuff System
-  // =========================================================================
-
-  /**
-   * Get effective stat after applying active buffs.
-   */
-  private getEffectiveStat(baseValue: number, stat: string, target: 'player' | 'monster'): number {
-    let modifier = 0;
-    for (const buff of this.activeBuffs) {
-      if (buff.stat === stat && buff.target === target && buff.turnsRemaining > 0) {
-        modifier += buff.value;
-      }
-    }
-    return Math.max(0, baseValue + modifier);
-  }
-
-  /**
-   * Tick all buffs at start of each combat phase.
-   * Decrements turnsRemaining and removes expired buffs.
-   */
-  private tickBuffs() {
-    for (const buff of this.activeBuffs) {
-      buff.turnsRemaining -= 1;
-    }
-    // Remove expired
-    this.activeBuffs = this.activeBuffs.filter(b => b.turnsRemaining > 0);
-  }
-
-  /**
-   * Apply DoT (damage over time) effects to the monster.
-   */
-  private applyDoTEffects() {
-    if (!this.monster) return;
-
-    for (const buff of this.activeBuffs) {
-      if (buff.stat === 'DOT' && buff.target === 'monster' && buff.turnsRemaining > 0) {
-        this.monster.currentHP = Math.max(0, this.monster.currentHP - buff.value);
-      }
-    }
-  }
-
-  // =========================================================================
-  // Cooldown System
-  // =========================================================================
-
-  /**
-   * Tick all skill cooldowns by 1 at start of player turn.
-   */
-  private tickCooldowns() {
-    for (const [skillId, cd] of this.skillCooldowns.entries()) {
-      if (cd > 0) {
-        this.skillCooldowns.set(skillId, cd - 1);
-      }
-      if (cd <= 1) {
-        this.skillCooldowns.delete(skillId);
-      }
-    }
-  }
-
-  // =========================================================================
-  // Status Effects
-  // =========================================================================
-
-  private applyStatusEffect(type: 'stun' | 'confusion', duration: number, target: 'player' | 'monster') {
-    // Don't stack same effect on same target — refresh duration instead
-    const existing = this.statusEffects.find(e => e.type === type && e.target === target);
-    if (existing) {
-      existing.turnsRemaining = Math.max(existing.turnsRemaining, duration);
-      return;
-    }
-    this.statusEffects.push({ type, turnsRemaining: duration, target });
-  }
-
-  private hasStatusEffect(type: 'stun' | 'confusion', target: 'player' | 'monster'): boolean {
-    return this.statusEffects.some(e => e.type === type && e.target === target && e.turnsRemaining > 0);
-  }
-
-  private tickStatusEffects(target: 'player' | 'monster') {
-    for (const effect of this.statusEffects) {
-      if (effect.target === target) {
-        effect.turnsRemaining -= 1;
-      }
-    }
-    this.statusEffects = this.statusEffects.filter(e => e.turnsRemaining > 0);
-  }
 
   // =========================================================================
   // Passive Abilities
@@ -1465,12 +1124,12 @@ export class BattleScene extends Phaser.Scene {
   // =========================================================================
 
   private handleItemUse() {
-    if (!this.player || !this.techDebt || !this.isPlayerTurn || !this.itemSystem) return;
+    if (!this.player || !this.techDebt || !this.isPlayerTurn || !this.itemSystem || !this.uiRenderer) return;
     if (this.skillPanelVisible) this.toggleSkillPanel();
 
     const consumables = this.itemSystem.getItemsByType('consumable');
     if (consumables.length === 0) {
-      this.turnText?.setText('No items to use!');
+      this.uiRenderer.setTurnText('No items to use!');
       return;
     }
 
@@ -1478,7 +1137,7 @@ export class BattleScene extends Phaser.Scene {
     this.showItemPanel(consumables);
   }
 
-  private showItemPanel(items: any[]) {
+  private showItemPanel(items: Item[]) {
     // Remove existing panel
     if (this.itemPanelContainer) {
       this.itemPanelContainer.removeAll(true);
@@ -1513,7 +1172,7 @@ export class BattleScene extends Phaser.Scene {
       const y = -60 + index * 35;
       if (y > 80) return;
 
-      const itemBtn = this.add.text(0, y, `${item.name} - ${item.description ?? 'Consumable'}`, {
+      const itemBtn = this.add.text(0, y, `${item.name} - ${item.type}`, {
         fontSize: '14px', color: '#ffffff', backgroundColor: '#2a4a3a',
         padding: { x: 10, y: 5 }, wordWrap: { width: 360 },
       }).setOrigin(0.5).setInteractive();
@@ -1537,8 +1196,8 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  private useSelectedItem(item: any) {
-    if (!this.player || !this.techDebt || !this.itemSystem) return;
+  private useSelectedItem(item: Item) {
+    if (!this.player || !this.techDebt || !this.itemSystem || !this.uiRenderer) return;
 
     this.isPlayerTurn = false;
     this.setActionsEnabled(false);
@@ -1550,11 +1209,11 @@ export class BattleScene extends Phaser.Scene {
       if (result.hpRestored && result.hpRestored > 0) itemText += ` +${result.hpRestored} HP`;
       if (result.mpRestored && result.mpRestored > 0) itemText += ` +${result.mpRestored} MP`;
 
-      this.turnText?.setText(itemText);
+      this.uiRenderer.setTurnText(itemText);
       this.updateUI();
       this.time.delayedCall(1000, () => this.monsterTurn());
     } else {
-      this.turnText?.setText(result.message);
+      this.uiRenderer.setTurnText(result.message);
       this.isPlayerTurn = true;
       this.setActionsEnabled(true);
     }
@@ -1582,65 +1241,27 @@ export class BattleScene extends Phaser.Scene {
   // =========================================================================
 
   private handleVictory() {
-    if (!this.player || !this.monster || !this.levelUpSystem || !this.techDebt) return;
-
-    // Stop BGM and play victory sound
-    this.soundManager?.stopBGM();
-    this.soundManager?.playSFX('sfx-victory');
-
-    // Restore MP to 100% on victory
-    this.player.currentMP = this.player.stats.MP;
+    if (!this.resultHandler || !this.monster || !this.uiRenderer) return;
 
     // Mark stage as completed (not skipped)
     const chapter = this.sceneData?.chapter ?? 1;
     const stage = this.sceneData?.stage ?? 1;
-    this.stagesCompleted.push(chapter * 100 + stage); // unique key
+    this.stagesCompleted.push(chapter * 100 + stage);
 
-    // Award EXP and gold from monster drops
-    const expReward = this.monster.drops.exp;
-    const goldReward = this.monster.drops.gold;
-    this.player.gold += goldReward;
-
-    // Roll for item drops
-    let dropText = '';
-    if (this.itemSystem) {
-      const drops = this.itemSystem.rollLoot(this.monster.drops);
-      if (drops.items.length > 0) {
-        const collected = this.itemSystem.collectDrops(drops);
-        const itemNames = collected.collected.map(i => i.name).join(', ');
-        if (itemNames) {
-          dropText = `\nItems: ${itemNames}`;
-          this.soundManager?.playSFX('sfx-item-drop');
-        }
-      }
-    }
-
-    this.turnText?.setText(
-      `Victory! Defeated ${this.monster.name}!\n+${expReward} EXP, +${goldReward} Gold, MP restored${dropText}`
-    );
+    // Process victory rewards
+    const rewards = this.resultHandler.processVictory(this.monster);
+    const message = this.resultHandler.getVictoryMessage(this.monster.name, rewards);
+    this.uiRenderer.setTurnText(message);
     this.updateUI();
 
     // Check for level-up
     this.time.delayedCall(1500, () => {
-      if (!this.levelUpSystem || !this.techDebt || !this.progressionSystem) return;
+      if (!this.resultHandler || !this.uiRenderer) return;
 
-      const levelUpResult = this.levelUpSystem.addExp(expReward);
-
-      if (levelUpResult) {
-        this.soundManager?.playSFX('sfx-levelup');
-
-        const statsText = Object.entries(levelUpResult.statsGained)
-          .filter(([_, value]) => value && value > 0)
-          .map(([stat, value]) => `${stat}+${value}`)
-          .join(', ');
-
-        this.turnText?.setText(
-          `LEVEL UP! Lv.${levelUpResult.newLevel}\n` +
-          `Stats increased: ${statsText}\n` +
-          `HP and MP fully restored!`
-        );
+      if (rewards.levelUp) {
+        const levelUpMsg = this.resultHandler.getLevelUpMessage(rewards);
+        this.uiRenderer.setTurnText(levelUpMsg);
         this.updateUI();
-
         this.time.delayedCall(2500, () => this.completeStageAndAdvance());
       } else {
         this.time.delayedCall(1000, () => this.completeStageAndAdvance());
@@ -1652,37 +1273,48 @@ export class BattleScene extends Phaser.Scene {
    * Complete stage via ProgressionSystem and advance to next battle or ending.
    */
   private completeStageAndAdvance() {
-    if (!this.progressionSystem || !this.techDebt || !this.sceneData) return;
+    if (!this.resultHandler || !this.sceneData || !this.uiRenderer) return;
 
-    const battleTime = Math.floor((Date.now() - this.battleStartTime) / 1000);
-    const totalPlayTime = (this.sceneData.playTime ?? 0) + battleTime;
-
-    // Complete stage in progression
-    const result = this.progressionSystem.completeStage(this.techDebt.current, battleTime);
+    const battleTime = this.resultHandler.getBattleTime(this.battleStartTime);
+    const totalPlayTime = this.resultHandler.calculateTotalPlayTime(
+      this.battleStartTime,
+      this.sceneData.playTime ?? 0
+    );
 
     const chapter = this.sceneData.chapter;
     const stage = this.sceneData.stage;
 
-    // Determine if this was the final boss (Chapter 4 boss)
-    const chapterTotalStages: Record<number, number> = { 1: 6, 2: 5, 3: 6, 4: 6 };
-    const isFinalBoss = chapter === 4 && stage === (chapterTotalStages[chapter] ?? 6);
+    // Determine next stage
+    const result = this.resultHandler.determineNextStage(
+      chapter,
+      stage,
+      battleTime,
+      this.stagesCompleted,
+      totalPlayTime
+    );
 
-    if (isFinalBoss || (result.chapterCompleted && chapter === 4)) {
+    if (result.type === 'game-complete') {
       // GAME COMPLETE - transition to EndingScene
       this.transitionToEnding(totalPlayTime);
       return;
     }
 
-    if (result.chapterCompleted && result.newChapterUnlocked) {
-      // Chapter 1 complete, show message then move to Chapter 2
-      this.turnText?.setText(
-        `Chapter ${chapter} Complete! Chapter ${chapter + 1} Unlocked!`
+    if (result.type === 'chapter-complete') {
+      // Chapter complete, show message then move to next chapter
+      this.uiRenderer.setTurnText(
+        this.resultHandler.getChapterCompleteMessage(chapter)
       );
       this.updateUI();
 
       this.time.delayedCall(2500, () => {
         this.advanceToNextStage(true);
       });
+      return;
+    }
+
+    if (result.type === 'event') {
+      // Event triggered - transition to EventScene
+      this.transitionToEvent(result);
       return;
     }
 
@@ -1695,12 +1327,14 @@ export class BattleScene extends Phaser.Scene {
    * @param wasVictory - true if player won, false if fled/skipped
    */
   private advanceToNextStage(wasVictory: boolean) {
-    if (!this.progressionSystem || !this.sceneData || !this.techDebt || !this.eventSystem) return;
+    if (!this.progressionSystem || !this.sceneData || !this.techDebt || !this.resultHandler) return;
 
     const nextChapter = this.progressionSystem.getCurrentChapter();
     const nextStage = this.progressionSystem.getCurrentStage();
-    const battleTime = Math.floor((Date.now() - this.battleStartTime) / 1000);
-    const totalPlayTime = (this.sceneData.playTime ?? 0) + battleTime;
+    const totalPlayTime = this.resultHandler.calculateTotalPlayTime(
+      this.battleStartTime,
+      this.sceneData.playTime ?? 0
+    );
 
     // Prepare next battle data
     const nextBattleData: BattleSceneData = {
@@ -1714,35 +1348,46 @@ export class BattleScene extends Phaser.Scene {
       playTime: totalPlayTime,
     };
 
-    // Roll for random event (only on victory)
-    if (wasVictory) {
-      const eventResult = this.eventSystem.rollEvent();
-
-      if (eventResult.event) {
-        // Store event result for application in next battle
-        this.eventSystem.setLastEventResult(eventResult);
-
-        // Transition to EventScene, which will then go to BattleScene
-        const eventData: EventSceneData = {
-          event: eventResult.event,
-          returnScene: 'BattleScene',
-          returnData: nextBattleData,
-        };
-
-        this.scene.start('EventScene', eventData);
-        return;
-      }
-    }
-
     // No event triggered, go directly to next battle
     this.scene.start('BattleScene', nextBattleData);
+  }
+
+  /**
+   * Transition to EventScene after rolling an event.
+   */
+  private transitionToEvent(result: StageAdvanceResult) {
+    if (!this.sceneData || !this.techDebt || !this.progressionSystem || !result.eventData) return;
+
+    const totalPlayTime = this.resultHandler?.calculateTotalPlayTime(
+      this.battleStartTime,
+      this.sceneData.playTime ?? 0
+    ) ?? 0;
+
+    const nextBattleData: BattleSceneData = {
+      playerClass: this.sceneData.playerClass,
+      chapter: result.chapter ?? 1,
+      stage: result.stage ?? 1,
+      player: this.player ?? undefined,
+      techDebtCarry: this.techDebt.current,
+      progression: this.progressionSystem,
+      stagesCompleted: this.stagesCompleted,
+      playTime: totalPlayTime,
+    };
+
+    const eventData: EventSceneData = {
+      event: result.eventData.event,
+      returnScene: 'BattleScene',
+      returnData: nextBattleData,
+    };
+
+    this.scene.start('EventScene', eventData);
   }
 
   /**
    * Transition to EndingScene after defeating the final boss.
    */
   private transitionToEnding(totalPlayTime: number) {
-    if (!this.techDebt || !this.progressionSystem || !this.player) return;
+    if (!this.techDebt || !this.progressionSystem || !this.player || !this.uiRenderer) return;
 
     // Determine if all stages were completed without skipping
     // Total stages: Ch1=6 + Ch2=5 + Ch3=6 + Ch4=6 = 23
@@ -1764,7 +1409,7 @@ export class BattleScene extends Phaser.Scene {
       allWarningsKilled,
     };
 
-    this.turnText?.setText('The final bug has been vanquished...');
+    this.uiRenderer.setTurnText('The final bug has been vanquished...');
     this.updateUI();
 
     this.time.delayedCall(3000, () => {
@@ -1773,10 +1418,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleDefeat() {
-    this.soundManager?.stopBGM();
-    this.soundManager?.playSFX('sfx-defeat');
+    if (!this.resultHandler || !this.uiRenderer) return;
 
-    this.turnText?.setText('Defeat... The bug won.\nReturning to try again...');
+    const result = this.resultHandler.processDefeat();
+    this.uiRenderer.setTurnText(result.message);
+    this.updateUI();
 
     this.time.delayedCall(2000, () => {
       // On defeat, restart the same stage (don't advance)
@@ -1797,370 +1443,35 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  // =========================================================================
-  // Boss Phase Visuals
-  // =========================================================================
-
-  /**
-   * Apply visual effects when boss transitions to a new phase.
-   */
-  private applyBossPhaseVisuals(newPhase: number) {
-    if (!this.bossSprite || !this.monster) return;
-
-    const phaseKey = newPhase as 1 | 2 | 3 | 4;
-    const config = this.BOSS_PHASE_CONFIG[phaseKey];
-    if (!config) return;
-
-    // Play boss phase sound
-    this.soundManager?.playSFX('sfx-boss-phase');
-
-    // 1. Camera shake based on phase intensity
-    this.cameras.main.shake(300, config.shakeIntensity / 1000);
-
-    // 2. Screen flash with phase color
-    this.cameras.main.flash(400,
-      (config.tint >> 16) & 0xFF,
-      (config.tint >> 8) & 0xFF,
-      config.tint & 0xFF,
-      false
-    );
-
-    // 3. Tween boss sprite color/tint
-    this.tweens.add({
-      targets: this.bossSprite,
-      fillColor: config.tint,
-      duration: 800,
-      ease: 'Power2',
-    });
-
-    // 4. Scale boss sprite up then back (phase transition animation)
-    this.tweens.add({
-      targets: this.bossSprite,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      duration: 400,
-      yoyo: true,
-      ease: 'Back.easeOut',
-    });
-
-    // 5. Update overlay with phase color
-    if (this.bossPhaseOverlay) {
-      this.tweens.add({
-        targets: this.bossPhaseOverlay,
-        fillColor: config.tint,
-        alpha: config.overlayAlpha,
-        duration: 600,
-      });
-    }
-
-    // 6. Show random boss dialogue
-    const dialogue = config.dialogues[Math.floor(Math.random() * config.dialogues.length)];
-    if (this.bossDialogueText && dialogue) {
-      this.bossDialogueText.setText(dialogue);
-      this.bossDialogueText.setVisible(true);
-      this.bossDialogueText.setAlpha(0);
-
-      // Fade in dialogue
-      this.tweens.add({
-        targets: this.bossDialogueText,
-        alpha: 1,
-        duration: 300,
-      });
-
-      // Fade out after 2 seconds
-      this.time.delayedCall(2000, () => {
-        if (this.bossDialogueText) {
-          this.tweens.add({
-            targets: this.bossDialogueText,
-            alpha: 0,
-            duration: 300,
-            onComplete: () => {
-              this.bossDialogueText?.setVisible(false);
-            },
-          });
-        }
-      });
-    }
-
-    // 7. Show phase warning text
-    const phaseDesc = this.enemyAI?.getPhaseDescription() ?? '';
-    this.turnText?.setText(`WARNING: ${this.monster.name} enters ${phaseDesc}!`);
-    this.updateUI();
-  }
 
   // =========================================================================
   // UI
   // =========================================================================
 
   private updateUI() {
-    if (!this.player || !this.monster || !this.techDebt) return;
+    if (!this.player || !this.monster || !this.techDebt || !this.buffManager || !this.skillManager || !this.uiRenderer) return;
 
-    // ---- Player info ----
-    const levelInfo = this.levelUpSystem?.getLevelInfo();
-    const expDisplay = levelInfo
-      ? `\nLv.${levelInfo.level} | EXP: ${levelInfo.exp}/${levelInfo.expForNextLevel}`
-      : '';
-
-    const focusIndicator = this.focusBuff ? '\n[FOCUS: +20% DMG next attack]' : '';
-
-    this.playerHPText?.setText(
-      `${this.player.name}${expDisplay}` +
-      `\nHP: ${this.player.currentHP}/${this.player.stats.HP}` +
-      `\nMP: ${this.player.currentMP}/${this.player.stats.MP}` +
-      focusIndicator
+    this.uiRenderer.updateUI(
+      this.player,
+      this.monster,
+      this.techDebt,
+      this.buffManager.getActiveBuffs(),
+      this.buffManager.getActiveStatusEffects(),
+      this.skillManager.hasFocusBuff(),
+      this.levelUpSystem,
+      this.monsterAI
     );
-
-    // ---- Gold display with coin icon ----
-    this.goldText?.setText(`● ${this.player.gold}g`);
-
-    // ---- Player HP/MP bars with gradient and rounded corners ----
-    this.drawPlayerBars();
-
-    // ---- Monster info ----
-    const isBoss = this.monster.type === 'boss';
-    const currentPhase = this.enemyAI?.phase ?? 1;
-    const phaseText = isBoss && this.enemyAI
-      ? `\nPhase ${currentPhase}/4`
-      : '';
-
-    // Color HP text based on current phase
-    let hpColor = '#ef4444'; // default red
-    if (isBoss) {
-      const phaseConfig = this.BOSS_PHASE_CONFIG[currentPhase as 1 | 2 | 3 | 4];
-      if (phaseConfig) {
-        hpColor = '#' + phaseConfig.tint.toString(16).padStart(6, '0');
-      }
-    }
-
-    this.monsterHPText?.setText(
-      `${this.monster.name}\nHP: ${this.monster.currentHP}/${this.monster.stats.HP}${phaseText}`
-    );
-    this.monsterHPText?.setColor(hpColor);
-
-    // ---- Monster HP bar ----
-    this.drawMonsterHPBar();
-
-    // ---- Buff display ----
-    if (this.buffText) {
-      const buffLines: string[] = [];
-      for (const buff of this.activeBuffs) {
-        if (buff.stat === 'DOT') {
-          buffLines.push(`[DoT on ${buff.target}] ${buff.value} dmg (${buff.turnsRemaining}t)`);
-        } else {
-          const sign = buff.value >= 0 ? '+' : '';
-          buffLines.push(`[${buff.target}] ${sign}${buff.value} ${buff.stat} (${buff.turnsRemaining}t)`);
-        }
-      }
-      this.buffText.setText(buffLines.join('\n'));
-    }
-
-    // ---- Status effects display ----
-    if (this.statusEffectText) {
-      const effectLines: string[] = [];
-      for (const effect of this.statusEffects) {
-        const icon = effect.type === 'stun' ? '⚡' : '❓';
-        const label = effect.type.toUpperCase();
-        effectLines.push(`${icon} [${effect.target}] ${label} (${effect.turnsRemaining}t)`);
-      }
-      this.statusEffectText.setText(effectLines.join('  '));
-    }
-
-    // ---- Draw status effect icons near HP bars ----
-    this.drawStatusEffectIcons();
-
-    // ---- Tech Debt bar with gradient and glow ----
-    const status = this.techDebt.getStatus();
-    const barWidth = 300;
-    const barHeight = 20;
-    const barX = this.cameras.main.width / 2 - barWidth / 2;
-    const barY = this.cameras.main.height - 250;
-    const fillWidth = (status.current / 100) * barWidth;
-
-    // Determine color based on debt level (gradient from green to yellow to red)
-    let fillColor = 0x4ec9b0; // green (low)
-    if (status.current > 40 && status.current <= 70) {
-      fillColor = 0xdcdcaa; // yellow (medium)
-    } else if (status.current > 70) {
-      fillColor = 0xf48771; // red (high)
-    }
-
-    this.techDebtBar?.clear();
-    this.techDebtBar?.fillStyle(fillColor, 1);
-    this.techDebtBar?.fillRoundedRect(barX, barY, fillWidth, barHeight, 4);
-
-    // Pulsing glow effect when tech debt > 60
-    if (status.current > 60 && this.techDebtGlow) {
-      this.techDebtGlow.clear();
-      const glowAlpha = 0.3 + Math.sin(Date.now() * 0.005) * 0.2;
-      this.techDebtGlow.lineStyle(3, fillColor, glowAlpha);
-      this.techDebtGlow.strokeRoundedRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, 6);
-    } else if (this.techDebtGlow) {
-      this.techDebtGlow.clear();
-    }
-
-    this.techDebtText?.setText(`${status.current}/100 - ${status.description}`);
-    this.techDebtText?.setColor(status.color);
-
-    if (!this.turnText?.text) {
-      this.turnText?.setText('Your turn! Choose an action.');
-    }
-  }
-
-  /**
-   * Draw player HP/MP bars with gradient and rounded corners.
-   */
-  private drawPlayerBars() {
-    if (!this.player || !this.playerHPBar || !this.playerMPBar) return;
-
-    const barWidth = 150;
-    const barHeight = 16;
-    const barX = 100;
-    const hpBarY = 225;
-    const mpBarY = 245;
-
-    // HP Bar
-    const hpPercent = this.player.currentHP / this.player.stats.HP;
-    const hpFillWidth = barWidth * hpPercent;
-
-    this.playerHPBar.clear();
-    // Background
-    this.playerHPBar.fillStyle(0x2d2d30, 1);
-    this.playerHPBar.fillRoundedRect(barX, hpBarY, barWidth, barHeight, 4);
-    // Gradient fill (lighter at top, darker at bottom)
-    this.playerHPBar.fillGradientStyle(0x6ed9c0, 0x6ed9c0, 0x4ec9b0, 0x4ec9b0, 1);
-    this.playerHPBar.fillRoundedRect(barX, hpBarY, hpFillWidth, barHeight, 4);
-    // Border
-    this.playerHPBar.lineStyle(1, 0x3e3e42, 1);
-    this.playerHPBar.strokeRoundedRect(barX, hpBarY, barWidth, barHeight, 4);
-
-    // HP Text overlay
-    const hpText = this.add.text(barX + barWidth / 2, hpBarY + barHeight / 2,
-      `${this.player.currentHP}/${this.player.stats.HP}`, {
-      fontSize: '11px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(10);
-
-    // MP Bar
-    const mpPercent = this.player.currentMP / this.player.stats.MP;
-    const mpFillWidth = barWidth * mpPercent;
-
-    this.playerMPBar.clear();
-    // Background
-    this.playerMPBar.fillStyle(0x2d2d30, 1);
-    this.playerMPBar.fillRoundedRect(barX, mpBarY, barWidth, barHeight, 4);
-    // Blue gradient fill
-    this.playerMPBar.fillGradientStyle(0x6eacd6, 0x6eacd6, 0x569cd6, 0x569cd6, 1);
-    this.playerMPBar.fillRoundedRect(barX, mpBarY, mpFillWidth, barHeight, 4);
-    // Border
-    this.playerMPBar.lineStyle(1, 0x3e3e42, 1);
-    this.playerMPBar.strokeRoundedRect(barX, mpBarY, barWidth, barHeight, 4);
-
-    // MP Text overlay
-    const mpText = this.add.text(barX + barWidth / 2, mpBarY + barHeight / 2,
-      `${this.player.currentMP}/${this.player.stats.MP}`, {
-      fontSize: '11px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(10);
-  }
-
-  /**
-   * Draw monster HP bar with gradient.
-   */
-  private drawMonsterHPBar() {
-    if (!this.monster || !this.monsterHPBar) return;
-
-    const barWidth = 150;
-    const barHeight = 16;
-    const barX = this.cameras.main.width - 200;
-    const barY = 230;
-
-    const hpPercent = this.monster.currentHP / this.monster.stats.HP;
-    const hpFillWidth = barWidth * hpPercent;
-
-    // Determine color based on monster type and phase
-    let fillColorTop = 0xef6666;
-    let fillColorBottom = 0xef4444;
-
-    if (this.monster.type === 'boss' && this.enemyAI) {
-      const phase = this.enemyAI.phase;
-      if (phase === 2) {
-        fillColorTop = 0xeedd8a;
-        fillColorBottom = 0xdcdcaa;
-      } else if (phase === 3) {
-        fillColorTop = 0xde9988;
-        fillColorBottom = 0xce9178;
-      } else if (phase === 4) {
-        fillColorTop = 0xf46767;
-        fillColorBottom = 0xf44747;
-      }
-    }
-
-    this.monsterHPBar.clear();
-    // Background
-    this.monsterHPBar.fillStyle(0x2d2d30, 1);
-    this.monsterHPBar.fillRoundedRect(barX, barY, barWidth, barHeight, 4);
-    // Gradient fill
-    this.monsterHPBar.fillGradientStyle(fillColorTop, fillColorTop, fillColorBottom, fillColorBottom, 1);
-    this.monsterHPBar.fillRoundedRect(barX, barY, hpFillWidth, barHeight, 4);
-    // Border
-    this.monsterHPBar.lineStyle(1, 0x3e3e42, 1);
-    this.monsterHPBar.strokeRoundedRect(barX, barY, barWidth, barHeight, 4);
-
-    // HP Text overlay
-    const hpText = this.add.text(barX + barWidth / 2, barY + barHeight / 2,
-      `${this.monster.currentHP}/${this.monster.stats.HP}`, {
-      fontSize: '11px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(10);
-  }
-
-  /**
-   * Draw status effect icons near character HP bars.
-   */
-  private drawStatusEffectIcons() {
-    // This is a placeholder - status icons are already shown via statusEffectText
-    // Could be enhanced to show small icons directly on/near the HP bars
   }
 
   /**
    * Continuous update loop for boss phase visual effects.
    */
   update(time: number, delta: number): void {
-    if (!this.bossSprite || !this.monster || this.monster.type !== 'boss' || !this.enemyAI) {
+    if (!this.monster || this.monster.type !== 'boss' || !this.monsterAI || !this.uiRenderer) {
       return;
     }
 
-    const currentPhase = this.enemyAI.phase;
-
-    // Phase 3+: Apply continuous visual effects
-    if (currentPhase >= 3) {
-      // Calculate oscillating alpha for red pulse effect
-      const pulseSpeed = currentPhase === 4 ? 0.008 : 0.004; // Phase 4 pulses faster
-      const pulseAlpha = 0.3 + Math.sin(time * pulseSpeed) * 0.2; // Oscillate between 0.1 and 0.5
-
-      // Apply alpha pulse to boss sprite
-      this.bossSprite.setAlpha(pulseAlpha);
-
-      // Phase 4: Add slight position jitter
-      if (currentPhase === 4) {
-        const jitterX = (Math.random() - 0.5) * 2; // -1 to +1 pixel
-        const jitterY = (Math.random() - 0.5) * 2;
-        const baseX = this.cameras.main.width - 150;
-        const baseY = 300;
-        this.bossSprite.setPosition(baseX + jitterX, baseY + jitterY);
-      }
-    } else {
-      // Phase 1-2: Normal opacity
-      this.bossSprite.setAlpha(1);
-    }
+    // Delegate boss visual updates to UI renderer
+    this.uiRenderer.updateBossVisuals(time, this.monsterAI);
   }
 }

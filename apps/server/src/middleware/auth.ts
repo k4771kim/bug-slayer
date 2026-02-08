@@ -23,16 +23,15 @@ declare global {
 
 /**
  * Authentication middleware
- * Verifies JWT token and attaches user info to request
+ * Verifies JWT token from httpOnly cookie and attaches user info to request
  */
 export function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
-  // Extract token from Authorization header
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  // Extract token from httpOnly cookie
+  const token = req.cookies.token;
 
   if (!token) {
     res.status(401).json({

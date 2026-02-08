@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { apiClient } from '@/lib/api-client';
+import { apiPost, apiGet } from '@/lib/apiClient';
 
 interface User {
   id: string;
@@ -20,7 +20,7 @@ interface AuthState {
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, displayName: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -32,71 +32,62 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
 
-    const response = await apiClient.post<{ user: User; token: string }>(
-      '/api/auth/login',
-      { email, password }
-    );
+    try {
+      const data = await apiPost<{ user: User }>(
+        '/api/auth/login',
+        { email, password }
+      );
 
-    if (response.error) {
-      set({ isLoading: false, error: response.error.message });
+      set({ user: data.user, isLoading: false, error: null });
+      return true;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Login failed',
+      });
       return false;
     }
-
-    if (response.data) {
-      apiClient.setToken(response.data.token);
-      set({ user: response.data.user, isLoading: false, error: null });
-      return true;
-    }
-
-    return false;
   },
 
   register: async (email: string, password: string, displayName: string) => {
     set({ isLoading: true, error: null });
 
-    const response = await apiClient.post<{ user: User; token: string }>(
-      '/api/auth/register',
-      { email, password, displayName }
-    );
+    try {
+      const data = await apiPost<{ user: User }>(
+        '/api/auth/register',
+        { email, password, displayName }
+      );
 
-    if (response.error) {
-      set({ isLoading: false, error: response.error.message });
+      set({ user: data.user, isLoading: false, error: null });
+      return true;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Registration failed',
+      });
       return false;
     }
-
-    if (response.data) {
-      apiClient.setToken(response.data.token);
-      set({ user: response.data.user, isLoading: false, error: null });
-      return true;
-    }
-
-    return false;
   },
 
-  logout: () => {
-    apiClient.setToken(null);
+  logout: async () => {
+    try {
+      // Call server to clear httpOnly cookie
+      await apiPost('/api/auth/logout');
+    } catch (error) {
+      // Ignore errors on logout
+      console.error('Logout error:', error);
+    }
     set({ user: null, error: null });
   },
 
   checkAuth: async () => {
-    const token = apiClient.getToken();
-    if (!token) {
-      set({ user: null });
-      return;
-    }
-
     set({ isLoading: true });
 
-    const response = await apiClient.get<{ user: User }>('/api/auth/me');
-
-    if (response.error) {
-      apiClient.setToken(null);
+    try {
+      const data = await apiGet<{ user: User }>('/api/auth/me');
+      set({ user: data.user, isLoading: false });
+    } catch (error) {
       set({ user: null, isLoading: false });
-      return;
-    }
-
-    if (response.data) {
-      set({ user: response.data.user, isLoading: false });
     }
   },
 }));

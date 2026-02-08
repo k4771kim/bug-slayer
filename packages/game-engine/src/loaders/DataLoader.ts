@@ -10,6 +10,23 @@ import paletteData from '../data/palette.json';
 import itemsData from '../data/items.json';
 import type { Item } from '@bug-slayer/shared';
 
+// Type definitions for JSON data structure
+interface ClassesJSON {
+  classes: ClassData[];
+}
+
+interface SkillsJSON {
+  skills: SkillData[];
+}
+
+interface BugsJSON {
+  bugs: BugData[];
+}
+
+interface ItemsJSON {
+  items: Item[];
+}
+
 export interface ClassData {
   id: string;
   name: string;
@@ -121,22 +138,22 @@ export class DataLoader {
 
   private loadData() {
     // Load classes
-    (classesData as any).classes.forEach((cls: ClassData) => {
+    (classesData as ClassesJSON).classes.forEach((cls: ClassData) => {
       this.classes.set(cls.id, cls);
     });
 
     // Load skills
-    (skillsData as any).skills.forEach((skill: SkillData) => {
+    (skillsData as SkillsJSON).skills.forEach((skill: SkillData) => {
       this.skills.set(skill.id, skill);
     });
 
     // Load bugs
-    (bugsData as any).bugs.forEach((bug: BugData) => {
+    (bugsData as BugsJSON).bugs.forEach((bug: BugData) => {
       this.bugs.set(bug.id, bug);
     });
 
     // Load items
-    (itemsData as any).items.forEach((item: Item) => {
+    (itemsData as ItemsJSON).items.forEach((item: Item) => {
       this.items.set(item.id, item);
     });
 
