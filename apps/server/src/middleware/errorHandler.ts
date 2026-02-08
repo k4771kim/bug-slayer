@@ -14,8 +14,19 @@ export function errorHandler(
 ): void {
   console.error('Error:', err);
 
-  // JSON parse errors (body-parser)
-  if (err instanceof SyntaxError && 'type' in err && (err as any).type === 'entity.parse.failed') {
+  // JSON parse errors (body-parser / express.json())
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({
+      error: {
+        code: 'INVALID_JSON',
+        message: 'Request body contains invalid JSON',
+      },
+    });
+    return;
+  }
+
+  // Additional JSON parsing error check
+  if (err.message && err.message.includes('JSON')) {
     res.status(400).json({
       error: {
         code: 'INVALID_JSON',
