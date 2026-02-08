@@ -158,9 +158,9 @@
       "type": "boss",
       "chapter": 1,
       "stats": {
-        "HP": 300,
-        "ATK": 20,
-        "DEF": 15,
+        "HP": 128,
+        "ATK": 16,
+        "DEF": 10,
         "SPD": 12
       },
       "phase": 1,
@@ -353,9 +353,9 @@
       "type": "boss",
       "chapter": 2,
       "stats": {
-        "HP": 400,
-        "ATK": 30,
-        "DEF": 20,
+        "HP": 187,
+        "ATK": 24,
+        "DEF": 14,
         "SPD": 18
       },
       "phase": 1,
@@ -578,9 +578,9 @@
       "type": "boss",
       "chapter": 3,
       "stats": {
-        "HP": 500,
-        "ATK": 35,
-        "DEF": 25,
+        "HP": 255,
+        "ATK": 28,
+        "DEF": 18,
         "SPD": 20
       },
       "phase": 1,
@@ -804,9 +804,9 @@
       "type": "boss",
       "chapter": 4,
       "stats": {
-        "HP": 650,
-        "ATK": 42,
-        "DEF": 30,
+        "HP": 340,
+        "ATK": 35,
+        "DEF": 22,
         "SPD": 22
       },
       "phase": 1,

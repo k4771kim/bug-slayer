@@ -88,6 +88,9 @@ interface SimPlayer {
   passive: string;
   focusActive: boolean;
   refactorerCounter: number;
+  attackCount: number;       // gpu-warlock: track attack count for 200% burst
+  nineLifeUsed: boolean;     // cat-summoner: one auto-revive per battle
+  firstAttackDone: boolean;  // code-ninja: first strike bonus
 }
 
 interface SimMonster {
@@ -302,6 +305,25 @@ export class BalanceSimulator {
       }
     }
 
+    // GPU Warlock passive: Every 3rd attack deals 200% damage (CUDA Cores)
+    if (player.passive === 'gpu-warlock') {
+      player.attackCount++;
+      if (player.attackCount >= 3) {
+        const burstDamage = damage; // Double the damage (200% total = original + 100% bonus)
+        monster.currentHP -= burstDamage;
+        log.totalDamageDealt += burstDamage;
+        player.attackCount = 0;
+      }
+    }
+
+    // Code Ninja passive: First attack gets CRIT_MULTIPLIER (1.5x) bonus
+    if (player.passive === 'code-ninja' && !player.firstAttackDone) {
+      const firstStrikeBonus = Math.floor(damage * 0.5); // +50% on first hit
+      monster.currentHP -= firstStrikeBonus;
+      log.totalDamageDealt += firstStrikeBonus;
+      player.firstAttackDone = true;
+    }
+
     // Reset focus after attack
     player.focusActive = false;
   }
@@ -322,6 +344,12 @@ export class BalanceSimulator {
 
     player.currentHP -= finalDamage;
     log.totalDamageTaken += finalDamage;
+
+    // Cat Summoner passive: Auto-revive once per battle at 30% HP (Nine Lives)
+    if (player.currentHP <= 0 && player.passive === 'cat-summoner' && !player.nineLifeUsed) {
+      player.currentHP = Math.floor(player.maxHP * 0.3);
+      player.nineLifeUsed = true;
+    }
 
     // Boss phase transitions at 75%, 50%, 25%
     if (monster.type === 'boss') {
@@ -365,6 +393,11 @@ export class BalanceSimulator {
     let actualCritRate = critRate;
     if ('passive' in attacker && attacker.passive === 'devops') {
       actualCritRate = Math.min(0.3, critRate + 0.05);
+    }
+
+    // Code Ninja passive: +10% crit rate
+    if ('passive' in attacker && attacker.passive === 'code-ninja') {
+      actualCritRate = Math.min(0.3, actualCritRate + 0.1);
     }
 
     if (Math.random() < actualCritRate) {
@@ -447,6 +480,9 @@ export class BalanceSimulator {
       passive: classId,
       focusActive: false,
       refactorerCounter: 0,
+      attackCount: 0,
+      nineLifeUsed: false,
+      firstAttackDone: false,
     };
   }
 
