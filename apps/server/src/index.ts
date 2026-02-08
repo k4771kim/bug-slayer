@@ -44,44 +44,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Temporary debug endpoint - diagnose auth 500
-app.get('/debug/auth-test', async (req, res) => {
-  const results: Record<string, unknown> = {};
-  try {
-    // Test 1: Prisma import
-    const { PrismaClient } = await import('@prisma/client');
-    results.prismaImport = 'OK';
-
-    // Test 2: Prisma connection
-    const prisma = new PrismaClient();
-    await prisma.$connect();
-    results.prismaConnect = 'OK';
-
-    // Test 3: Query
-    const userCount = await prisma.user.count();
-    results.userCount = userCount;
-
-    // Test 4: bcrypt
-    const bcrypt = await import('bcrypt');
-    const hash = await bcrypt.hash('test', 10);
-    results.bcryptHash = hash ? 'OK' : 'FAIL';
-
-    // Test 5: jwt
-    const jwt = await import('jsonwebtoken');
-    const token = jwt.sign({ test: true }, env.JWT_SECRET, { expiresIn: '1m' });
-    results.jwtSign = token ? 'OK' : 'FAIL';
-
-    await prisma.$disconnect();
-    results.overall = 'ALL_PASS';
-    res.json(results);
-  } catch (err: unknown) {
-    const error = err as Error;
-    results.error = error.message;
-    results.stack = error.stack?.split('\n').slice(0, 5);
-    res.status(500).json(results);
-  }
-});
-
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
