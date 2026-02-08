@@ -1,9 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-
-interface PrismaError extends Error {
-  code?: string;
-}
+import { Prisma } from '@prisma/client';
 
 /**
  * Global error handler middleware
@@ -30,10 +27,9 @@ export function errorHandler(
   }
 
   // Prisma errors
-  if (err.constructor.name === 'PrismaClientKnownRequestError') {
-    const prismaErr = err as PrismaError;
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
     // Unique constraint violation
-    if (prismaErr.code === 'P2002') {
+    if (err.code === 'P2002') {
       res.status(409).json({
         error: {
           code: 'EMAIL_ALREADY_EXISTS',
@@ -44,7 +40,7 @@ export function errorHandler(
     }
 
     // Record not found
-    if (prismaErr.code === 'P2025') {
+    if (err.code === 'P2025') {
       res.status(404).json({
         error: {
           code: 'NOT_FOUND',
@@ -56,6 +52,16 @@ export function errorHandler(
   }
 
   // Custom application errors
+  if (err.message === 'EMAIL_ALREADY_EXISTS') {
+    res.status(409).json({
+      error: {
+        code: 'EMAIL_ALREADY_EXISTS',
+        message: 'An account with this email already exists',
+      },
+    });
+    return;
+  }
+
   if (err.message === 'INVALID_CREDENTIALS') {
     res.status(401).json({
       error: {
