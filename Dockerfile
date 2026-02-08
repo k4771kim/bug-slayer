@@ -38,5 +38,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN cd apps/server && npx prisma generate
 WORKDIR /app/apps/server
 
+# Cache bust for Railway: v2
 # Run prisma db push to create tables, then start the server
 CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
