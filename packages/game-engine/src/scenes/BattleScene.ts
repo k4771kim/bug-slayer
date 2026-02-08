@@ -91,7 +91,9 @@ export class BattleScene extends Phaser.Scene {
   private isPlayerTurn: boolean = true;
   private battleStartTime: number = 0;
   private stagesCompleted: number[] = [];
-  private attackCount: number = 0; // for Refactorer passive
+  private attackCount: number = 0; // for Refactorer/GPU Warlock passive
+  private nineLifeUsed: boolean = false; // Cat Summoner passive (once per battle)
+  private totalDamageDealt: number = 0; // Track for class unlock checks
 
   // Skill panel
   private skillPanelContainer: Phaser.GameObjects.Container | null = null;
@@ -124,6 +126,9 @@ export class BattleScene extends Phaser.Scene {
     this.battleStartTime = Date.now();
     this.skillPanelVisible = false;
     this.actionButtons = [];
+    this.attackCount = 0;
+    this.nineLifeUsed = false;
+    this.totalDamageDealt = 0;
 
     // Carry over stages-completed list
     this.stagesCompleted = data.stagesCompleted ?? [];
@@ -584,6 +589,7 @@ export class BattleScene extends Phaser.Scene {
       this.uiRenderer.setTurnText(`CONFUSED! You hit yourself for ${selfDmg} damage!`);
       this.updateUI();
       if (this.player.currentHP <= 0) {
+        if (this.checkNineLives()) return;
         this.time.delayedCall(1000, () => this.handleDefeat());
         return;
       }
@@ -637,6 +643,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Apply damage
     this.monster.currentHP = Math.max(0, this.monster.currentHP - damage);
+    this.totalDamageDealt += damage;
 
     // Tech debt per turn
     this.techDebt.turnPassed();
@@ -667,7 +674,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Use skill via SkillManager
     const soundCallback = (sfxId: string) => this.soundManager?.playSFX(sfxId);
-    const result = this.skillManager.useSkill(skillData, this.player, this.monster, this.techDebt, soundCallback);
+    const result = this.skillManager.useSkill(skillData, this.player, this.monster, this.techDebt, soundCallback, this.sceneData?.playerClass.toLowerCase());
 
     if (!result.success) {
       this.uiRenderer.setTurnText(result.errorMessage ?? 'Skill failed!');
@@ -677,6 +684,9 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.soundManager?.playSFX('sfx-skill');
+
+    // Track damage for class unlock checks
+    this.totalDamageDealt += result.totalDamage;
 
     // Build result text
     let resultText = `Used ${skillData.name}!`;
@@ -1014,6 +1024,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Check lose condition
     if (this.player.currentHP <= 0) {
+      if (this.checkNineLives()) return;
       this.time.delayedCall(1000, () => this.handleDefeat());
       return;
     }
@@ -1048,9 +1059,16 @@ export class BattleScene extends Phaser.Scene {
   /**
    * Critical hit: critChance = min(30%, 10 + SPD * 0.5)
    * Uses shared constants from GDD spec.
+   * Code Ninja passive: +10% crit rate (cap still 30%)
    */
   private rollCritical(attackerSPD: number, _defenderSPD: number): boolean {
-    const critChance = calculateCritChance(attackerSPD);
+    let critChance = calculateCritChance(attackerSPD);
+
+    // Code Ninja passive: +10% crit rate
+    if (this.sceneData?.playerClass.toLowerCase() === 'code-ninja') {
+      critChance = Math.min(30, critChance + 10);
+    }
+
     return Math.random() * 100 < critChance;
   }
 
@@ -1077,6 +1095,33 @@ export class BattleScene extends Phaser.Scene {
 
 
   // =========================================================================
+  // Nine Lives (Cat Summoner passive)
+  // =========================================================================
+
+  /**
+   * Cat Summoner passive: Auto-revive once per battle with 30% HP.
+   * Returns true if Nine Lives activated (caller should skip handleDefeat).
+   */
+  private checkNineLives(): boolean {
+    if (!this.player || !this.sceneData || !this.uiRenderer) return false;
+
+    const classId = this.sceneData.playerClass.toLowerCase();
+    if (classId !== 'cat-summoner' || this.nineLifeUsed) return false;
+
+    this.nineLifeUsed = true;
+    this.player.currentHP = Math.floor(this.player.stats.HP * 0.3);
+    this.uiRenderer.setTurnText('Nine Lives activated! Revived with 30% HP!');
+    this.updateUI();
+
+    // Resume battle after revive animation
+    this.time.delayedCall(2000, () => {
+      this.isPlayerTurn = true;
+      this.setActionsEnabled(true);
+    });
+    return true;
+  }
+
+  // =========================================================================
   // Passive Abilities
   // =========================================================================
 
@@ -1086,6 +1131,8 @@ export class BattleScene extends Phaser.Scene {
    * - Refactorer: Every 3rd attack deals 150% damage
    * - FullStack: +20% damage when HP > 70%
    * - DevOps: +5% crit rate (handled in rollCritical via higher SPD)
+   * - GPU Warlock: Every 3rd attack deals 200% damage (CUDA burst)
+   * - Code Ninja: First attack always crits (1.5x)
    */
   private applyPassiveToOutgoingDamage(damage: number): { damage: number; text: string } {
     if (!this.player || !this.sceneData) return { damage, text: '' };
@@ -1104,12 +1151,22 @@ export class BattleScene extends Phaser.Scene {
           return { damage: Math.floor(damage * 1.2), text: ' [Full Power: +20%!]' };
         }
         break;
+      case 'gpu-warlock':
+        if (this.attackCount % 3 === 0) {
+          return { damage: Math.floor(damage * 2.0), text: ' [CUDA Cores: 200% Burst!]' };
+        }
+        break;
+      case 'code-ninja':
+        if (this.attackCount === 1) {
+          return { damage: Math.floor(damage * CRIT_MULTIPLIER), text: ' [Stealth Strike: First Hit!]' };
+        }
+        break;
     }
     return { damage, text: '' };
   }
 
   /**
-   * Apply class passive to incoming damage (Debugger).
+   * Apply class passive to incoming damage (Debugger, Light Mage).
    */
   private applyPassiveToIncomingDamage(damage: number): { damage: number; text: string } {
     if (!this.sceneData) return { damage, text: '' };
@@ -1119,6 +1176,13 @@ export class BattleScene extends Phaser.Scene {
     if (classId === 'debugger' && Math.random() < 0.2) {
       return { damage: Math.floor(damage * 0.5), text: ' [Exception Handler: -50%!]' };
     }
+
+    // Light Mage: Show enemy danger level as color indicator
+    if (classId === 'light-mage') {
+      const dangerText = damage > 30 ? ' [!!!]' : damage > 15 ? ' [!!]' : ' [!]';
+      return { damage, text: dangerText };
+    }
+
     return { damage, text: '' };
   }
 
@@ -1286,6 +1350,24 @@ export class BattleScene extends Phaser.Scene {
 
     const chapter = this.sceneData.chapter;
     const stage = this.sceneData.stage;
+
+    // Check for hidden class unlocks after battle
+    if (this.progressionSystem) {
+      const battleStats = {
+        damageDealt: this.totalDamageDealt,
+        turnsUsed: this.attackCount,
+        chapterTime: battleTime,
+      };
+      const newUnlocks = this.progressionSystem.checkClassUnlocks(battleStats);
+      if (newUnlocks.length > 0) {
+        this.progressionSystem.saveProgress();
+        const names = newUnlocks.map(id =>
+          id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        );
+        this.uiRenderer.setTurnText(`NEW CLASS UNLOCKED: ${names.join(', ')}!`);
+        this.updateUI();
+      }
+    }
 
     // Determine next stage
     const result = this.resultHandler.determineNextStage(

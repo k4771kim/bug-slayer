@@ -163,6 +163,23 @@ export class BuffManager {
   }
 
   /**
+   * Remove one negative status effect from a target.
+   * Used by Light Mage passive: heals cleanse 1 debuff.
+   * @param target - 'player' or 'monster'
+   * @returns The removed effect type, or null if none
+   */
+  removeOneStatusEffect(target: 'player' | 'monster'): string | null {
+    const idx = this.statusEffects.findIndex(
+      e => e.target === target && e.turnsRemaining > 0
+    );
+    if (idx !== -1) {
+      const removed = this.statusEffects.splice(idx, 1);
+      return removed.length > 0 ? removed[0]!.type : null;
+    }
+    return null;
+  }
+
+  /**
    * Clear all buffs and status effects for a specific target.
    * Useful for special abilities or end-of-battle cleanup.
    * @param target - 'player' or 'monster'

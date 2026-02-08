@@ -63,7 +63,8 @@ export class SkillManager {
     player: Character,
     monster: Monster,
     techDebt: TechDebt,
-    soundCallback?: (sfxId: string) => void
+    soundCallback?: (sfxId: string) => void,
+    playerClass?: string
   ): SkillUseResult {
     // Check MP
     if (player.currentMP < skillData.mpCost) {
@@ -148,6 +149,13 @@ export class SkillManager {
           totalHeal += healAmount;
           effectTexts.push(`Healed ${healAmount} HP`);
           soundCallback?.('sfx-heal');
+          // Light Mage passive: heals cleanse 1 debuff
+          if (playerClass === 'light-mage') {
+            const cleansed = this.buffManager.removeOneStatusEffect('player');
+            if (cleansed) {
+              effectTexts.push(`Cleansed ${cleansed}!`);
+            }
+          }
           break;
         }
 
