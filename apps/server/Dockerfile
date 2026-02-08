@@ -1,5 +1,5 @@
 FROM node:20-slim AS base
-RUN npm i -g pnpm@9
+RUN npm i -g pnpm@8.15.1
 
 # Install dependencies
 FROM base AS deps
