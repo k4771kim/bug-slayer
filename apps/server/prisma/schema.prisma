@@ -3,61 +3,65 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String        @id @default(uuid())
-  email         String        @unique
-  displayName   String
-  passwordHash  String
-  createdAt     DateTime      @default(now())
-  gameSessions  GameSession[]
+  id           String        @id @default(uuid())
+  email        String        @unique
+  displayName  String
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  gameSessions GameSession[]
+
   @@index([email])
 }
 
 model GameSession {
-  id          String          @id @default(uuid())
-  userId      String
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chapter     Int             @default(1)
-  stage       Int             @default(1)
-  techDebt    Int             @default(0)
-  gold        Int             @default(0)
-  playTime    Int             @default(0)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  characters  Character[]
-  inventory   InventoryItem[]
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter    Int             @default(1)
+  stage      Int             @default(1)
+  techDebt   Int             @default(0)
+  gold       Int             @default(0)
+  playTime   Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  characters Character[]
+  inventory  InventoryItem[]
+
   @@index([userId])
   @@index([createdAt])
 }
 
 model Character {
-  id          String      @id @default(uuid())
-  sessionId   String
-  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  name        String
-  class       String
-  level       Int         @default(1)
-  exp         Int         @default(0)
-  hp          Int
-  mp          Int
-  atk         Int
-  def         Int
-  spd         Int
-  currentHP   Int
-  currentMP   Int
+  id        String      @id @default(uuid())
+  sessionId String
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name      String
+  class     String
+  level     Int         @default(1)
+  exp       Int         @default(0)
+  hp        Int
+  mp        Int
+  atk       Int
+  def       Int
+  spd       Int
+  currentHP Int
+  currentMP Int
+
   @@index([sessionId])
 }
 
 model InventoryItem {
-  id          String      @id @default(uuid())
-  sessionId   String
-  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  itemId      String
-  quantity    Int         @default(1)
+  id        String      @id @default(uuid())
+  sessionId String
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  itemId    String
+  quantity  Int         @default(1)
+
   @@index([sessionId])
   @@index([itemId])
 }

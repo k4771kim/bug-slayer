@@ -16,18 +16,18 @@
 
 ### Architecture
 - Custom `Dockerfile` 사용 (멀티스테이지 빌드: deps → builder → runner)
-- 컨테이너 시작 시 `prisma db push --accept-data-loss`로 SQLite 테이블 자동 생성
-- SQLite는 Railway 에페메럴 파일시스템에 저장 (재배포 시 데이터 초기화됨)
+- 컨테이너 시작 시 `prisma migrate deploy`로 PostgreSQL 마이그레이션 적용
+- PostgreSQL은 Railway managed database로 영구 저장 (재배포해도 데이터 유지)
 
 ### Environment Variables (Railway Dashboard)
-- `DATABASE_URL`: `file:./prod.db` (SQLite)
+- `DATABASE_URL`: Railway PostgreSQL 플러그인이 자동 설정 (변경 불필요)
 - `JWT_SECRET`: 32자 이상 랜덤 문자열
 - `CORS_ORIGIN`: `https://out-tau-jade.vercel.app`
 - `PORT`: Railway가 자동 할당 (기본 8080)
 
 ### Dockerfile CMD
 ```dockerfile
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
 ```
 
 ### Healthcheck
