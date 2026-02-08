@@ -2,7 +2,7 @@
 buildCommand = "pnpm install && pnpm --filter @bug-slayer/shared build && pnpm --filter @bug-slayer/game-engine build && pnpm --filter @bug-slayer/server build"
 
 [deploy]
-startCommand = "cd apps/server && npx prisma db push --accept-data-loss && node dist/index.js"
+startCommand = "cd apps/server && pnpm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
