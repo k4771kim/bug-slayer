@@ -1,107 +1,81 @@
 # Bug Slayer Deployment Guide
 
-## Current Status
-- Frontend (apps/web): Static export build ready at `apps/web/out/`
-- Backend (apps/server): Build ready at `apps/server/dist/`
-- GitHub Actions workflow: `.github/workflows/deploy-pages.yml`
+## Current Active Deployment
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| Frontend | Vercel | https://out-tau-jade.vercel.app |
+| Backend | Railway | https://bug-slayer-api-production.up.railway.app |
+
+- Frontend: Vercel에서 자동 배포 (master 브랜치 push 시)
+- Backend: Railway에서 자동 배포 (master 브랜치 push 시, GitHub webhook)
 
 ---
 
-## 1. Frontend: GitHub Pages (Recommended)
+## Backend: Railway
 
-### Step 1: Enable GitHub Pages
-1. Go to https://github.com/k4771kim/bug-slayer/settings/pages
-2. Source: **GitHub Actions**
-3. Save
+### Architecture
+- Custom `Dockerfile` 사용 (멀티스테이지 빌드: deps → builder → runner)
+- 컨테이너 시작 시 `prisma db push --accept-data-loss`로 SQLite 테이블 자동 생성
+- SQLite는 Railway 에페메럴 파일시스템에 저장 (재배포 시 데이터 초기화됨)
 
-### Step 2: Push changes
-```bash
-git add .github/workflows/deploy-pages.yml apps/web/next.config.js
-git commit -m "feat: add GitHub Pages deployment workflow"
-git push origin master
+### Environment Variables (Railway Dashboard)
+- `DATABASE_URL`: `file:./prod.db` (SQLite)
+- `JWT_SECRET`: 32자 이상 랜덤 문자열
+- `CORS_ORIGIN`: `https://out-tau-jade.vercel.app`
+- `PORT`: Railway가 자동 할당 (기본 8080)
+
+### Dockerfile CMD
+```dockerfile
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
 ```
 
-### Step 3: Verify
-- Actions tab: https://github.com/k4771kim/bug-slayer/actions
-- Live URL: **https://k4771kim.github.io/bug-slayer/**
+### Healthcheck
+- Path: `/health`
+- Response: `{"status":"ok","timestamp":"...","environment":"production"}`
 
----
-
-## 2. Frontend Alternative: Vercel
-
-```bash
-# Get token from https://vercel.com/account/tokens
-cd apps/web
-npx vercel deploy --prod --yes --token YOUR_TOKEN
+### API Endpoints
 ```
-
-Environment variables in Vercel Dashboard:
-- `NEXT_PUBLIC_API_URL`: Backend URL
-
-> Note: Remove `output: 'export'` from next.config.js for Vercel (SSR mode).
-
----
-
-## 3. Backend: Railway
-
-```bash
-# Get token from Railway dashboard
-export RAILWAY_TOKEN=your-token
-railway login --browserless
-railway up
-```
-
-Environment variables:
-- `DATABASE_URL`: SQLite file path (e.g., `file:./dev.db`)
-- `JWT_SECRET`: Strong random secret
-- `CORS_ORIGIN`: Frontend URL (e.g., https://k4771kim.github.io)
-- `PORT`: 3001
-
----
-
-## 4. Backend Alternative: Render.com
-
-1. Go to https://render.com
-2. New > Web Service > Connect GitHub repo
-3. Root Directory: `apps/server`
-4. Build: `npm install && npm run build`
-5. Start: `node dist/index.js`
-6. Set environment variables (same as Railway)
-
----
-
-## 5. Backend Alternative: Fly.io
-
-```bash
-# Install: curl -L https://fly.io/install.sh | sh
-flyctl auth login
-cd apps/server
-flyctl launch
-flyctl deploy
+POST /api/auth/register  - 회원가입
+POST /api/auth/login     - 로그인
+POST /api/auth/logout    - 로그아웃
+GET  /api/auth/me        - 현재 사용자 조회
+POST /api/game/save      - 게임 저장
+GET  /api/game/load      - 게임 로드
+DELETE /api/game/save    - 게임 삭제
+GET  /health             - 헬스체크
 ```
 
 ---
 
-## After Backend Deployment
+## Frontend: Vercel
 
-Update frontend environment variable:
-```bash
-# For GitHub Pages - update workflow
-# In .github/workflows/deploy-pages.yml, set:
-# NEXT_PUBLIC_API_URL: https://your-backend-url.com
+Vercel Dashboard에서 Environment Variables 설정:
+- `NEXT_PUBLIC_API_URL`: `https://bug-slayer-api-production.up.railway.app`
 
-# For local .env
-echo "NEXT_PUBLIC_API_URL=https://your-backend-url.com" > apps/web/.env.local
-```
+> Vercel은 GitHub 연동으로 master 브랜치 push 시 자동 배포됩니다.
 
 ---
 
 ## Quick Local Test
 
 ```bash
-# Frontend
-cd apps/web && npx serve out -s -l 3000
+# Backend (port 3001)
+cd apps/server && pnpm dev
 
-# Backend
-cd apps/server && node dist/index.js
+# Frontend (port 3002)
+cd apps/web && pnpm dev
 ```
+
+---
+
+## Troubleshooting
+
+### Railway P2021 (Table does not exist)
+- `prisma db push`가 실행되지 않은 경우 발생
+- Dockerfile CMD가 올바르게 `prisma db push`를 포함하는지 확인
+- `railway.toml`이 Dockerfile CMD를 오버라이드할 수 있으므로 주의
+
+### Railway 자동 배포가 안 되는 경우
+- Railway Dashboard에서 Deploy Trigger (GitHub webhook) 확인
+- Repository: `k4771kim/bug-slayer`, Branch: `master`

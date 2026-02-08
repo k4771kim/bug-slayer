@@ -215,7 +215,7 @@ MonsterAI.ts         (~300 lines)  - Enemy AI + behaviorTree 확장
 | Variable | Purpose | Scope | To Be Created |
 |----------|---------|-------|:-------------:|
 | `NEXT_PUBLIC_API_URL` | 백엔드 API 엔드포인트 | Client | ☑ (기존) |
-| `DATABASE_URL` | MongoDB 연결 | Server | ☑ (기존) |
+| `DATABASE_URL` | SQLite 파일 경로 (file:./prod.db) | Server | ☑ (기존) |
 | `JWT_SECRET` | JWT 서명 키 | Server | ☑ (기존) |
 | `CORS_ORIGIN` | CORS 허용 출처 | Server | ☐ (신규) |
 | `COOKIE_DOMAIN` | httpOnly cookie 도메인 | Server | ☐ (신규) |
