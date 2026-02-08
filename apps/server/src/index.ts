@@ -44,6 +44,24 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Diagnostic endpoint (temporary - for Railway debugging)
+app.get('/debug/db', async (req, res) => {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient();
+  try {
+    const dbUrl = env.DATABASE_URL;
+    const masked = dbUrl.startsWith('file:') ? dbUrl : dbUrl.replace(/\/\/.*@/, '//***@');
+    await prisma.$connect();
+    const userCount = await prisma.user.count();
+    res.json({ dbConnected: true, provider: dbUrl.startsWith('file:') ? 'sqlite' : 'postgresql', masked, userCount });
+  } catch (e: unknown) {
+    const err = e as Error;
+    res.status(500).json({ dbConnected: false, error: err.message, stack: err.stack?.split('\n').slice(0, 5) });
+  } finally {
+    await prisma.$disconnect();
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
