@@ -143,8 +143,7 @@ export class BattleResultHandler {
     // Complete stage in progression
     const result = this.progressionSystem.completeStage(this.techDebt.current, battleTime);
 
-    // Mark stage as completed
-    stagesCompleted.push(chapter * 100 + stage);
+    // Note: stagesCompleted is already pushed by handleVictory() caller
 
     // Determine if this was the final boss (Chapter 2 boss for MVP)
     const chapterTotalStages: Record<number, number> = { 1: 6, 2: 5 };

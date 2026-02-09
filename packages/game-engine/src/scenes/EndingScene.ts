@@ -133,14 +133,22 @@ export class EndingScene extends Phaser.Scene {
       wordWrap: { width: width - 100 },
     }).setOrigin(0.5);
 
-    // Continue prompt
-    this.add.text(width / 2, height - 60, 'Press SPACE to return to main menu', {
+    // Continue button (works for both desktop and mobile)
+    const continueBtn = this.add.text(width / 2, height - 60, 'Tap or press SPACE to return to main menu', {
       fontSize: '16px',
       color: '#666666',
       align: 'center',
-    }).setOrigin(0.5);
+      backgroundColor: '#2d2d30',
+      padding: { x: 20, y: 10 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    // Input handling
+    continueBtn.on('pointerover', () => continueBtn.setColor('#d4d4d4'));
+    continueBtn.on('pointerout', () => continueBtn.setColor('#666666'));
+    continueBtn.on('pointerdown', () => {
+      this.scene.start('MainMenuScene');
+    });
+
+    // Keyboard input
     this.input.keyboard?.once('keydown-SPACE', () => {
       this.scene.start('MainMenuScene');
     });

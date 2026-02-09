@@ -93,8 +93,8 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private startNewGame() {
-    // Start fresh with class selection
-    this.scene.start('ClassSelectScene');
+    // Start with tutorial for new players (has skip button)
+    this.scene.start('TutorialScene');
   }
 
   private loadSavedGame() {

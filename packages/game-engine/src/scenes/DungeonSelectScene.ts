@@ -9,6 +9,14 @@ import type { BugData } from '../loaders/DataLoader';
  * DungeonSelectScene - Select chapter and stage
  */
 
+interface MinigameResult {
+  success: boolean;
+  score: number;
+  goldReward: number;
+  techDebtPenalty: number;
+  perfectClear: boolean;
+}
+
 interface DungeonSelectData {
   playerClass: string;
   player?: Character;
@@ -16,6 +24,7 @@ interface DungeonSelectData {
   progression?: ProgressionSystem;
   stagesCompleted?: number[];
   playTime?: number;
+  minigameResult?: MinigameResult;
 }
 
 interface StageNode {
@@ -77,6 +86,19 @@ export class DungeonSelectScene extends Phaser.Scene {
       this.techDebt = new TechDebt(data.techDebt);
     } else {
       this.techDebt = new TechDebt(this.progression.getTotalTechDebt());
+    }
+
+    // Apply minigame results if returning from MinigameScene
+    if (data.minigameResult) {
+      const result = data.minigameResult;
+      if (result.success && this.player) {
+        this.player.gold = (this.player.gold || 0) + result.goldReward;
+        console.log(`[DungeonSelect] Minigame gold reward: +${result.goldReward}`);
+      }
+      if (!result.success && result.techDebtPenalty > 0) {
+        this.techDebt = new TechDebt(this.techDebt.current + result.techDebtPenalty);
+        console.log(`[DungeonSelect] Minigame tech debt penalty: +${result.techDebtPenalty}`);
+      }
     }
 
     // Set selected chapter to current chapter
@@ -839,7 +861,7 @@ export class DungeonSelectScene extends Phaser.Scene {
       player: this.player,
       chapter: this.selectedStage.chapter,
       stage: this.selectedStage.stage,
-      techDebt: this.techDebt.current,
+      techDebtCarry: this.techDebt.current,
       progression: this.progression,
       playTime: this.playTime,
     });
